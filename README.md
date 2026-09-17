@@ -51,6 +51,7 @@
 │   ├── materials-and-licenses.md#   材料来源与许可合规
 │   ├── platform-capability-check.md # 平台能力边界验证报告
 │   ├── delivery-form.md         #   作品形态决策分析
+│   ├── dev-environment.md       #   ★ 开发环境与已知坑（新人先读这份）
 │   ├── tasks/                   #   逐人每日任务清单
 │   └── buddy-logs/              #   LearnBuddy 使用记录（提交材料之一）
 ├── backend/                     # FastAPI 后端

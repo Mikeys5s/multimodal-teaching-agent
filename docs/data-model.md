@@ -1,9 +1,19 @@
 # 数据模型规格
 
 > 上游文档：[`../SPEC.md`](../SPEC.md) §4.6
-> 版本：v1.3 · 2026-09-17（v1.3 变更：**主键由随机 UUID 改为确定性路径式 ID**（原约定与验收项 A2-7「同输入可复现」冲突，且重跑无法逐条 diff）；**`materials` 补上 `file_hash` 字段**（SPEC §5.1 C2 与 §8.2 D2 要求"按文件 hash 建唯一索引"，此前规格漏写））
+> 版本：v1.4 · 2026-09-17
+>
+> **v1.4 变更**：新增 §0「数据完整性约定」—— ① **层级链一致性改用复合外键在数据库层强制保证**
+> （原设计每个层级字段各挂一个单列外键，只能保证"各自存在"、保证不了"同属一条链"，错链数据不报错
+> 却会让查询与质量报告算错）；② **时间字段收敛为唯一格式 + 三层防护**（ORM 默认值 / 数据库默认值 /
+> CHECK 归一化校验），修复"混进本地时区偏移会让字典序静默出错"。
+>
+> **v1.3 变更**：主键由随机 UUID 改为**确定性路径式 ID**（原约定与验收项 A2-7「同输入可复现」冲突，
+> 且重跑无法逐条 diff）；`materials` 补上 `file_hash` 字段（SPEC §5.1 C2 与 §8.2 D2 要求"按文件 hash
+> 建唯一索引"，此前规格漏写）。
+>
 > 实现：SQLite（WAL 模式）+ SQLAlchemy 2.x ORM + Alembic 迁移
-> 时间统一 UTC ISO8601 字符串。
+> 时间统一 UTC ISO8601 字符串（唯一格式，见 §0）。
 
 ### 主键约定（v1.3 重写）
 
@@ -38,6 +48,49 @@
 （内容变了就是新的抽取产物）。
 
 > 章节号取自材料自身的编号（`number` 字段，保留原貌）；节内序号取自 `knowledge_points.seq`。
+
+### 数据完整性约定（v1.4 新增）
+
+**① 层级链一致性 —— 用复合外键在数据库层强制保证**
+
+`knowledge_points` 与 `sections` 都存了冗余的层级字段（`chapter_id` / `material_id`），
+用途是"便于按章 / 按材料查询"。但**单列外键保证不了它们同属一条链** ——
+单列外键只能说"这个 chapter 存在""这个 material 存在"，
+说不了"这个 chapter 属于这个 material"。错链数据不会报错，只会让查询与质量报告悄悄算错。
+
+因此改用**复合外键**：
+
+| 表 | 复合外键 | 保证的事 |
+|---|---|---|
+| `sections` | `(chapter_id, material_id) → chapters(id, material_id)` | 节所属的章，必须属于该节声明的材料 |
+| `knowledge_points` | `(section_id, chapter_id, material_id) → sections(id, chapter_id, material_id)` | 知识点声明的节 / 章 / 材料必须是同一条链 |
+
+配套的父侧唯一索引（复合外键的前置条件）：`chapters` 需 `UNIQUE(id, material_id)`，
+`sections` 需 `UNIQUE(id, chapter_id, material_id)`。
+
+均带 `ON UPDATE CASCADE` —— 调整某节归属时，其下知识点自动跟随，不必手工改。
+
+> **代价（已知并接受）**：多 2 个复合外键 + 3 个唯一索引；插入顺序必须是
+> materials → chapters → sections → knowledge_points（本来也是这个顺序）。
+
+**② 时间字段格式 —— 唯一格式 + 三层防护**
+
+时间列是 `TEXT`，排序依赖字符串字典序。**只要混进一个带本地时区偏移的时间**
+（如 `2026-09-17T20:00:00+08:00`），字典序就会把一个"实际更早"的时间排到后面，
+**而且全程不报错**。
+
+因此把格式收敛为**唯一形式**：`UTC_ISO_FORMAT = %Y-%m-%dT%H:%M:%S+00:00`
+（即 `2026-09-17T12:00:00+00:00`：UTC、秒精度、带 `+00:00` 偏移）。
+
+| 层 | 手段 |
+|---|---|
+| ORM | `default=utc_now_iso`（`updated_at` 另有 `onupdate`） |
+| 数据库 | `server_default = (strftime('%Y-%m-%dT%H:%M:%S+00:00','now'))` |
+| 约束 | `CHECK (col IS strftime('%Y-%m-%dT%H:%M:%S+00:00', col))` |
+
+> **为什么 CHECK 用 `strftime` 归一化比对而不是 GLOB 模式匹配**：GLOB 只校验"形状"，
+> 实测 `2026-13-17T12:00:00+00:00`（13 月）能骗过它；而 `strftime` 会把这种值归一化成
+> NULL 从而拒绝。它还会拒绝带本地偏移的时间，等于强制全库统一 UTC。
 
 ---
 

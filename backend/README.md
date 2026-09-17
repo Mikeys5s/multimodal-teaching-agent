@@ -90,12 +90,38 @@ raise ApiError(ErrorCode.UNSUPPORTED_FORMAT, "暂不支持 .pages 格式，请�
 
 ## 已知坑（都踩过）
 
+> **完整版见 [`../docs/dev-environment.md`](../docs/dev-environment.md)** —— 那份是给三个人看的。
+> 这里只列与后端直接相关的。
+
 | 现象 | 原因 | 处理 |
 |---|---|---|
 | 装依赖时报 `SAFE_DELETE_FAIL_CLOSED` / `No module named pip` | `pip install --upgrade pip` 要删旧 `pip.exe`，被环境的回收站机制拦下，反而把 pip 弄坏 | **不要升级 pip**；已坏则 `.venv/Scripts/python.exe -m ensurepip` 修复 |
 | `alembic revision --autogenerate` 生成**空迁移** | 模型文件没被 import，`Base.metadata` 里没有表 | 新增模型后**必须在 `app/models/__init__.py` 里 import** |
 | 外键约束不生效 | SQLite 默认关闭外键，且 pragma 是**连接级**的 | 已在 `app/db.py` 用 connect 事件监听统一设置；`/api/health/pragma` 可自检 |
 | 后台任务访问数据库报线程错误 | SQLite 默认禁止跨线程 | 已在 engine 里设 `check_same_thread=False` |
+| **迁移里少了索引 / CHECK 约束**（模型里有、库里没有，且不报错） | `autogenerate` 不比较 CHECK，也识别不了表达式索引 | **改完模型跑 `pytest`** —— `tests/test_migration_schema.py` 会对比"迁移建出的结构"与"模型定义"。缺的约束要手工补进迁移文件 |
+| 时间字段写入报 `CHECK constraint failed` | 时间列强制 **UTC 单一格式** | 用 `app.models.utc_now_iso()`；不传也会自动填。格式为 `2026-09-17T12:00:00+00:00` |
+
+---
+
+## 迁移注意事项
+
+**① `downgrade` 会丢数据。**
+
+> `alembic downgrade` **仅限本地开发库使用**。禁止对共享库、演示库执行。
+> 需要回退线上结构时，写一个**新的正向迁移**修正，而不是回滚。
+
+**② SQLite 改列必须走 batch 模式。**
+
+`alembic/env.py` 已开 `render_as_batch=True`，**不要关掉** —— 否则改列会直接失败。
+
+**③ 复合外键（层级链一致性）。**
+
+`sections` 与 `knowledge_points` 用复合外键把「节 / 章 / 材料必须同属一条链」钉在数据库层。
+注意两点：
+- 插入顺序必须是 `materials → chapters → sections → knowledge_points`
+- 复合外键的**父侧必须有对应的唯一索引**（`chapters` 的 `UNIQUE(id, material_id)`、
+  `sections` 的 `UNIQUE(id, chapter_id, material_id)`），否则约束形同虚设
 
 ---
 
@@ -107,7 +133,10 @@ raise ApiError(ErrorCode.UNSUPPORTED_FORMAT, "暂不支持 .pages 格式，请�
 .venv/Scripts/python.exe -m ruff format .      # 格式化
 ```
 
-`tests/test_skeleton.py` 里有几条**基础设施回归测试**，其中
-`test_foreign_keys_pragma_is_actually_enabled` 值得留意 ——
-将来有人重构 `db.py` 时如果不小心去掉事件监听，它会立刻失败，
-而不是等到数据脏了才发现。
+三条**基础设施回归测试**值得留意，它们守的都是"将来有人重构时容易悄悄破坏"的东西：
+
+| 测试 | 它守什么 |
+|---|---|
+| `test_foreign_keys_pragma_is_actually_enabled` | `db.py` 的连接事件监听被去掉 → 外键约束静默失效 |
+| `test_migration_schema.py` 全部用例 | 迁移与模型不一致（autogenerate 静默漏约束） |
+| `test_composite_fk_is_actually_enforced` | 复合外键"声明了但不生效"（父侧唯一索引形状不对时会发生） |

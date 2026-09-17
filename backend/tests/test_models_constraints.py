@@ -51,9 +51,18 @@ def make_material(mat_id: str = "mat_aaaaaaaa", file_hash: str = HASH, **over) -
     return Material(**data)
 
 
+def _hash8(entity_id: str) -> str:
+    """从 `mat_xxxxxxxx` / `ch_xxxxxxxx_000` 之类 ID 里取出材料 hash 段。
+
+    夹具必须按真实 ID 规则生成，不能写死 —— 否则第二条链（mat_b）会撞上
+    第一条链（mat_a）的主键，测试会以 UNIQUE 冲突的假象失败，掩盖真正的问题。
+    """
+    return entity_id.split("_")[1]
+
+
 def make_chapter(mat_id: str, seq: int = 0, **over) -> Chapter:
     data = {
-        "id": f"ch_aaaaaaaa_{seq:03d}",
+        "id": f"ch_{_hash8(mat_id)}_{seq:03d}",
         "material_id": mat_id,
         "title": "传输层",
         "number": "5",
@@ -64,8 +73,10 @@ def make_chapter(mat_id: str, seq: int = 0, **over) -> Chapter:
 
 
 def make_section(mat_id: str, chapter_id: str, seq: int = 0, **over) -> Section:
+    # chapter_id 形如 ch_<hash8>_<章seq>，把章 seq 带进节的 ID
+    chapter_seq = chapter_id.split("_")[2]
     data = {
-        "id": f"sec_aaaaaaaa_{0:03d}_{seq:03d}",
+        "id": f"sec_{_hash8(mat_id)}_{chapter_seq}_{seq:03d}",
         "material_id": mat_id,
         "chapter_id": chapter_id,
         "title": "可靠数据传输",
@@ -77,8 +88,16 @@ def make_section(mat_id: str, chapter_id: str, seq: int = 0, **over) -> Section:
 
 
 def make_kp(section_id: str, chapter_id: str, mat_id: str, seq: int = 0, **over) -> KnowledgePoint:
+    # section_id 形如 sec_<hash8>_<章seq>_<节seq>。
+    # 有些用例故意传非法 section_id（例如 "sec_not_exist"）来验证外键，
+    # 这类值解析不出序号 —— 退回占位值即可，ID 本身与链一致性无关。
+    parts = section_id.split("_")
+    if len(parts) == 4 and parts[0] == "sec":
+        _, _, chapter_seq, section_seq = parts
+    else:
+        chapter_seq = section_seq = "000"
     data = {
-        "id": f"kp_aaaaaaaa_{0:03d}_{0:03d}_{seq:03d}",
+        "id": f"kp_{_hash8(mat_id)}_{chapter_seq}_{section_seq}_{seq:03d}",
         "section_id": section_id,
         "chapter_id": chapter_id,
         "material_id": mat_id,
@@ -104,34 +123,43 @@ def must_fail(session: Session, obj: object) -> None:
 
 
 # ---------------------------------------------------------------------------
-# 夹具：一份材料 -> 一章 -> 一节 -> 两个知识点
+# 夹具：两条互不相干的链，用来验证"跨链"数据会被拒绝
+#   链 A：mat_aaaaaaaa -> ch_aaaaaaaa_000 -> sec_aaaaaaaa_000_000 -> kp0 / kp1
+#   链 B：mat_bbbbbbbb -> ch_bbbbbbbb_000 -> sec_bbbbbbbb_000_000
 # ---------------------------------------------------------------------------
 
 
 @pytest.fixture
 def seeded(session: Session) -> dict[str, str]:
-    mat = make_material()
-    session.add(mat)
+    mat_a = make_material()
+    mat_b = make_material(mat_id="mat_bbbbbbbb", file_hash="b" * 64)
+    session.add_all([mat_a, mat_b])
     session.flush()
 
-    ch = make_chapter(mat.id)
-    session.add(ch)
+    ch_a = make_chapter(mat_a.id)
+    ch_b = make_chapter(mat_b.id)
+    session.add_all([ch_a, ch_b])
     session.flush()
 
-    sec = make_section(mat.id, ch.id)
-    session.add(sec)
+    sec_a = make_section(mat_a.id, ch_a.id)
+    sec_b = make_section(mat_b.id, ch_b.id)
+    session.add_all([sec_a, sec_b])
     session.flush()
 
-    kps = [make_kp(sec.id, ch.id, mat.id, seq=i) for i in range(2)]
+    kps = [make_kp(sec_a.id, ch_a.id, mat_a.id, seq=i) for i in range(2)]
     session.add_all(kps)
     session.commit()
 
     return {
-        "material_id": mat.id,
-        "chapter_id": ch.id,
-        "section_id": sec.id,
+        "material_id": mat_a.id,
+        "chapter_id": ch_a.id,
+        "section_id": sec_a.id,
         "kp0": kps[0].id,
         "kp1": kps[1].id,
+        # 第二条链
+        "material_b": mat_b.id,
+        "chapter_b": ch_b.id,
+        "section_b": sec_b.id,
     }
 
 
@@ -406,3 +434,152 @@ def test_deleting_material_cascades_to_knowledge_points(
     assert session.get(KnowledgePoint, seeded["kp0"]) is None
     assert session.get(Section, seeded["section_id"]) is None
     assert session.get(Chapter, seeded["chapter_id"]) is None
+
+
+# ---------------------------------------------------------------------------
+# 层级链一致性 —— 复合外键（隐患 A 的修复）
+#
+# 单列外键只能保证"这些 id 各自存在"，保证不了"它们同属一条链"。
+# 错链数据不会报错，只会让"按章查询"和质量报告悄悄算错 —— 所以必须在写入时拦住。
+# ---------------------------------------------------------------------------
+
+
+def test_consistent_chain_is_accepted(session: Session, seeded: dict[str, str]) -> None:
+    """正常数据当然要能写进去 —— 先确认新约束没有误伤。"""
+    assert session.get(KnowledgePoint, seeded["kp0"]) is not None
+    assert session.get(Section, seeded["section_b"]) is not None
+
+
+def test_kp_with_chapter_from_other_chain_is_rejected(
+    session: Session, seeded: dict[str, str]
+) -> None:
+    """节属于 A 链，chapter_id 却填 B 链的章 —— 必须拒绝。"""
+    must_fail(
+        session,
+        make_kp(seeded["section_id"], seeded["chapter_b"], seeded["material_id"], seq=50),
+    )
+
+
+def test_kp_with_material_from_other_chain_is_rejected(
+    session: Session, seeded: dict[str, str]
+) -> None:
+    """节属于 A 材料，material_id 却写 B 材料 —— 必须拒绝。"""
+    must_fail(
+        session,
+        make_kp(seeded["section_id"], seeded["chapter_id"], seeded["material_b"], seq=51),
+    )
+
+
+def test_kp_with_fully_crossed_chain_is_rejected(session: Session, seeded: dict[str, str]) -> None:
+    """整组字段都指向 B 链，但 section_id 是 A 链的 —— 必须拒绝。"""
+    must_fail(
+        session,
+        make_kp(seeded["section_id"], seeded["chapter_b"], seeded["material_b"], seq=52),
+    )
+
+
+def test_section_with_chapter_from_other_material_is_rejected(
+    session: Session, seeded: dict[str, str]
+) -> None:
+    """节声明属于 B 材料，章却是 A 材料的 —— 必须拒绝。"""
+    must_fail(session, make_section(seeded["material_b"], seeded["chapter_id"], seq=60))
+
+
+def test_moving_section_within_material_cascades_to_kp(
+    session: Session, seeded: dict[str, str]
+) -> None:
+    """把节挪到**同材料的**另一章，其下知识点应自动跟随（ON UPDATE CASCADE）。
+
+    这条是"复合外键不会给正常运维添麻烦"的证据 —— 否则每次调整章节结构，
+    都要手工同步所有下游行。
+    """
+    ch_a2 = Chapter(
+        id="ch_aaaaaaaa_001", material_id=seeded["material_id"], title="同材料的第二章", seq=1
+    )
+    session.add(ch_a2)
+    session.commit()
+
+    sec = session.get(Section, seeded["section_id"])
+    assert sec is not None
+    sec.chapter_id = ch_a2.id
+    session.commit()
+
+    session.expire_all()  # 丢掉身份映射里的缓存，强制从库里重读
+    kp = session.get(KnowledgePoint, seeded["kp0"])
+    assert kp is not None
+    assert kp.chapter_id == ch_a2.id, "下游知识点的 chapter_id 没有跟随更新"
+
+
+# ---------------------------------------------------------------------------
+# 时间字段格式 —— 三层防护（隐患 B 的修复）
+#
+# 时间列是 TEXT，排序靠字典序。混进一个带本地偏移的时间，排序就会静默出错。
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.parametrize(
+    "bad_value",
+    [
+        "2026-13-17T12:00:00+00:00",  # 13 月：形状对但日历非法（GLOB 拦不住，strftime 能）
+        "2026-09-17T20:00:00+08:00",  # 带本地偏移：会破坏字典序
+        "2026-09-17T12:00:00Z",  # Z 结尾：格式不统一
+        "2026/09/17 12:00:00",  # 另一种写法
+        "2026-09-17",  # 只有日期没有时间
+        "not-a-time",  # 纯垃圾
+    ],
+)
+def test_kp_created_at_rejects_non_utc_iso(
+    session: Session, seeded: dict[str, str], bad_value: str
+) -> None:
+    must_fail(
+        session,
+        make_kp(
+            seeded["section_id"],
+            seeded["chapter_id"],
+            seeded["material_id"],
+            seq=70,
+            created_at=bad_value,
+        ),
+    )
+
+
+def test_kp_created_at_is_auto_filled_when_omitted(
+    session: Session, seeded: dict[str, str]
+) -> None:
+    """忘了传时间不该报错，而应自动填入正确格式 —— 这是 ORM 默认值的作用。"""
+    kp = KnowledgePoint(
+        id="kp_aaaaaaaa_000_000_080",
+        section_id=seeded["section_id"],
+        chapter_id=seeded["chapter_id"],
+        material_id=seeded["material_id"],
+        name="不传时间的知识点",
+        summary_md="说明",
+        difficulty=3,
+        kp_type="concept",
+        source_material_id=seeded["material_id"],
+        source_quote="原文",
+        seq=80,
+        # 刻意不传 created_at
+    )
+    session.add(kp)
+    session.commit()
+
+    assert kp.created_at
+    assert kp.created_at.endswith("+00:00"), f"自动填充的时间不是 UTC：{kp.created_at}"
+
+
+def test_material_updated_at_is_maintained(session: Session, seeded: dict[str, str]) -> None:
+    """`updated_at` 应当随 ORM 更新自动刷新（靠 onupdate），不需要手工赋值。"""
+    mat = session.get(Material, seeded["material_id"])
+    assert mat is not None
+    before = mat.updated_at
+
+    mat.filename = "改名后的文件.pdf"
+    session.commit()
+    session.expire_all()
+
+    refreshed = session.get(Material, seeded["material_id"])
+    assert refreshed is not None
+    assert refreshed.filename == "改名后的文件.pdf"
+    assert refreshed.updated_at >= before
+    assert refreshed.updated_at.endswith("+00:00")

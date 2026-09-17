@@ -26,6 +26,9 @@ from app.models._common import (
     PARSE_METHODS,
     SOURCE_TYPES,
     sql_in,
+    utc_iso_check,
+    utc_now_iso,
+    utc_server_default,
 )
 
 
@@ -67,8 +70,22 @@ class Material(Base):
     )
     quality_score: Mapped[float | None] = mapped_column(Float, nullable=True)
 
-    created_at: Mapped[str] = mapped_column(Text, nullable=False)
-    updated_at: Mapped[str] = mapped_column(Text, nullable=False)
+    # 时间字段三层防护：ORM 默认值 + 数据库默认值 + CHECK 格式校验。
+    # 只靠"约定大家记得手传 utc_now_iso()"是不够的 —— 漏传会报错，
+    # 但传错格式不会，而错格式会静默破坏按时间排序。
+    created_at: Mapped[str] = mapped_column(
+        Text,
+        nullable=False,
+        default=utc_now_iso,
+        server_default=utc_server_default(),
+    )
+    updated_at: Mapped[str] = mapped_column(
+        Text,
+        nullable=False,
+        default=utc_now_iso,
+        onupdate=utc_now_iso,  # ORM 层更新时自动刷新
+        server_default=utc_server_default(),
+    )
 
     __table_args__ = (
         CheckConstraint(f"source_type IN ({sql_in(SOURCE_TYPES)})", name="source_type"),
@@ -78,6 +95,8 @@ class Material(Base):
             name="parse_method",
         ),
         CheckConstraint(f"status IN ({sql_in(MATERIAL_STATUSES)})", name="status"),
+        CheckConstraint(utc_iso_check("created_at"), name="created_at_utc_iso"),
+        CheckConstraint(utc_iso_check("updated_at"), name="updated_at_utc_iso"),
         Index("idx_materials_status", "status"),
         # 刻意用普通升序索引，不写 DESC —— 两个理由：
         #   ① SQLite 可以**双向**遍历索引，DESC 索引不带来任何查询收益；
