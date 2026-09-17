@@ -176,7 +176,8 @@ def export_knowledge_points(
     if format == "csv":
         return text_response(_to_csv(rows), "text/csv; charset=utf-8")
     # json 分支返回包封（前端可直接解析）
-    return text_response(
-        Envelope[list[ExportKpOut]](ok=True, data=rows).model_dump_json(),
-        "application/json; charset=utf-8",
-    )
+    #
+    # ⚠️ 必须用 `ok()` 助手构造，不能手写 `Envelope(ok=True, data=...)` ——
+    # Envelope 的 request_id 是必填字段，手写会漏掉它并直接抛 ValidationError（500）。
+    # 这个 bug 是被 tests/test_api_smoke.py 抓到的。
+    return text_response(ok(rows).model_dump_json(), "application/json; charset=utf-8")
