@@ -1,7 +1,17 @@
 # 接口规格（API Spec）
 
 > 上游文档：[`../SPEC.md`](../SPEC.md) §4
-> 版本：v1.2 · 2026-09-17（v1.2 无端点增删，仅同步 SPEC 变更：音频链路移除；`/knowledge-graph`、`/learning-path`、`/report/quality` 增补创新点相关字段）
+> 版本：**v1.3** · 2026-09-17
+>
+> **v1.3 变更（冻结前补齐 6 处缺口，见 SPEC §12 变更日志）**：
+> ① 新增 **`/api/health/pragma`**（实现早于规格，本应登记）—— 端点数 27 → **28**；
+> ② 明确**非 JSON 响应**（markdown / CSV）的 `request_id` 走 **`X-Request-ID` 响应头**；
+> ③ SSE 事件补 **`id:` 字段**（会话内单调递增），`Last-Event-ID` 续推才有依据；
+> ④ `gap-analysis` 的 `student_evidence` 明确为**可重复查询参数**；
+> ⑤ `needs_review` 查询参数统一为**布尔** `true`/`false`；
+> ⑥ 分页补上**默认值与越界行为**。
+>
+> v1.2 · 2026-09-17（无端点增删，仅同步 SPEC 变更：音频链路移除；图谱/路径/报告增补创新点相关字段）
 > 风格：REST + JSON；流式接口用 SSE
 > 前缀：`/api`（生产环境下前端静态资源在 `/`，后端在 `/api`，同源无 CORS）
 
@@ -27,6 +37,18 @@
 
 **规则**：`error.message` 必须是**能直接展示给用户的中文**，不允许出现英文堆栈或裸错误码。这是用户体验评分项。
 
+**例外：非 JSON 响应（v1.3 新增）**
+
+`GET /api/materials/{id}/markdown` 返回 `text/markdown`、`GET /api/export/knowledge-points?format=csv` 返回 `text/csv`。
+这类响应**无法包封**（body 里塞不进 `ok` / `request_id`），因此约定：
+
+| 情况 | 约定 |
+|---|---|
+| 成功 | 直接返回原始内容；`Content-Type` 为对应类型；**请求标识走 `X-Request-ID` 响应头** |
+| 失败 | **仍返回 JSON 包封**（`Content-Type` 切回 `application/json`），错误结构与普通端点完全一致 |
+
+这样前端只需要一套错误处理逻辑：**先看 `Content-Type`，非 JSON 时把错误分支交给那套包封解析**。
+
 ### 1.2 错误码
 
 | HTTP | code | 场景 |
@@ -42,8 +64,17 @@
 
 ### 1.3 分页
 
-请求：`?page=1&page_size=20`（`page_size` ≤ 100）
+请求：`?page=1&page_size=20`
+
+| 参数 | 默认 | 取值 | 越界行为 |
+|---|---|---|---|
+| `page` | `1` | 整数 ≥ 1 | 返回 `400 INVALID_PARAM` |
+| `page_size` | `20` | 整数 1–100 | 返回 `400 INVALID_PARAM` |
+
 响应：`{ "items": [...], "total": 137, "page": 1, "page_size": 20 }`
+
+> **默认值必须写死在规格里**（v1.3 补充）。否则前端会按自己猜的默认值写死分页控件，
+> 而 mock 与真实实现又可能不一致 —— 这类偏差在联调时才暴露，返工成本高。
 
 ### 1.4 任务轮询
 
@@ -57,7 +88,21 @@
 | 方法 | 路径 | 说明 |
 |---|---|---|
 | GET | `/api/health` | `{ status, db, llm, version }` —— 演示前自检用 |
+| GET | `/api/health/pragma` | **v1.3 补登记**：读回当前连接的实际 SQLite pragma 值。**`foreign_keys` 必须为 1** —— 它是"外键约束真的生效了吗"的可验证答案，而不是靠读代码猜 |
 | GET | `/api/meta/capabilities` | 返回支持的素材类型、大小限制、当前 LLM provider/model，**前端据此渲染上传提示，避免硬编码** |
+
+`/api/health/pragma` 响应：
+
+```json
+{
+  "ok": true,
+  "data": {
+    "pragmas": { "journal_mode": "wal", "foreign_keys": "1", "busy_timeout": "5000" },
+    "db_file": "D:\\...\\backend\\app.db"
+  },
+  "request_id": "req_8f21"
+}
+```
 
 ---
 
@@ -172,6 +217,18 @@ GET /api/knowledge-points
     &page=&page_size=
 ```
 
+**查询参数取值（v1.3 明确）**
+
+| 参数 | 取值 | 说明 |
+|---|---|---|
+| `difficulty_min` / `difficulty_max` | 整数 1–5 | 越界返回 `400 INVALID_PARAM`；`min > max` 同样返回 400 |
+| `kp_type` | `concept` / `skill` / `theorem` / `method` / `fact` | 非法值返回 `400 INVALID_PARAM` |
+| **`needs_review`** | **布尔 `true` / `false`**（v1.3 统一） | 不传 = 不过滤；非法值返回 `400 INVALID_PARAM` |
+| `q` | 关键词 | 全文检索；空字符串等同不传 |
+
+> `needs_review` 此前未定义取值，容易同时出现 `1` / `0` / `true` / `false` 四种写法。
+> 统一为布尔字符串，`0`/`1` 视为非法值（**不静默兼容**，避免前端长期带着两套写法）。
+
 响应 `data.items[i]`：
 ```json
 {
@@ -225,7 +282,19 @@ GET /api/knowledge-points/{id}
 |---|---|---|
 | GET | `/api/knowledge-graph?material_id=&chapter_id=&max_nodes=200` | DAG 数据：`{ nodes: [...], edges: [...] }`，节点带 `difficulty`（前端颜色映射）、`needs_review`；边带 `relation_type` |
 | GET | `/api/learning-path?kp_id=kp_3c81` | 学习路径：拓扑有序数组 `[{ order, kp_id, name, difficulty, reason }]`，含 `is_start_point` 标记 |
-| GET | `/api/knowledge-points/{id}/gap-analysis` | **卡点根因回溯**（F3.8）：沿 `hard` 边反向可达，返回该知识点的全部硬前置与"最可能的断层"排序。`?student_evidence=` 可传入学生本轮暴露的误区 id 以提高精度 |
+| GET | `/api/knowledge-points/{id}/gap-analysis` | **卡点根因回溯**（F3.8）：沿 `hard` 边反向可达，返回该知识点的全部硬前置与"最可能的断层"排序 |
+
+**`gap-analysis` 的可选参数（v1.3 明确）**
+
+```
+GET /api/knowledge-points/{id}/gap-analysis?student_evidence=<误区id>&student_evidence=<误区id>
+```
+
+| 参数 | 取值 | 说明 |
+|---|---|---|
+| `student_evidence` | `kp_misconceptions.id` | **可重复**（`?student_evidence=a&student_evidence=b`），一次可传多个。传了它，系统会把命中的误区纳入"最可能断层"的排序依据 |
+| `student_evidence` 无效值 | 不存在的 id | **忽略该值而非报错** —— 它只影响排序精度，不该让整个请求失败 |
+
 
 `/learning-path` 的 `reason` **必须来自边上的 `reason`**（P10 产出），前端逐条展示 —— 这样"为什么这个要排在前面"是可解释的，不是黑盒拓扑排序的结果。
 
@@ -315,34 +384,44 @@ Accept: text/event-stream
 Body: { "question": "这题为什么用快排不用冒泡？" }
 ```
 
-SSE 事件序列（顺序固定）：
+SSE 事件序列（顺序固定）。**每个事件都带 `id:`，值为会话内单调递增的 `seq`**（v1.3 补充）：
+
 ```
+id: 41
 event: retrieved
-data: {"kp_ids":["kp_3c81","kp_2f04"],"block_ids":["blk_9f2a"],"is_out_of_scope":false}
+data: {"seq":41,"kp_ids":["kp_3c81","kp_2f04"],"block_ids":["blk_9f2a"],"is_out_of_scope":false}
 
+id: 42
 event: state
-data: {"turn_type":"probe","state":"S1_PROBE","hint_level":0}
+data: {"seq":42,"turn_type":"probe","state":"S1_PROBE","hint_level":0}
 
+id: 43
 event: delta
-data: {"text":"先想一个问题："}
+data: {"seq":43,"text":"先想一个问题："}
 
+id: 44
 event: delta
-data: {"text":"如果数组已经是升序的，快排还需要比较多少次？"}
+data: {"seq":44,"text":"如果数组已经是升序的，快排还需要比较多少次？"}
 
+id: 45
 event: diagnosis
-data: {"knowledge_points":[{"kp_id":"kp_3c81","name":"快速排序的分区思想","difficulty":3}],
+data: {"seq":45,
+       "knowledge_points":[{"kp_id":"kp_3c81","name":"快速排序的分区思想","difficulty":3}],
        "stuck_at":{"step":"尚未建立分区与最终位置的关系","evidence_kp_id":"kp_3c81","evidence_misconception_id":null},
        "next_practice":[{"kp_id":"kp_3c81","task":"手写一次 Hoare 分区过程"}]}
 
+id: 46
 event: done
-data: {"turn_id":"turn_88","latency_ms":2310,"usage":{"input_tokens":1820,"output_tokens":96}}
+data: {"seq":46,"turn_id":"turn_88","latency_ms":2310,"usage":{"input_tokens":1820,"output_tokens":96}}
 ```
 
 **约定**
+- **`id:` 行必须有，且与 `data.seq` 一致**（v1.3 补充）。SSE 协议的 `Last-Event-ID` 请求头携带的就是 `id:` 的值；
+  规格此前只提了续推、没定义 `seq` 来源，实现时无从下手。**`seq` 在一个会话内单调递增，跨轮次不重置。**
 - `retrieved` 必须先于任何 `delta` —— 前端据此先渲染溯源卡片，让"先检索再回答"这件事**在界面上可见**。
 - 越界时：`retrieved.is_out_of_scope = true`，`state` 事件为 `turn_type: "refuse"`，`delta` 内容为拒答模板，**不得包含任何材料外知识断言**。
 - 进入降级讲解时：`state` 事件 `turn_type: "explain"`，前端据此展示"连续两次没答上，我直接讲"的提示。
-- 连接中断：客户端用 `Last-Event-ID` 重连，服务端从最后一个 `seq` 续推。
+- 连接中断：客户端带 `Last-Event-ID: <最后一个 seq>` 重连，服务端**从该 seq 之后**续推。
 
 ### 5.3 状态机查询（供前端渲染进度）
 
@@ -382,33 +461,37 @@ GET /api/qa/sessions/{id}/state
 |---|---|---|---|---|
 | 1 | GET | `/api/health` | 运维 | — |
 | 2 | GET | `/api/meta/capabilities` | 元信息 | — |
-| 3 | POST | `/api/materials` | 素材 | Stage 1 |
-| 4 | GET | `/api/materials` | 素材 | Stage 1 |
-| 5 | GET | `/api/materials/{id}` | 素材 | Stage 1 |
-| 6 | GET | `/api/materials/{id}/blocks` | 素材 | Stage 1 |
-| 7 | GET | `/api/materials/{id}/markdown` | 素材 | Stage 1 |
-| 8 | GET | `/api/materials/{id}/outline` | 素材 | Stage 1 |
-| 9 | GET | `/api/materials/{id}/questions` | 素材 | Stage 1 |
-| 10 | POST | `/api/materials/{id}/reparse` | 素材 | Stage 1 |
-| 11 | DELETE | `/api/materials/{id}` | 素材 | Stage 1 |
-| 12 | POST | `/api/extract/knowledge` | 抽取 | Stage 2 |
-| 13 | GET | `/api/knowledge-points` | 知识点 | Stage 2 |
-| 14 | GET | `/api/knowledge-points/{id}` | 知识点 | Stage 2 |
-| 15 | GET | `/api/knowledge-graph` | 图谱 | Stage 2 |
-| 16 | GET | `/api/learning-path` | 路径 | Stage 2 |
-| 17 | GET | `/api/export/knowledge-points` | 导出 | Stage 2 |
-| 18 | GET | `/api/report/quality` | 报告 | 全 |
-| 19 | POST | `/api/qa/sessions` | 答疑 | Stage 3 |
-| 20 | GET | `/api/qa/sessions/{id}` | 答疑 | Stage 3 |
-| 21 | POST | `/api/qa/sessions/{id}/ask` | 答疑（SSE） | Stage 3 |
-| 22 | GET | `/api/qa/sessions/{id}/state` | 答疑 | Stage 3 |
-| 23 | GET | `/api/qa/sessions/{id}/report` | 答疑 | Stage 3 |
-| 24 | DELETE | `/api/qa/sessions/{id}` | 答疑 | Stage 3 |
-| 25 | GET | `/api/jobs/{job_id}` | 任务 | — |
-| 26 | GET | `/api/jobs` | 任务 | — |
-| **27** | GET | `/api/knowledge-points/{id}/gap-analysis` | **卡点根因回溯（v1.2 新增）** | Stage 3 |
+| 3 | GET | `/api/health/pragma` | 运维 | — |
+| 4 | POST | `/api/materials` | 素材 | Stage 1 |
+| 5 | GET | `/api/materials` | 素材 | Stage 1 |
+| 6 | GET | `/api/materials/{id}` | 素材 | Stage 1 |
+| 7 | GET | `/api/materials/{id}/blocks` | 素材 | Stage 1 |
+| 8 | GET | `/api/materials/{id}/markdown` | 素材 | Stage 1 |
+| 9 | GET | `/api/materials/{id}/outline` | 素材 | Stage 1 |
+| 10 | GET | `/api/materials/{id}/questions` | 素材 | Stage 1 |
+| 11 | POST | `/api/materials/{id}/reparse` | 素材 | Stage 1 |
+| 12 | DELETE | `/api/materials/{id}` | 素材 | Stage 1 |
+| 13 | POST | `/api/extract/knowledge` | 抽取 | Stage 2 |
+| 14 | GET | `/api/knowledge-points` | 知识点 | Stage 2 |
+| 15 | GET | `/api/knowledge-points/{id}` | 知识点 | Stage 2 |
+| 16 | GET | `/api/knowledge-graph` | 图谱 | Stage 2 |
+| 17 | GET | `/api/learning-path` | 路径 | Stage 2 |
+| 18 | GET | `/api/export/knowledge-points` | 导出 | Stage 2 |
+| 19 | GET | `/api/report/quality` | 报告 | 全 |
+| 20 | POST | `/api/qa/sessions` | 答疑 | Stage 3 |
+| 21 | GET | `/api/qa/sessions/{id}` | 答疑 | Stage 3 |
+| 22 | POST | `/api/qa/sessions/{id}/ask` | 答疑（SSE） | Stage 3 |
+| 23 | GET | `/api/qa/sessions/{id}/state` | 答疑 | Stage 3 |
+| 24 | GET | `/api/qa/sessions/{id}/report` | 答疑 | Stage 3 |
+| 25 | DELETE | `/api/qa/sessions/{id}` | 答疑 | Stage 3 |
+| 26 | GET | `/api/jobs/{job_id}` | 任务 | — |
+| 27 | GET | `/api/jobs` | 任务 | — |
+| **28** | GET | `/api/knowledge-points/{id}/gap-analysis` | **卡点根因回溯** | Stage 3 |
 
-**共 27 个端点。** 任何新增端点需走 SPEC §12 变更流程。
+**共 28 个端点**（v1.3 加入 `/api/health/pragma`，原为 27）。任何新增端点需走 SPEC §12 变更流程。
+
+> 这张表是 `tests/test_api_contract.py` 的**解析来源** —— 测试会把它与 `app.openapi()` 的实际端点集合做比对，
+> 多一个少一个都失败。**所以新增端点必须先改这张表**，规格与实现的漂移会立刻暴露。
 
 ---
 
