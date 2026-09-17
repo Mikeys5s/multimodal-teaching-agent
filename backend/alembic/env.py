@@ -22,7 +22,12 @@ from app.config import settings
 from app.db import Base
 
 config = context.config
-config.set_main_option("sqlalchemy.url", f"sqlite:///{settings.db_file}")
+
+# 只有调用方没指定 URL 时才从 settings 推导。
+# 这样测试可以把迁移指向临时库，验证「迁移建出来的结构 == 模型定义的结构」，
+# 而不是只能对着开发库跑。
+if not config.get_main_option("sqlalchemy.url", None):
+    config.set_main_option("sqlalchemy.url", f"sqlite:///{settings.db_file}")
 
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)

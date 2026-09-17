@@ -1,9 +1,43 @@
 # 数据模型规格
 
 > 上游文档：[`../SPEC.md`](../SPEC.md) §4.6
-> 版本：v1.2 · 2026-09-17（v1.2 变更：`kp_prerequisites` 扩为创新点核心表 —— 新增 `reason` NOT NULL / `evidence_quote` / `source_channel` / `needs_review` / `pruned`；音频字段标记为保留不启用）
+> 版本：v1.3 · 2026-09-17（v1.3 变更：**主键由随机 UUID 改为确定性路径式 ID**（原约定与验收项 A2-7「同输入可复现」冲突，且重跑无法逐条 diff）；**`materials` 补上 `file_hash` 字段**（SPEC §5.1 C2 与 §8.2 D2 要求"按文件 hash 建唯一索引"，此前规格漏写））
 > 实现：SQLite（WAL 模式）+ SQLAlchemy 2.x ORM + Alembic 迁移
-> 约定：主键统一使用 `TEXT` 类型的 UUID（便于将来分库与前端引用）；时间统一 UTC ISO8601 字符串。
+> 时间统一 UTC ISO8601 字符串。
+
+### 主键约定（v1.3 重写）
+
+**主键统一 `TEXT`，但采用确定性路径式 ID，不用随机 UUID。**
+
+| 实体 | 格式 | 示例 |
+|---|---|---|
+| `materials` | `mat_<sha1(文件内容)[:8]>` | `mat_a1b2c3d4` |
+| `material_blocks` | `blk_<材料hash8>_<seq:05d>` | `blk_a1b2c3d4_00007` |
+| `chapters` | `ch_<材料hash8>_<章seq:03d>` | `ch_a1b2c3d4_002` |
+| `sections` | `sec_<材料hash8>_<章seq:03d>_<节seq:03d>` | `sec_a1b2c3d4_002_003` |
+| `knowledge_points` | `kp_<材料hash8>_<章seq>_<节seq>_<节内seq:03d>` | `kp_a1b2c3d4_002_003_007` |
+| `kp_prerequisites` | 复合主键 `(kp_id, prereq_kp_id)` | — |
+
+> ⚠️ **ID 里用位置序号 `seq`，不用章节号 `number`**（这是刻意的）。
+> 章节号是展示用的原貌值（`3.2` 这种），直接拼进 ID 会有两个问题：
+> ① 节号若不含章前缀（有的材料节号就是 `1`/`2`），跨章会撞 ID；
+> ② 需要额外的规范化规则，规则越多越容易出错。
+> `seq` 由我们在解析时按文档顺序赋值，同一父节点下天然唯一，无歧义。
+> 章节号仍然完整存在 `number` 字段里供展示与检索。
+
+**为什么不用随机 UUID**（这是 v1.3 的核心修正）：
+
+1. **验收项 A2-7 要求「同输入可复现」** —— 随机 ID 会让同一份材料重跑后得到完全不同的主键，
+   "可复现"就只剩一句口号。确定性 ID 让 A2-7 天然成立。
+2. **抽取是离线、可反复重跑的**（SPEC §4.8）。"这次重跑比上次改了什么"必须能回答；
+   随机 ID 会把逐条 diff 退化成整库重灌。
+3. **ID 自带归属信息**（哪个材料、哪章哪节），调试与人工校验时省事。
+4. 与成本控制 **C2** 天然合一：`material_id` 由文件内容 hash 决定，重复上传同一文件得到同一个 ID。
+
+**代价（已知并接受）**：ID 较长；材料内容一变，其下所有 ID 全变 —— 但这本来就是应该发生的事
+（内容变了就是新的抽取产物）。
+
+> 章节号取自材料自身的编号（`number` 字段，保留原貌）；节内序号取自 `knowledge_points.seq`。
 
 ---
 
@@ -39,8 +73,9 @@ llm_calls                          LLM 调用日志（可观测性）
 
 | 字段 | 类型 | 约束 | 说明 |
 |---|---|---|---|
-| `id` | TEXT | PK | UUID |
+| `id` | TEXT | PK | `mat_<sha1(文件内容)[:8]>`，确定性 ID，见 §0 |
 | `filename` | TEXT | NOT NULL | 原始文件名 |
+| `file_hash` | TEXT | **NOT NULL, UNIQUE** | 文件内容 SHA-256（十六进制全串）。**成本控制 C2**：同一文件重复上传不重复抽取。也是 `id` 的生成依据 |
 | `stored_path` | TEXT | NOT NULL | 落盘路径（相对 `UPLOAD_DIR`） |
 | `mime_type` | TEXT | NOT NULL | MIME |
 | `size_bytes` | INTEGER | NOT NULL | 文件大小 |
@@ -56,7 +91,16 @@ llm_calls                          LLM 调用日志（可观测性）
 | `created_at` | TEXT | NOT NULL | |
 | `updated_at` | TEXT | NOT NULL | |
 
-索引：`idx_materials_status(status)`、`idx_materials_created(created_at DESC)`
+索引：`idx_materials_status(status)`、`idx_materials_created(created_at)`
+
+> **关于 `idx_materials_created` 为什么不写 DESC**（v1.3 修正）：
+> ① SQLite 可以**双向遍历索引**，升序索引即可支持 `ORDER BY created_at DESC`，DESC 索引不带来收益；
+> ② 表达式索引（`text("created_at DESC")`）**Alembic 的 autogenerate 识别不了，会静默漏掉** ——
+> 实测踩过，迁移里少了这个索引而模型里有，两边不一致。用普通列索引可避免这类隐蔽偏差。
+
+> **v1.3 新增 `file_hash`**：SPEC §5.1 C2 与 §8.2 D2 都要求"素材按文件 hash 建唯一索引，
+> 同一文件重复上传不重复抽取"，但本文档此前漏写该字段。它是**成本控制的关键**——
+> 没有它，改一次前端就要重跑一次解析、白烧 Credits。
 
 ### 2.2 `material_blocks` — 解析块（溯源原子单位）
 

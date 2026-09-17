@@ -17,7 +17,7 @@ from __future__ import annotations
 import logging
 from collections.abc import Generator
 
-from sqlalchemy import create_engine, event
+from sqlalchemy import MetaData, create_engine, event
 from sqlalchemy.engine import Engine
 from sqlalchemy.orm import DeclarativeBase, Session, sessionmaker
 
@@ -35,21 +35,48 @@ engine: Engine = create_engine(
 )
 
 
-@event.listens_for(engine, "connect")
-def _set_sqlite_pragma(dbapi_connection, _connection_record) -> None:
-    """每个新连接都必须设一遍 pragma。"""
-    cursor = dbapi_connection.cursor()
-    try:
-        cursor.execute("PRAGMA journal_mode=WAL")  # 读写并发：解析任务写、前端读，不互锁
-        cursor.execute("PRAGMA foreign_keys=ON")  # ★ 默认关闭，漏了外键形同虚设
-        cursor.execute("PRAGMA busy_timeout=5000")  # 写冲突时等 5s 而不是立刻报错
-        cursor.execute("PRAGMA synchronous=NORMAL")  # WAL 下的常规取舍：性能与安全平衡
-    finally:
-        cursor.close()
+def apply_sqlite_pragmas(target_engine: Engine) -> None:
+    """把必需的 pragma 挂到指定引擎的**每一个新连接**上。
+
+    抽成函数（而不是直接写 `@event.listens_for(engine, ...)`）是为了让测试
+    也能用同一个逻辑 —— 测试如果自己建引擎却忘了开 `foreign_keys`，
+    就会出现"外键测试在测试环境通过、在生产环境不生效"这种最糟糕的情况。
+    """
+
+    @event.listens_for(target_engine, "connect")
+    def _set_sqlite_pragma(dbapi_connection, _connection_record) -> None:
+        cursor = dbapi_connection.cursor()
+        try:
+            cursor.execute("PRAGMA journal_mode=WAL")  # 读写并发：解析任务写、前端读，不互锁
+            cursor.execute("PRAGMA foreign_keys=ON")  # ★ 默认关闭，漏了外键形同虚设
+            cursor.execute("PRAGMA busy_timeout=5000")  # 写冲突时等 5s 而不是立刻报错
+            cursor.execute("PRAGMA synchronous=NORMAL")  # WAL 下的常规取舍：性能与安全平衡
+        finally:
+            cursor.close()
+
+
+apply_sqlite_pragmas(engine)
 
 
 # ---- 会话 ----
 SessionLocal = sessionmaker(bind=engine, autoflush=False, autocommit=False, future=True)
+
+
+# 约束命名约定（v1.3 新增）
+# ---------------------------------------------------------------------------
+# 为什么非要显式约定命名？两个理由，都不是洁癖：
+#   1. **Alembic 靠名字识别约束。** 匿名约束在不同环境下自动生成的名字可能不同，
+#      导致「本地明明没问题、队友机器上却要重建表」。
+#   2. **SQLite 改表只能靠 batch 模式重建表**，重建时必须能按名字 drop 掉旧的约束，
+#      没有稳定名字就 drop 不掉。
+# 索引名不在这里约定 —— 它按 docs/data-model.md 的规格显式命名（如 idx_kp_section）。
+NAMING_CONVENTION = {
+    "ix": "ix_%(table_name)s_%(column_0_N_name)s",
+    "uq": "uq_%(table_name)s_%(column_0_N_name)s",
+    "ck": "ck_%(table_name)s_%(constraint_name)s",
+    "fk": "fk_%(table_name)s_%(column_0_name)s_%(referred_table_name)s",
+    "pk": "pk_%(table_name)s",
+}
 
 
 class Base(DeclarativeBase):
@@ -58,6 +85,8 @@ class Base(DeclarativeBase):
     Alembic 通过 `Base.metadata` 感知表结构 —— 因此新增模型文件后
     **必须在 app/models/__init__.py 里 import 它**，否则会生成空迁移。
     """
+
+    metadata = MetaData(naming_convention=NAMING_CONVENTION)
 
 
 def get_db() -> Generator[Session, None, None]:
