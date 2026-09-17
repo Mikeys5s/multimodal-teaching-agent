@@ -1,0 +1,58 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "xizhi-backend"
+version = "0.1.0"
+description = "析知 XiZhi · 多模态教学智能体后端"
+readme = "README.md"
+requires-python = ">=3.11"
+
+# ---- 运行期核心依赖（P2 / P3 需要）----
+# 只放「跑起来必需」的东西，解析类重依赖在下面的可选组里。
+dependencies = [
+    "fastapi>=0.115",
+    "uvicorn[standard]>=0.32",
+    "sqlalchemy>=2.0.36",
+    "alembic>=1.14",
+    "pydantic-settings>=2.6",
+    "python-multipart>=0.0.12",
+]
+
+[project.optional-dependencies]
+# 开发与测试：P2 今晚只需要装这个
+dev = [
+    "pytest>=8.3",
+    "pytest-cov>=6.0",
+    "httpx>=0.28",          # FastAPI TestClient 依赖它
+    "ruff>=0.8",
+]
+# 解析链路：P1 需要时才装。
+# ⚠️ 不要和 dev 一起装 —— paddleocr + paddlepaddle 有几个 GB，
+#    和 P2/P3 的日常开发完全无关。
+parse = [
+    "pymupdf>=1.25",
+    "python-docx>=1.1",
+    "python-pptx>=1.0",
+    "paddleocr>=2.9",
+    "paddlepaddle>=2.6",
+]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["app*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+# 覆盖率门槛先不设死，D9 跑验收时再收紧到 A4-1 要求的 60%
+# addopts = "--cov=app --cov-report=term-missing --cov-fail-under=60"
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+ignore = ["E501"]  # 行宽交给 formatter，不在 lint 里卡
