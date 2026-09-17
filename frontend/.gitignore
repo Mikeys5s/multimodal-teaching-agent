@@ -1,0 +1,32 @@
+# 依赖与构建产物
+node_modules/
+dist/
+dist-ssr/
+*.local
+
+# 本地 npm 缓存（环境受限时用于离线/修复安装）
+.npm-cache/
+
+# vite 加载 TS 配置时生成的临时文件
+*.timestamp-*.mjs
+
+# 编辑器
+.vscode/*
+!.vscode/extensions.json
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# 日志
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# 环境变量（只提交 .env.example）
+.env
+.env.*
+!.env.example
