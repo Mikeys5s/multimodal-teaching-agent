@@ -3,9 +3,9 @@
 | 项 | 内容 |
 |---|---|
 | 项目代号 | **析知 XiZhi**（已定稿） |
-| 文档版本 | **v2.1** |
+| 文档版本 | **v2.3** |
 | 状态 | **已冻结基线**，后续所有开发以本文档为准 |
-| 建立日期 | 2026-09-16（v2.1 更新于 2026-09-17） |
+| 建立日期 | 2026-09-16（v2.3 更新于 2026-09-17） |
 | 赛事 | 深大计软 & 腾讯云 粤港澳大湾区 AI Coding 创新大赛 · 方向一「AI + 教学管理助手」 |
 | 赛题 | 多模态教学智能体：支持图文素材智能解析、知识点结构化抽取与交互式答疑辅导的智能教学辅助工具 |
 | 交付截止 | **2026-09-26（周六）23:59**（硬截止，截止后不可修改） |
@@ -1055,10 +1055,29 @@ Step 5  入库与索引：写库 + 生成 embedding + 更新 FTS5 索引
 | **数据与结构化** | **P2** | `backend/app/models/`、`migrations/`<br>`backend/app/schemas/`<br>`backend/app/extract/`<br>`backend/app/retrieve/`<br>`backend/app/api/materials.py`、`knowledge.py`<br>`backend/tests/`、`scripts/evaluate.py` | 数据模型 + Alembic 迁移；知识点抽取流水线；**P10 依赖边判定 + 融合与冲突标记**；混合检索层；接口与单测；**LearnBuddy 抽取的执行与 Prompt 维护**；评测集 E-1 组织 + 跑测脚本 | A2-*、A3-1、A4-1、**B1-1 / B1-4 / B1-5** | 66 |
 | **前端与交互** | **P3** | `frontend/`（全部）<br>`backend/app/tutor/`<br>`backend/app/api/qa.py` | 五页 UI；**苏格拉底状态机后端 + 模板库**；**诊断面板与卡点根因回溯可视化**；**人工校验工作台 UI**；图谱可视化；Demo 视频 + PPT + 社媒连载 | A3-2 ~ A3-6、A4-2、A4-6、**B1-3 / B1-6** | 60 |
 
+**角色 ↔ 人员 ↔ GitHub 账号对应表（v2.3 定稿）**
+
+| 代号 | 角色 | GitHub 账号 | user id | 提交身份（`user.email`） |
+|---|---|---|---|---|
+| **P1** | 解析工程 | **DakerDack** | 272972788 | `272972788+DakerDack@users.noreply.github.com` |
+| **P2** | 数据与结构化 | **Mikeys5s** | 244154527 | `244154527+Mikeys5s@users.noreply.github.com` ✅ 本机已配 |
+| **P3** | 前端与交互 | **RyeYen**（仓库初始化者） | 192489362 | `192489362+RyeYen@users.noreply.github.com` |
+
+**三人各自的一次性环境准备（每人第一次提交前必做）**
+
+```bash
+git config --global user.name  "<你的 GitHub 账号名>"
+git config --global user.email "<user id>+<账号名>@users.noreply.github.com"
+```
+
+> **为什么用 noreply 邮箱**：既能正确归属到 GitHub 账号（贡献图、commit 归属都正常），又不用暴露真实邮箱。上表的 user id 已查实，直接照抄即可。
+>
+> **映射依据**：`RyeYen` 是仓库初始化提交 `a52025e` 的作者，对应 P3；`DakerDack` 与 `Mikeys5s` 的对应关系由项目负责人确认（2026-09-17）。
+
 **归属纪律（硬性）**
 
-1. **不碰别人的目录。** 需要改动别人负责的文件时，先说一声，由 owner 改 —— 直接改会让两人同时改同一文件。
-2. **共享文件只有两个**：`README.md` 与 `SPEC.md`。改这两个必须先在群里知会。
+1. **不碰别人的目录。** 需要改动别人负责的文件时，**先在 Issue 里说一声**，由 owner 改 —— 直接改会让两人同时改同一文件。
+2. **共享文件有三个**：`SPEC.md`、`README.md`、`CONTRIBUTING.md`。改它们要先在 **Issue 里知会**（§9.3），再建 `docs/` 或 `chore/` 分支走 PR。
 3. **API 层按模块切**：`api/materials.py` + `api/knowledge.py` 归 P2，`api/qa.py` 归 P3 —— 避免多人改同一个文件。
 4. **前后端只通过接口通信**：前端不得直连数据库、不得调后端内部函数。所有交互走 `docs/api-spec.md` 定义的端点。
 5. **P2 比 P1 / P3 多 6 人时**，因为依赖图抽取的主创压在他身上；P1 在 D7 投入 12 人时支援（结构线索与 DAG 校验），P3 负责把结果做成评委看得见的东西。
@@ -1076,17 +1095,36 @@ Step 5  入库与索引：写库 + 生成 embedding + 更新 FTS5 索引
 
 > **接口冻结纪律**：`docs/api-spec.md` 的端点路径与请求/响应结构在 **D1 EOD 冻结**。之后只允许「新增端点」与「新增可选字段」，**不允许改已有字段名或类型** —— 否则前端要返工。
 
-### 9.3 协作纪律
+### 9.3 协作纪律（v2.2 重写 —— **对齐团队 `CONTRIBUTING.md`**）
+
+> **本节是 [`CONTRIBUTING.md`](CONTRIBUTING.md) 的执行细则。两者若有冲突，以 `CONTRIBUTING.md` 为准。**
+>
+> v2.2 之前本节与团队规范有**三处冲突**，已全部改正：① ~~每人固定分支~~ → 每任务一个短分支；② ~~每日合并到 main~~ → 每个任务一个 PR 经 review 后合并；③ ~~提交信息加 `[P1]` 人员前缀~~ → 用团队的类型前缀。
 
 | 项 | 规则 |
 |---|---|
-| Git 分支 | `main` 为保护分支；每人 `feat/p1-parse` / `feat/p2-extract` / `feat/p3-frontend`；**每日至少合并一次到 main** |
-| 合并前 | 至少 1 人看过 diff |
-| 提交信息 | `[P1] 完成 PDF 文本抽取` 形式，前缀标明归属 |
-| 每日站会 | **09:00，15 分钟**，固定三问：昨天完成什么 / 今天做什么 / 卡在哪 |
-| 阻塞升级 | **卡超过 2 小时立即在群里说**，不要自己硬扛到晚上 |
-| 接口变更 | 必须先改 `docs/api-spec.md`，再改代码（规格先行，§12 变更流程） |
-| 每日部署 | D5 起，**每天收工前部署一次**，保持公网链接始终可用 |
+| **分支模型** | `main` 为保护分支，**禁止直接在 main 开发**。每项任务一个短分支：<br>`git switch main` → `git pull --ff-only origin main` → `git switch -c feat/简短任务名` |
+| **分支命名** | `feat/` 新功能 · `fix/` 修复 · `docs/` 文档 · `test/` 测试 · `chore/` 工程配置。<br>示例：`feat/material-parser`、`fix/upload-timeout`、`docs/demo-guide` |
+| **提交信息** | 团队格式「类型 + 简短说明」，如 `feat: 支持 PDF 素材上传`。<br>**不加人员前缀** —— 人员归属由 commit author 记录，标题里不必重复。<br>一次提交只解决一个主题；**禁止**"改一下""最终版""update"这类无法追溯的说明 |
+| **合并方式** | **一律走 Pull Request，至少 1 名队友 review 后合并**。合并后本地清理分支 |
+| **同步与冲突** | 推送前 `git fetch origin` + `git rebase origin/main`。<br>个人分支重推用 `git push --force-with-lease`。<br>**禁止对 main 强推；禁止 `git push --force`** |
+| **撤销** | 已共享的提交用 `git revert` 创建反向提交，**不改写公共历史** |
+| **任务跟踪** | **任务与需求讨论写在 GitHub Issues**，PR 关联对应 Issue；代码审查与合并结论写在 PR。<br>**不只留在聊天记录里** —— 这条来自团队规范，必须遵守 |
+| **提交前自查** | 必须先跑 `git status` 与 `git diff --staged`，确认没有 `.env` / API Key / Token / 隐私数据混入 |
+| **每日站会** | **09:00，15 分钟**，固定三问：昨天完成什么 / 今天做什么 / 卡在哪 |
+| **阻塞升级** | **卡超过 2 小时立即说**，不要自己硬扛到晚上 |
+| **规格变更** | 先改 `SPEC.md` / `docs/api-spec.md`（走 §12 变更流程），**再**改代码 |
+| **部署** | D5 起每次实质改动后重新部署，并保持公网链接始终可用（§4.7 / R-20） |
+
+**任务归属 → 分支的落地方式（三人协作）**
+
+| 场景 | 分支 | Review 要求 |
+|---|---|---|
+| 单模块的一个功能 / 修复 | `feat/` 或 `fix/` + 简短任务名 | 任一队友 review |
+| 跨模块的功能 | 按**发起人所属模块**建分支，跨模块改动在同一个 PR 里说明 | **涉及模块的 owner 必须参与 review** |
+| 改共享文件（`SPEC.md` / `README.md` / `CONTRIBUTING.md`） | **先在 Issue 里知会**，再建 `docs/` 或 `chore/` 分支 | 至少 1 人 review |
+
+> **两份记录的关系**：`docs/tasks/` 的逐人清单是**执行细化**，**GitHub Issue 是协作跟踪的正式载体**。每天站会后由当天轮值者把清单同步成 Issue，避免两份记录各走各的。
 
 ### 9.4 抽取操作的执行分配（v1.5 新增 —— **最容易漏掉的一块**）
 
@@ -1208,6 +1246,8 @@ Step 5  入库与索引：写库 + 生成 embedding + 更新 FTS5 索引
 
 | 版本 | 日期 | 变更内容 | 变更人 | 原因 |
 |---|---|---|---|---|
+| **v2.3** | 2026-09-17 | **三人分工落到真实账号（§9.1 定稿）**：经项目负责人确认，**P1 解析工程 = DakerDack**、**P2 数据与结构化 = Mikeys5s**、**P3 前端与交互 = RyeYen**（仓库初始化者）。补齐三人的 GitHub user id 与 noreply 提交邮箱（均已查实），并给出每人一次性的 `git config` 环境准备命令 | 项目负责人确认 + AI 拟定 | 分工必须落到真实账号，否则"文件级归属"无法执行 |
+| **v2.2** | 2026-09-17 | **§9 团队分工与团队仓库规范对齐（重要）**：① **§9.3 协作纪律全量重写**，修正与团队 `CONTRIBUTING.md` 的**三处冲突**（固定个人分支 → 每任务短分支；每日合并 main → 每任务 PR 经 review 后合并；提交信息加 `[P1]` 人员前缀 → 团队类型前缀）；补齐团队规范中我们此前**完全没有**的条目：**任务与讨论写 GitHub Issues**、rebase 同步、`--force-with-lease`、禁止 `git push --force`、`git revert` 不改写公共历史、提交前 `git status` + `git diff --staged` 自查；② §9.1 新增**角色 ↔ 人员 ↔ GitHub 账号对应表**，归属纪律改为"先在 Issue 知会"，共享文件由 2 个补为 3 个（含 `CONTRIBUTING.md`）；③ 明确 `docs/tasks/` 与 GitHub Issue 的分工（前者执行细化、后者协作跟踪的正式载体） | 项目负责人要求对齐团队规范 + AI 拟定 | 团队仓库已有 `CONTRIBUTING.md`，SPEC 必须服从 |
 | **v2.1** | 2026-09-17 | **登记排期偏移**：9/16–9/17 的时间用于方案论证与规格撰写，**实际开发从 9/17 开始，整体偏移 1 天**（可用整天 10 → 9）。§8 新增偏移登记说明（不上调目标，记在 R-01 名下，D4 EOD 复核时统一决定从哪补）；新增 `docs/tasks/` 目录与首份逐人任务清单 [`docs/tasks/2026-09-17-P2.md`](docs/tasks/2026-09-17-P2.md) | AI 拟定 | 核实仓库状态后发现的进度差异，主动登记 |
 | **v2.0** | 2026-09-17 | **平台能力边界实测验证（V-22 闭环）**：① **实地验证平台支持自定义 Skill 且新建后立即识别（无需重启）** —— 「知识依赖分析模块」已挂成 Skill `xizhi-graph-infer` 并跑通；② **核心算法真正落地**（非伪代码）：`verify` / `prune` / `path` / `gap` 四个算法，用真实抽取数据实测（环数 0、理由完备率 100%、学习路径拓扑有序），并用两组对抗性输入验证剪枝（T1 单一环 / T2 环+自环+缺理由+稀疏性违规）；③ 新增 [`docs/platform-capability-check.md`](docs/platform-capability-check.md) 与 `samples/graph-infer-tests/`、`samples/graph-infer-out/`；④ §4.8.3 补记"图算法层已跑在平台上"与 Skill 挂载路径；⑤ §7.5 **B1-4 夹具部分就绪**；⑥ §9.1 P1 目录新增 `pipeline/graph_infer.py`；⑦ 实测发现并修正一个真 bug（`depended_by_count` 用错度数方向），并新增"孤立知识点必须显式列出"检查（真实数据检出 2 个孤立节点，其中 1 个是真实漏抽） | AI 实测 + 拟定 | 用户要求"自己建一个脚本尝试一下"，用实测替代猜测 |
 | **v1.9** | 2026-09-17 | **修正 v1.8 的部署决策（重要）**：当把手册 §二「作品须部署至浏览器环境，提供**可直接访问的在线链接**」与赛事方口头的「不用部署到正式环境」放在一起看时，正确解读是**门槛降低而非要求取消**。① §1.1 / §2.3 S8 更新部署口径，新增**兼容落点说明**并明确排除"临时隧道糊弄"；② **§4.7 恢复「轻量部署必须做」**，D5 硬要求恢复（但不做正式环境）；③ **§6.2 预算回补主机费用**，改为 ¥0 ~ ¥79（学生券后可能仍为 ¥0~10）；④ **§8.1 工时回补部署 3→6**，从专家智能体（7→5）与交付物（5→4）匀出，总额仍 185；⑤ §8.2 D5 与排期纪律恢复"部署不推迟"；⑥ D-16 定稿并新增第 4 条硬边界（链接必须常驻可访问）；⑦ R-19 更新为"已修正"，新增 **R-20（链接在评审期打不开）**；⑧ V-20 降为"顺带确认" | 项目负责人引手册原文 + AI 修正 | **手册书面要求优先于口头口径** —— 评审按手册走 |
@@ -1243,7 +1283,7 @@ Step 5  入库与索引：写库 + 生成 embedding + 更新 FTS5 索引
 | **抽取通道测试夹具** | [`samples/channel-smoke-test/`](samples/channel-smoke-test/) | P3/P4/P10 三份真实产出，可直接用于 schema 校验、入库测试、图算法测试、前端联调 |
 | 赛事手册 | `粤港澳大湾区AI Coding 创新大赛赛事手册(4).docx` | 原始约束来源 |
 | LearnBuddy 使用记录 | `docs/buddy-logs/` | 每日开发对话归档（待建）。**注：`docs/extraction-channel.md` §5 的冒烟测试本身就是第一份可用记录** |
-| **版本配套** | **SPEC v2.1 ↔ prompt-contracts v1.3 ↔ data-model v1.2 ↔ api-spec v1.2 ↔ innovation v1.0 ↔ extraction-channel v1.0 ↔ materials-and-licenses v1.0 ↔ edge-review-consensus v1.0 ↔ delivery-form v1.1 ↔ platform-capability-check v1.0** | 文档版本必须**同步升版**，不允许单份漂移。发现不一致时，以 SPEC 为准并立即修正其余各份 |
+| **版本配套** | **SPEC v2.2 ↔ prompt-contracts v1.3 ↔ data-model v1.2 ↔ api-spec v1.2 ↔ innovation v1.0 ↔ extraction-channel v1.0 ↔ materials-and-licenses v1.0 ↔ edge-review-consensus v1.0 ↔ delivery-form v1.1 ↔ platform-capability-check v1.0 ↔ CONTRIBUTING（团队仓库）** | 文档版本必须**同步升版**，不允许单份漂移。发现不一致时，以 SPEC 为准并立即修正其余各份。**例外：与团队 `CONTRIBUTING.md` 冲突时以团队规范为准**（§9.3） |
 
 ---
 
