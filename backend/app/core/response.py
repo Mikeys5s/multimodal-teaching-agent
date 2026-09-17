@@ -91,6 +91,24 @@ def text_response(content: str, media_type: str) -> Response:
     )
 
 
+class MarkdownResponse(Response):
+    """`text/markdown` 响应类。
+
+    ⚠️ 路由上的 `response_class=` 必须是**类**，不能传上面的 `text_response` 函数 ——
+    FastAPI 会去读 `response_class.media_type`，传函数会直接抛
+    `AttributeError: 'function' object has no attribute 'media_type'`（实测踩过）。
+    这个类存在的意义就是让 `/docs` 能正确标注响应类型。
+    """
+
+    media_type = "text/markdown; charset=utf-8"
+
+
+class CsvResponse(Response):
+    """`text/csv` 响应类（导出接口用）。理由同上。"""
+
+    media_type = "text/csv; charset=utf-8"
+
+
 # ---------------------------------------------------------------------------
 # helper
 # ---------------------------------------------------------------------------
