@@ -3,9 +3,9 @@
 | 项 | 内容 |
 |---|---|
 | 项目代号 | **析知 XiZhi**（已定稿） |
-| 文档版本 | **v2.4** |
+| 文档版本 | **v2.5** |
 | 状态 | **已冻结基线**，后续所有开发以本文档为准 |
-| 建立日期 | 2026-09-16（v2.4 更新于 2026-09-17） |
+| 建立日期 | 2026-09-16（v2.5 更新于 2026-09-17） |
 | 赛事 | 深大计软 & 腾讯云 粤港澳大湾区 AI Coding 创新大赛 · 方向一「AI + 教学管理助手」 |
 | 赛题 | 多模态教学智能体：支持图文素材智能解析、知识点结构化抽取与交互式答疑辅导的智能教学辅助工具 |
 | 交付截止 | **2026-09-26（周六）23:59**（硬截止，截止后不可修改） |
@@ -1084,14 +1084,35 @@ git config --global user.email "<user id>+<账号名>@users.noreply.github.com"
 
 ### 9.2 接口约定（谁给谁什么、何时）
 
-| 编号 | 交付方 → 接收方 | 内容 | 格式 | 冻结时间 |
-|---|---|---|---|---|
-| I-1 | P1 → P2 | 解析产物 `material_blocks`（含块锚点与 `section` 归属） | 数据库表 | D3 EOD |
-| I-2 | P1 → P2 | 抽取结果入库脚本 `scripts/ingest.py` | CLI | D4 EOD |
-| I-3 | P2 → P3 | 全部 API 端点 | `docs/api-spec.md` + `/docs` OpenAPI | **D1 EOD 冻结骨架** |
-| I-4 | P2 → P3 | 知识点与依赖图查询接口的返回结构 | JSON | D6 EOD |
-| I-5 | P1 → P3 | PaddleOCR 的人工校对辅助工具（导出待校对清单） | CLI / JSON | D3 EOD |
-| I-6 | P3 → P2 | 前端所需的额外字段需求 | 提 issue 说明 | 随时，但 **D9 后不再接受** |
+| 编号 | 交付方 → 接收方 | 内容 | 格式 | 冻结时间 | 状态 |
+|---|---|---|---|---|---|
+| I-1 | P1 → P2 | 解析产物 `material_blocks`（含块锚点与 `section` 归属） | 数据库表 | D3 EOD | 待交付 |
+| I-2 | P1 → P2 | 抽取结果入库脚本 `scripts/ingest.py` | CLI | D4 EOD | 待交付 |
+| I-3 | P2 → P3 | 全部 API 端点 | `docs/api-spec.md` + `/docs` OpenAPI | **D1 EOD 冻结骨架** | ✅ **已完成**（见下） |
+| I-4 | P2 → P3 | 知识点与依赖图查询接口的返回结构 | JSON | D6 EOD | 待交付 |
+| I-5 | P1 → P3 | PaddleOCR 的人工校对辅助工具（导出待校对清单） | CLI / JSON | D3 EOD | 待交付 |
+| I-6 | P3 → P2 | 前端所需的额外字段需求 | 提 issue 说明 | 随时，但 **D9 后不再接受** | 通道已开 |
+
+#### I-3 完成记录（2026-09-17）
+
+**交付物**：
+
+- `docs/api-spec.md` **v1.3** —— 冻结前补齐 6 处定义缺口（详见 §12 的 v2.4 变更记录）
+- **28 个端点**全部注册进 `app.openapi()`，`GET /docs` 可直接查看完整请求/响应结构
+- `backend/app/schemas/` 7 个契约文件（56 个模型）
+- **14 张表**的数据模型与可逆迁移（`docs/data-model.md` v1.4）
+
+**实现口径**（团队约定 D-22）：**输入校验按规格真实实现，业务数据返回 mock**。
+所以 P3 现在即可完整对接**正常路径与错误分支**，无需等后端实现。
+
+**「冻结」由断言守住，不靠自觉**：
+
+| 测试 | 守住什么 |
+|---|---|
+| `tests/test_api_contract.py` | 从 `api-spec.md` §7 解析端点清单，与 `app.openapi()` 做**集合比对**，多一个少一个都失败 |
+| `tests/test_schemas.py` | 56 个模型的**关键字段名逐个钉死**（改名/删字段会失败） |
+
+合计 **160 passed**。通告载体：**GitHub Issue #5**。
 
 > **接口冻结纪律**：`docs/api-spec.md` 的端点路径与请求/响应结构在 **D1 EOD 冻结**。之后只允许「新增端点」与「新增可选字段」，**不允许改已有字段名或类型** —— 否则前端要返工。
 
@@ -1246,6 +1267,7 @@ git config --global user.email "<user id>+<账号名>@users.noreply.github.com"
 
 | 版本 | 日期 | 变更内容 | 变更人 | 原因 |
 |---|---|---|---|---|
+| **v2.5** | 2026-09-17 | **§9.2 接口约定 I-3 标记完成**：API 骨架已冻结并交付 P3。① 为 I-1～I-6 增加「状态」列（原表只有冻结时间，看不出谁交了谁没交）；② 新增「I-3 完成记录」小节，列明交付物（`api-spec.md` v1.3 的 28 个端点 / 7 个契约文件 56 个模型 / 14 张表可逆迁移）、实现口径（D-22：校验真实 + 业务 mock）、以及**守住冻结的两条断言测试**（`test_api_contract.py` 端点集合比对、`test_schemas.py` 字段名钉死，合计 160 passed）；③ 记录通告载体为 GitHub Issue #5 | AI 执行 + 项目负责人确认 | I-3 是唯一的"P2 不做、P3 就动不了"的硬节点，完成情况必须在规格里留痕，不能只靠聊天记录 |
 | **v2.4** | 2026-09-17 | **接口规格冻结前补齐 6 处缺口（`api-spec.md` v1.2 → v1.3）**：通读规格时发现 6 处定义缺失，不补则端点骨架只能靠猜。① **新增 `/api/health/pragma`**（步骤 1 已实现但未登记 —— 实现比规格多 1 个，即违反"规格唯一权威源"）→ 端点数 27 → **28**；② 明确**非 JSON 响应**（markdown / CSV 导出）的 `request_id` 走 **`X-Request-ID` 响应头**，失败时仍返回 JSON 包封；③ **SSE 事件补 `id:` 字段**（会话内单调递增的 `seq`）—— 「`Last-Event-ID` 续推」此前没有 `seq` 来源，实现无从下手；④ `gap-analysis` 的 `student_evidence` 明确为**可重复查询参数**；⑤ `needs_review` 统一为**布尔**取值（不静默兼容 `0`/`1`）；⑥ 分页补上**默认值与越界行为**（`page` 默认 1、`page_size` 默认 20、越界返回 400） | AI 通读规格发现 + 项目负责人确认 | 接口冻结是硬节点，缺口必须在冻结前补掉，否则会把问题锁进契约 |
 | **v2.3** | 2026-09-17 | **三人分工落到真实账号（§9.1 定稿）**：经项目负责人确认，**P1 解析工程 = DakerDack**、**P2 数据与结构化 = Mikeys5s**、**P3 前端与交互 = RyeYen**（仓库初始化者）。补齐三人的 GitHub user id 与 noreply 提交邮箱（均已查实），并给出每人一次性的 `git config` 环境准备命令 | 项目负责人确认 + AI 拟定 | 分工必须落到真实账号，否则"文件级归属"无法执行 |
 | **v2.2** | 2026-09-17 | **§9 团队分工与团队仓库规范对齐（重要）**：① **§9.3 协作纪律全量重写**，修正与团队 `CONTRIBUTING.md` 的**三处冲突**（固定个人分支 → 每任务短分支；每日合并 main → 每任务 PR 经 review 后合并；提交信息加 `[P1]` 人员前缀 → 团队类型前缀）；补齐团队规范中我们此前**完全没有**的条目：**任务与讨论写 GitHub Issues**、rebase 同步、`--force-with-lease`、禁止 `git push --force`、`git revert` 不改写公共历史、提交前 `git status` + `git diff --staged` 自查；② §9.1 新增**角色 ↔ 人员 ↔ GitHub 账号对应表**，归属纪律改为"先在 Issue 知会"，共享文件由 2 个补为 3 个（含 `CONTRIBUTING.md`）；③ 明确 `docs/tasks/` 与 GitHub Issue 的分工（前者执行细化、后者协作跟踪的正式载体） | 项目负责人要求对齐团队规范 + AI 拟定 | 团队仓库已有 `CONTRIBUTING.md`，SPEC 必须服从 |
@@ -1284,7 +1306,7 @@ git config --global user.email "<user id>+<账号名>@users.noreply.github.com"
 | **抽取通道测试夹具** | [`samples/channel-smoke-test/`](samples/channel-smoke-test/) | P3/P4/P10 三份真实产出，可直接用于 schema 校验、入库测试、图算法测试、前端联调 |
 | 赛事手册 | `粤港澳大湾区AI Coding 创新大赛赛事手册(4).docx` | 原始约束来源 |
 | LearnBuddy 使用记录 | `docs/buddy-logs/` | 每日开发对话归档（待建）。**注：`docs/extraction-channel.md` §5 的冒烟测试本身就是第一份可用记录** |
-| **版本配套** | **SPEC v2.4 ↔ prompt-contracts v1.3 ↔ data-model v1.4 ↔ api-spec v1.3 ↔ innovation v1.0 ↔ extraction-channel v1.0 ↔ materials-and-licenses v1.0 ↔ edge-review-consensus v1.0 ↔ delivery-form v1.1 ↔ platform-capability-check v1.0 ↔ dev-environment v1.0 ↔ CONTRIBUTING（团队仓库）** | 文档版本必须**同步升版**，不允许单份漂移。发现不一致时，以 SPEC 为准并立即修正其余各份。**例外：与团队 `CONTRIBUTING.md` 冲突时以团队规范为准**（§9.3） |
+| **版本配套** | **SPEC v2.5 ↔ prompt-contracts v1.3 ↔ data-model v1.4 ↔ api-spec v1.3 ↔ innovation v1.0 ↔ extraction-channel v1.0 ↔ materials-and-licenses v1.0 ↔ edge-review-consensus v1.0 ↔ delivery-form v1.1 ↔ platform-capability-check v1.0 ↔ dev-environment v1.0 ↔ CONTRIBUTING（团队仓库）** | 文档版本必须**同步升版**，不允许单份漂移。发现不一致时，以 SPEC 为准并立即修正其余各份。**例外：与团队 `CONTRIBUTING.md` 冲突时以团队规范为准**（§9.3） |
 
 ---
 
