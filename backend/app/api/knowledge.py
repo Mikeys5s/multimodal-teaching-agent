@@ -47,6 +47,35 @@ KP_TYPES = ("concept", "skill", "theorem", "method", "fact")
 KP_ID = "kp_9f2a1c40_000_002_003"
 
 
+def _strict_bool(
+    # ⚠️ 参数名必须与查询参数名一致（`needs_review`）——
+    # FastAPI 是按**形参名**去查请求参数的。写成 `value` 会去读 `?value=`，
+    # 永远拿到 None，于是校验静默失效（查了半天才发现）。
+    needs_review: Annotated[str | None, Query(description="严格布尔：只接受 true / false")] = None,
+) -> bool | None:
+    """严格布尔查询参数（api-spec v1.3）。
+
+    ⚠️ 为什么要自己解析：**FastAPI 默认的 `bool` 解析会把 `1`/`0` 也当成布尔**，
+    于是规格里写的「不静默兼容 `0`/`1`」形同虚设 —— 契约写了、实际不生效，
+    比不写更糟。这个函数把取值收窄到只有 `true` / `false`。
+
+    （这个疏漏是被 `tests/test_api_smoke.py` 抓到的。）
+    """
+    if needs_review is None:
+        return None
+    normalized = needs_review.strip().lower()
+    if normalized not in ("true", "false"):
+        raise ApiError(
+            ErrorCode.INVALID_PARAM,
+            f"needs_review 只接受 true 或 false，收到 {needs_review!r}",
+            {"allowed": ["true", "false"]},
+        )
+    return normalized == "true"
+
+
+StrictBoolDep = Annotated[bool | None, Depends(_strict_bool)]
+
+
 # ---------------------------------------------------------------------------
 # mock 数据（计算机网络 · 传输层，演示时直接可用）
 # ---------------------------------------------------------------------------
@@ -146,7 +175,7 @@ def list_knowledge_points(
     difficulty_min: Annotated[int | None, Query(ge=1, le=5)] = None,
     difficulty_max: Annotated[int | None, Query(ge=1, le=5)] = None,
     kp_type: Annotated[str | None, Query()] = None,
-    needs_review: Annotated[bool | None, Query()] = None,
+    needs_review: StrictBoolDep = None,
     q: Annotated[str | None, Query(description="关键词全文检索")] = None,
 ) -> Envelope[PageData[KpItemOut]]:
     if (
