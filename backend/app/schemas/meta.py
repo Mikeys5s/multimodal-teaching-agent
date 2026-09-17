@@ -22,6 +22,13 @@ class DbPragmaOut(BaseModel):
     busy_timeout: str
 
 
+class HealthPragmaOut(BaseModel):
+    """`GET /api/health/pragma` 的响应体（v1.3 补登记）。"""
+
+    pragmas: DbPragmaOut
+    db_file: str = Field(description="当前实际使用的数据库文件绝对路径")
+
+
 class CapabilitiesOut(BaseModel):
     """`GET /api/meta/capabilities` 的响应体。
 
@@ -30,7 +37,10 @@ class CapabilitiesOut(BaseModel):
 
     supported_material_types: list[str] = Field(description="支持的素材扩展名，如 .pdf / .docx")
     max_upload_mb: int
-    # 声明为 dict 而非强类型：step 4 之前字段还在演进，先不锁死 schema
     parse_methods: dict[str, str] = Field(
-        default_factory=dict, description="各类型素材走哪条解析路径"
+        default_factory=dict, description="每种扩展名走哪条解析路径（给用户看的说明文案）"
+    )
+    llm_mode: str = Field(
+        default="not_in_use",
+        description="模型通道模式。当前为 not_in_use —— 离线构建 + 在线零模型依赖（SPEC §4.8）",
     )

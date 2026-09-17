@@ -10,7 +10,7 @@ from sqlalchemy.orm import Session
 from app.config import settings
 from app.core.response import Envelope, ok
 from app.db import get_db, pragma_status
-from app.schemas.meta import CapabilitiesOut, HealthOut
+from app.schemas.meta import CapabilitiesOut, DbPragmaOut, HealthOut, HealthPragmaOut
 
 router = APIRouter(tags=["meta"])
 
@@ -61,13 +61,25 @@ def health() -> Envelope[HealthOut]:
 
 @router.get(
     "/health/pragma",
-    response_model=Envelope[dict],
+    response_model=Envelope[HealthPragmaOut],
     summary="SQLite pragma 自检",
-    description="读回当前连接的实际 pragma 值。foreign_keys 必须为 1。",
-    include_in_schema=True,
+    description=(
+        "读回当前连接的实际 pragma 值。**foreign_keys 必须为 1** —— "
+        "它是「外键约束真的生效了吗」的可验证答案，而不是靠读代码猜。"
+    ),
 )
-def health_pragma() -> Envelope[dict]:
-    return ok({"pragmas": pragma_status(), "db_file": str(settings.db_file)})
+def health_pragma() -> Envelope[HealthPragmaOut]:
+    raw = pragma_status()
+    return ok(
+        HealthPragmaOut(
+            pragmas=DbPragmaOut(
+                journal_mode=str(raw.get("journal_mode", "")),
+                foreign_keys=str(raw.get("foreign_keys", "")),
+                busy_timeout=str(raw.get("busy_timeout", "")),
+            ),
+            db_file=str(settings.db_file),
+        )
+    )
 
 
 @router.get(
@@ -82,5 +94,6 @@ def capabilities(_request: Request, _db: DbSession) -> Envelope[CapabilitiesOut]
             supported_material_types=SUPPORTED_EXTENSIONS,
             max_upload_mb=settings.max_upload_mb,
             parse_methods=PARSE_METHODS,
+            llm_mode="not_in_use",  # 离线构建 + 在线零模型依赖（SPEC §4.8 / D-13）
         )
     )

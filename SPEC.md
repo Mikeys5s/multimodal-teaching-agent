@@ -3,9 +3,9 @@
 | 项 | 内容 |
 |---|---|
 | 项目代号 | **析知 XiZhi**（已定稿） |
-| 文档版本 | **v2.3** |
+| 文档版本 | **v2.4** |
 | 状态 | **已冻结基线**，后续所有开发以本文档为准 |
-| 建立日期 | 2026-09-16（v2.3 更新于 2026-09-17） |
+| 建立日期 | 2026-09-16（v2.4 更新于 2026-09-17） |
 | 赛事 | 深大计软 & 腾讯云 粤港澳大湾区 AI Coding 创新大赛 · 方向一「AI + 教学管理助手」 |
 | 赛题 | 多模态教学智能体：支持图文素材智能解析、知识点结构化抽取与交互式答疑辅导的智能教学辅助工具 |
 | 交付截止 | **2026-09-26（周六）23:59**（硬截止，截止后不可修改） |
@@ -1246,6 +1246,7 @@ git config --global user.email "<user id>+<账号名>@users.noreply.github.com"
 
 | 版本 | 日期 | 变更内容 | 变更人 | 原因 |
 |---|---|---|---|---|
+| **v2.4** | 2026-09-17 | **接口规格冻结前补齐 6 处缺口（`api-spec.md` v1.2 → v1.3）**：通读规格时发现 6 处定义缺失，不补则端点骨架只能靠猜。① **新增 `/api/health/pragma`**（步骤 1 已实现但未登记 —— 实现比规格多 1 个，即违反"规格唯一权威源"）→ 端点数 27 → **28**；② 明确**非 JSON 响应**（markdown / CSV 导出）的 `request_id` 走 **`X-Request-ID` 响应头**，失败时仍返回 JSON 包封；③ **SSE 事件补 `id:` 字段**（会话内单调递增的 `seq`）—— 「`Last-Event-ID` 续推」此前没有 `seq` 来源，实现无从下手；④ `gap-analysis` 的 `student_evidence` 明确为**可重复查询参数**；⑤ `needs_review` 统一为**布尔**取值（不静默兼容 `0`/`1`）；⑥ 分页补上**默认值与越界行为**（`page` 默认 1、`page_size` 默认 20、越界返回 400） | AI 通读规格发现 + 项目负责人确认 | 接口冻结是硬节点，缺口必须在冻结前补掉，否则会把问题锁进契约 |
 | **v2.3** | 2026-09-17 | **三人分工落到真实账号（§9.1 定稿）**：经项目负责人确认，**P1 解析工程 = DakerDack**、**P2 数据与结构化 = Mikeys5s**、**P3 前端与交互 = RyeYen**（仓库初始化者）。补齐三人的 GitHub user id 与 noreply 提交邮箱（均已查实），并给出每人一次性的 `git config` 环境准备命令 | 项目负责人确认 + AI 拟定 | 分工必须落到真实账号，否则"文件级归属"无法执行 |
 | **v2.2** | 2026-09-17 | **§9 团队分工与团队仓库规范对齐（重要）**：① **§9.3 协作纪律全量重写**，修正与团队 `CONTRIBUTING.md` 的**三处冲突**（固定个人分支 → 每任务短分支；每日合并 main → 每任务 PR 经 review 后合并；提交信息加 `[P1]` 人员前缀 → 团队类型前缀）；补齐团队规范中我们此前**完全没有**的条目：**任务与讨论写 GitHub Issues**、rebase 同步、`--force-with-lease`、禁止 `git push --force`、`git revert` 不改写公共历史、提交前 `git status` + `git diff --staged` 自查；② §9.1 新增**角色 ↔ 人员 ↔ GitHub 账号对应表**，归属纪律改为"先在 Issue 知会"，共享文件由 2 个补为 3 个（含 `CONTRIBUTING.md`）；③ 明确 `docs/tasks/` 与 GitHub Issue 的分工（前者执行细化、后者协作跟踪的正式载体） | 项目负责人要求对齐团队规范 + AI 拟定 | 团队仓库已有 `CONTRIBUTING.md`，SPEC 必须服从 |
 | **v2.1** | 2026-09-17 | **登记排期偏移**：9/16–9/17 的时间用于方案论证与规格撰写，**实际开发从 9/17 开始，整体偏移 1 天**（可用整天 10 → 9）。§8 新增偏移登记说明（不上调目标，记在 R-01 名下，D4 EOD 复核时统一决定从哪补）；新增 `docs/tasks/` 目录与首份逐人任务清单 [`docs/tasks/2026-09-17-P2.md`](docs/tasks/2026-09-17-P2.md) | AI 拟定 | 核实仓库状态后发现的进度差异，主动登记 |
@@ -1283,7 +1284,7 @@ git config --global user.email "<user id>+<账号名>@users.noreply.github.com"
 | **抽取通道测试夹具** | [`samples/channel-smoke-test/`](samples/channel-smoke-test/) | P3/P4/P10 三份真实产出，可直接用于 schema 校验、入库测试、图算法测试、前端联调 |
 | 赛事手册 | `粤港澳大湾区AI Coding 创新大赛赛事手册(4).docx` | 原始约束来源 |
 | LearnBuddy 使用记录 | `docs/buddy-logs/` | 每日开发对话归档（待建）。**注：`docs/extraction-channel.md` §5 的冒烟测试本身就是第一份可用记录** |
-| **版本配套** | **SPEC v2.2 ↔ prompt-contracts v1.3 ↔ data-model v1.2 ↔ api-spec v1.2 ↔ innovation v1.0 ↔ extraction-channel v1.0 ↔ materials-and-licenses v1.0 ↔ edge-review-consensus v1.0 ↔ delivery-form v1.1 ↔ platform-capability-check v1.0 ↔ CONTRIBUTING（团队仓库）** | 文档版本必须**同步升版**，不允许单份漂移。发现不一致时，以 SPEC 为准并立即修正其余各份。**例外：与团队 `CONTRIBUTING.md` 冲突时以团队规范为准**（§9.3） |
+| **版本配套** | **SPEC v2.4 ↔ prompt-contracts v1.3 ↔ data-model v1.4 ↔ api-spec v1.3 ↔ innovation v1.0 ↔ extraction-channel v1.0 ↔ materials-and-licenses v1.0 ↔ edge-review-consensus v1.0 ↔ delivery-form v1.1 ↔ platform-capability-check v1.0 ↔ dev-environment v1.0 ↔ CONTRIBUTING（团队仓库）** | 文档版本必须**同步升版**，不允许单份漂移。发现不一致时，以 SPEC 为准并立即修正其余各份。**例外：与团队 `CONTRIBUTING.md` 冲突时以团队规范为准**（§9.3） |
 
 ---
 

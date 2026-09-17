@@ -17,6 +17,7 @@ import contextvars
 import uuid
 from typing import Any, Generic, TypeVar
 
+from fastapi import Response
 from pydantic import BaseModel, Field
 
 T = TypeVar("T")
@@ -71,13 +72,41 @@ class ErrorEnvelope(BaseModel):
     request_id: str
 
 
-class PageData(BaseModel, Generic[T]):
-    """分页数据体（docs/api-spec.md §1.3）。"""
+# 分页相关模型（`PageData` / `PageParams`）已移到 `app/core/pagination.py` ——
+# 分页的参数校验与响应体放在一起更内聚，避免"改了一处忘了另一处"。
 
-    items: list[T]
-    total: int
-    page: int = 1
-    page_size: int = 20
+
+def text_response(content: str, media_type: str) -> Response:
+    """构造**非 JSON 响应**（markdown / CSV）。
+
+    约定（docs/api-spec.md §1.1 的非 JSON 例外条款）：
+      · 成功时直接返回原始内容，**请求标识走 `X-Request-ID` 响应头**；
+      · 失败时仍由全局异常处理器返回 JSON 包封 —— 这样前端只需要一套错误处理逻辑，
+        不用为"下载接口报错"再写一个分支。
+    """
+    return Response(
+        content=content,
+        media_type=media_type,
+        headers={REQUEST_ID_HEADER: current_request_id()},
+    )
+
+
+class MarkdownResponse(Response):
+    """`text/markdown` 响应类。
+
+    ⚠️ 路由上的 `response_class=` 必须是**类**，不能传上面的 `text_response` 函数 ——
+    FastAPI 会去读 `response_class.media_type`，传函数会直接抛
+    `AttributeError: 'function' object has no attribute 'media_type'`（实测踩过）。
+    这个类存在的意义就是让 `/docs` 能正确标注响应类型。
+    """
+
+    media_type = "text/markdown; charset=utf-8"
+
+
+class CsvResponse(Response):
+    """`text/csv` 响应类（导出接口用）。理由同上。"""
+
+    media_type = "text/csv; charset=utf-8"
 
 
 # ---------------------------------------------------------------------------
