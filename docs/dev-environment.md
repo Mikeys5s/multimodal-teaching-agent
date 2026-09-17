@@ -7,34 +7,68 @@
 
 ---
 
-## ⚠️ 0. 先做这一件事：把仓库目录加入杀毒软件白名单
+## ⚠️ 0. 已知环境风险：有程序在批量删除本仓库下的文件
 
-**实测发生过两次**：`.git/objects/pack/` 被清空、`.venv/Lib/site-packages/` 下所有包变成
-**0 个文件**（目录结构和 `.dist-info` 还在）。
+**实测发生过 4 次**：`.venv/Lib/site-packages/` 下所有包变成 **0 个文件**
+（目录结构和 `.dist-info` 还在）、`.git/objects/pack/` 被清空。
 
-**判断依据**：目录结构完整、只丢文件 → **不是磁盘故障，是有程序在按规则删除/隔离**。
-进程里能看到杀毒软件（本机是火绒 `HipsDaemon` / `HipsTray`）。
+**特征**：目录结构完整、只丢文件 → **不是磁盘故障，是有程序在按规则删除/隔离**。
 
-**请把 `D:\muti_tagent` 加入杀毒软件的排除目录。** 否则会反复发生 ——
-表现为测试突然报 `No module named fastapi`、git 报 `not a valid object`。
+### 试过但**无效**的办法
 
-**在这个问题解决之前**：**勤提交、勤推送**。本机随时可能再被清，
-而远端的东西不会丢。不要攒一大堆改动最后一起推。
+把 `D:\muti_tagent` 加进杀毒软件（火绒）信任区 —— **加了之后仍然被删**。
+信任区界面原话是「**病毒查杀与病毒防护的扫描功能**将跳过以下信任项」，
+它只管火绒自己的扫描链路，管不了别的机制。
+
+> 所以**不能假定是杀毒软件**。火绒的「隔离区」和「日志」里如果没有对应记录，就可以排除它。
+
+### ✅ 有效的办法：把 venv 放到项目外
+
+**做法**：venv 建在项目外，用 **junction（目录联接）** 把 `backend/.venv` 指过去。
+
+```
+D:\muti_tagent\backend\.venv   ← junction（项目内只有一个目录项，0 个文件）
+        ↓ 指向
+C:\Users\<你>\.venvs\xizhi-backend   ← 真实的 4700+ 个文件在这里
+```
+
+**为什么这样有效**：文件在物理上不在项目目录里，按路径扫描的清理程序碰不到；
+而 `backend/.venv/Scripts/python.exe` **路径完全没变** ——
+文档、命令、脚本一个字都不用改。
+
+**一条命令搞定**（见 §1），已经实测通过。
+
+### 仍然需要你做的两件事
+
+1. **查火绒的「隔离区」+「日志」**，看有没有对应时间的记录 —— 这是**定责**的证据
+2. **勤提交、勤推送**。远端的东西不会丢，不要攒一大堆改动最后一起推
+
+### 想抓现行的话
+
+`.learnbuddy/tools/watch_files.py` 是文件哨兵：定时统计项目下各类文件数量，
+一旦下降立刻告警并列出消失的路径。开着它干活，能拿到**精确时间点**。
 
 ---
 
 ## 1. 环境准备
 
 ```bash
-# 后端（Python 3.13 —— 已核实 paddlepaddle / pymupdf / sqlalchemy 都有 cp313 wheel）
-cd backend
-python -m venv .venv
-.venv/Scripts/python.exe -m ensurepip          # 见坑 1
-.venv/Scripts/python.exe -m pip install -e ".[dev]"
+# 后端环境（一条命令，含"venv 放项目外 + junction"的处理）
+bash scripts/setup-venv.sh
+
+# 环境坏了要重建
+bash scripts/setup-venv.sh --rebuild
 
 # 起服务
+cd backend
 .venv/Scripts/python.exe -m uvicorn app.main:app --reload --port 8000
 ```
+
+**脚本会做五件事**：找 Python ≥ 3.11 → 腾出 junction 位置 →
+在 `%USERPROFILE%\.venvs\xizhi-backend` 建 venv → 装依赖 → 建 junction 并验证。
+
+> **不要手动 `python -m venv .venv`** —— 那样建出来的环境在项目目录里，
+> 会被上面 §0 说的问题删掉。用脚本。
 
 **依赖分组是刻意的，不要图省事全装**：
 
