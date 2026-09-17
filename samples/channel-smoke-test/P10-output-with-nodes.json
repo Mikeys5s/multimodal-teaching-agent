@@ -1,0 +1,30 @@
+{
+  "_comment": "由 P4-output.json 的知识点【全量列表】+ P10-output.json 的依赖边合并而成。用途：检出「完全没有任何边的知识点」—— 只传 edges 时这类节点根本不会出现在图里（这是实测发现的坑）。",
+  "_source": {
+    "nodes_from": "P4-output.json knowledge_points[].name",
+    "edges_from": "P10-output.json edges[]"
+  },
+  "nodes": [
+    "拥塞窗口 CongestionWindow",
+    "拥塞窗口与通告窗口取小",
+    "加性增 Additive Increase",
+    "乘性减 Multiplicative Decrease",
+    "AIMD 的不对称性与稳定性",
+    "慢启动 Slow Start",
+    "慢启动为何「慢」",
+    "快速重传 Fast Retransmit",
+    "快速恢复 Fast Recovery"
+  ],
+  "edges": [
+    { "prereq_name": "拥塞窗口 CongestionWindow", "dependent_name": "乘性减 Multiplicative Decrease", "relation_type": "hard", "reason": "不知道「减半」减的是哪个变量、这个变量从哪来，乘性减这条规则就无从落地。它是乘性减的操作对象。", "confidence": 0.95 },
+    { "prereq_name": "拥塞窗口 CongestionWindow", "dependent_name": "加性增 Additive Increase", "relation_type": "hard", "reason": "加性增的增量公式分母就是拥塞窗口（MSS/cwnd），不理解 cwnd 的语义与单位就无法理解这个公式为什么能实现线性增长。", "confidence": 0.95 },
+    { "prereq_name": "拥塞窗口 CongestionWindow", "dependent_name": "慢启动 Slow Start", "relation_type": "hard", "reason": "慢启动的规则是「初始置 1 个包、之后每 RTT 翻倍」，前提是知道翻倍翻的是拥塞窗口。", "confidence": 0.94 },
+    { "prereq_name": "加性增 Additive Increase", "dependent_name": "AIMD 的不对称性与稳定性", "relation_type": "hard", "reason": "「不对称」是加性增与乘性减两半的对比结论，只讲加性增这一半无法成立。", "confidence": 0.93 },
+    { "prereq_name": "乘性减 Multiplicative Decrease", "dependent_name": "AIMD 的不对称性与稳定性", "relation_type": "hard", "reason": "不对称性必须同时握住「增」与「减」两侧的速率才能比较，缺任一侧都无法理解这个结论。", "confidence": 0.93 },
+    { "prereq_name": "加性增 Additive Increase", "dependent_name": "慢启动 Slow Start", "relation_type": "soft", "reason": "不构成阻塞，但先理解加性增（线性）再学慢启动（指数），对比之下更容易记住慢启动为什么快。", "confidence": 0.88 },
+    { "prereq_name": "慢启动 Slow Start", "dependent_name": "慢启动为何「慢」", "relation_type": "hard", "reason": "这条知识点本身就是对慢启动命名的解释，不理解慢启动的行为就无从讨论它慢在哪。", "confidence": 0.94 },
+    { "prereq_name": "慢启动 Slow Start", "dependent_name": "快速恢复 Fast Recovery", "relation_type": "hard", "reason": "快速恢复做的事就是「删掉那段慢启动」，不知道慢启动是什么、代价在哪，就无法理解快速恢复优化了什么。", "confidence": 0.94 },
+    { "prereq_name": "加性增 Additive Increase", "dependent_name": "快速恢复 Fast Recovery", "relation_type": "hard", "reason": "快速恢复的收尾动作是「回到加性增」，且原文说此后遵循纯 AIMD。不理解加性增就不知道恢复到哪里去。", "confidence": 0.92 },
+    { "prereq_name": "乘性减 Multiplicative Decrease", "dependent_name": "快速恢复 Fast Recovery", "relation_type": "soft", "reason": "快速恢复在检测到丢包时执行的正是减半动作，先掌握乘性减会让这一步更好懂。", "confidence": 0.85 }
+  ]
+}

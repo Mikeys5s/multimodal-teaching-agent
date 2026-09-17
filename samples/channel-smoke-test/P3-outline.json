@@ -1,0 +1,41 @@
+{
+  "contract": "P3",
+  "version": "v1",
+  "material_id": "mat_smoke_cn_systems_approach_c6",
+  "material_name": "Computer Networks: A Systems Approach (6th Ed.) — Chapter 6",
+  "structure_confidence": 0.94,
+  "chapters": [
+    {
+      "number": "6",
+      "title": "Congestion Control",
+      "source_block_id": "blk_c6-0-0-01",
+      "sections": [
+        {
+          "number": "6.3.1",
+          "title": "Additive Increase/Multiplicative Decrease",
+          "source_block_id": "blk_c6-3-1-01",
+          "section_note": "材料原为 6.3 下的三级标题，按 SPEC §5.2 操作规程以「能抽出 3-12 个知识点」为准提升为节"
+        },
+        {
+          "number": "6.3.2",
+          "title": "Slow Start",
+          "source_block_id": "blk_c6-3-2-01",
+          "section_note": "同上"
+        },
+        {
+          "number": "6.3.3",
+          "title": "Fast Retransmit and Fast Recovery",
+          "source_block_id": "blk_c6-3-3-01",
+          "section_note": "同上"
+        },
+        {
+          "number": "6.3.4",
+          "title": "TCP CUBIC",
+          "source_block_id": "blk_c6-3-4-01",
+          "section_note": "本次冒烟未抽取（超出验证范围）"
+        }
+      ]
+    }
+  ],
+  "notes": "材料为网页版，无页码。若需页码级溯源，改用 Peterson & Davie 的 PDF/EPUB 版本。另：本教材没有 「Congestion Avoidance」 这一独立子节，对应语义由 6.3.1 的 additive increase 承担。"
+}

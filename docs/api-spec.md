@@ -1,0 +1,424 @@
+# 接口规格（API Spec）
+
+> 上游文档：[`../SPEC.md`](../SPEC.md) §4
+> 版本：v1.2 · 2026-09-17（v1.2 无端点增删，仅同步 SPEC 变更：音频链路移除；`/knowledge-graph`、`/learning-path`、`/report/quality` 增补创新点相关字段）
+> 风格：REST + JSON；流式接口用 SSE
+> 前缀：`/api`（生产环境下前端静态资源在 `/`，后端在 `/api`，同源无 CORS）
+
+---
+
+## 1. 通用约定
+
+### 1.1 响应包封
+
+成功：
+```json
+{ "ok": true, "data": { ... }, "request_id": "req_8f21" }
+```
+
+失败：
+```json
+{
+  "ok": false,
+  "error": { "code": "UNSUPPORTED_FORMAT", "message": "暂不支持 .pages 格式，请转为 PDF 或 DOCX", "detail": {} },
+  "request_id": "req_8f21"
+}
+```
+
+**规则**：`error.message` 必须是**能直接展示给用户的中文**，不允许出现英文堆栈或裸错误码。这是用户体验评分项。
+
+### 1.2 错误码
+
+| HTTP | code | 场景 |
+|---|---|---|
+| 400 | `INVALID_PARAM` | 参数校验失败 |
+| 400 | `UNSUPPORTED_FORMAT` | 文件格式不在白名单 |
+| 400 | `FILE_TOO_LARGE` | 超过 50MB |
+| 404 | `NOT_FOUND` | 资源不存在 |
+| 409 | `JOB_IN_PROGRESS` | 同一资源已有任务在跑 |
+| 422 | `LLM_SCHEMA_INVALID` | 结构化输出校验失败（已重试后） |
+| 500 | `INTERNAL` | 兜底 |
+| 503 | `LLM_UNAVAILABLE` | 模型服务不可用 |
+
+### 1.3 分页
+
+请求：`?page=1&page_size=20`（`page_size` ≤ 100）
+响应：`{ "items": [...], "total": 137, "page": 1, "page_size": 20 }`
+
+### 1.4 任务轮询
+
+耗时操作一律**立即返回 `job_id`**，前端轮询 `/api/jobs/{job_id}`。
+任务完成前返回 `202 Accepted`。
+
+---
+
+## 2. 健康检查与元信息
+
+| 方法 | 路径 | 说明 |
+|---|---|---|
+| GET | `/api/health` | `{ status, db, llm, version }` —— 演示前自检用 |
+| GET | `/api/meta/capabilities` | 返回支持的素材类型、大小限制、当前 LLM provider/model，**前端据此渲染上传提示，避免硬编码** |
+
+---
+
+## 3. 素材（Stage 1）
+
+### 3.1 上传素材
+
+```
+POST /api/materials
+Content-Type: multipart/form-data
+Body: files=<binary>[, files=<binary>...]
+```
+
+响应 `202`：
+```json
+{
+  "ok": true,
+  "data": {
+    "accepted": [{ "material_id": "mat_a1", "filename": "第3章-排序.pdf", "job_id": "job_x1" }],
+    "rejected": [{ "filename": "notes.pages", "reason": "暂不支持 .pages 格式，请转为 PDF 或 DOCX" }]
+  }
+}
+```
+
+**规则**：部分文件被拒绝时仍返回 `202`，`rejected` 数组必须给出可读原因；不得整批失败。
+
+### 3.2 素材清单
+
+```
+GET /api/materials?status=&page=&page_size=
+```
+
+响应 `data.items[i]`：
+```json
+{
+  "id": "mat_a1",
+  "filename": "第3章-排序.pdf",
+  "mime_type": "application/pdf",
+  "size_bytes": 2481920,
+  "source_type": "pdf_scan",
+  "parse_method": "multimodal_llm",
+  "status": "partial",
+  "page_count": 20,
+  "duration_sec": null,
+  "char_count": 18422,
+  "quality_score": 0.86,
+  "uncertain_count": 3,
+  "uncertain_notes": [
+    { "kind": "missing_field", "page": 12, "message": "第 12 页第 3 题只有题干与选项，未找到答案", "severity": "high" }
+  ],
+  "created_at": "2026-09-16T13:02:11Z"
+}
+```
+
+> 这就是**素材清单**的数据源，字段设计直接对应 A1-4 验收。
+
+### 3.3 素材详情 / 解析产物
+
+| 方法 | 路径 | 说明 |
+|---|---|---|
+| GET | `/api/materials/{id}` | 单份素材详情（同 3.2 结构） |
+| GET | `/api/materials/{id}/blocks?page_no=&block_type=` | 解析块列表（Markdown 预览数据源） |
+| GET | `/api/materials/{id}/markdown` | 拼接后的整篇 Markdown（`text/markdown`） |
+| GET | `/api/materials/{id}/outline` | 章节骨架（章 → 节，未抽知识点时的中间态） |
+| GET | `/api/materials/{id}/questions` | 从该素材抽出的题目列表 |
+
+`/blocks` 响应元素：
+```json
+{
+  "id": "blk_9f2a",
+  "seq": 42,
+  "page_no": 7,
+  "line_start": 3,
+  "line_end": 9,
+  "block_type": "paragraph",
+  "heading_level": null,
+  "content_md": "分区完成后，基准元素左侧均不大于它……",
+  "image_path": null,
+  "ocr_confidence": 0.94
+}
+```
+
+### 3.4 重试与删除
+
+| 方法 | 路径 | 说明 |
+|---|---|---|
+| POST | `/api/materials/{id}/reparse` | 重新解析，返回新 `job_id`（失败隔离，可单独重试） |
+| DELETE | `/api/materials/{id}` | 删除素材及其级联数据 |
+
+---
+
+## 4. 知识点抽取与查询（Stage 2）
+
+### 4.1 触发抽取
+
+```
+POST /api/extract/knowledge
+Body: { "material_ids": ["mat_a1"], "force": false }
+```
+
+响应 `202`：`{ "job_id": "job_k1", "estimated_seconds": 120 }`
+冲突时返回 `409 JOB_IN_PROGRESS`。
+
+### 4.2 知识点查询
+
+```
+GET /api/knowledge-points
+    ?chapter_id=&section_id=&material_id=
+    &difficulty_min=1&difficulty_max=5
+    &kp_type=&needs_review=
+    &q=<关键词>
+    &page=&page_size=
+```
+
+响应 `data.items[i]`：
+```json
+{
+  "id": "kp_3c81",
+  "name": "快速排序的分区思想",
+  "summary_md": "通过一次分区把基准元素放到最终位置，左侧均不大于它、右侧均不小于它。",
+  "difficulty": 3,
+  "difficulty_reason": "需要理解指针交换过程与不变式，但无需复杂数学",
+  "kp_type": "method",
+  "chapter": { "id": "ch_2", "number": "3", "title": "排序" },
+  "section": { "id": "sec_2_2", "number": "3.2", "title": "交换排序" },
+  "source": {
+    "material_id": "mat_a1",
+    "material_name": "第3章-排序.pdf",
+    "page": 9,
+    "block_id": "blk_9f2a",
+    "quote": "分区完成后，基准元素左侧均不大于它……"
+  },
+  "prerequisite_count": 2,
+  "example_count": 3,
+  "misconception_count": 1,
+  "needs_review": false,
+  "confidence": 0.93
+}
+```
+
+### 4.3 知识点详情
+
+```
+GET /api/knowledge-points/{id}
+```
+
+在 4.2 结构上追加：
+```json
+{
+  "prerequisites": [
+    { "kp_id": "kp_2f04", "name": "比较排序的时间下界", "relation_type": "hard", "reason": "不理解下界就无法解释快排的平均复杂度优势", "confidence": 0.88 }
+  ],
+  "examples": [
+    { "id": "ex_1", "question_type": "single_choice", "stem_md": "...", "options_json": [...], "answer_md": "B", "analysis_md": "...", "difficulty": 3, "source_page": 11 }
+  ],
+  "misconceptions": [
+    { "id": "mis_7d22", "description": "认为分区后基准元素仍可能移动", "cause": "把『分区』与『排序』混为一谈", "remedy": "强调分区只做一次交换定位，之后基准不再参与比较", "source": "human", "confidence": 0.9 }
+  ]
+}
+```
+
+### 4.4 地图与路径
+
+| 方法 | 路径 | 说明 |
+|---|---|---|
+| GET | `/api/knowledge-graph?material_id=&chapter_id=&max_nodes=200` | DAG 数据：`{ nodes: [...], edges: [...] }`，节点带 `difficulty`（前端颜色映射）、`needs_review`；边带 `relation_type` |
+| GET | `/api/learning-path?kp_id=kp_3c81` | 学习路径：拓扑有序数组 `[{ order, kp_id, name, difficulty, reason }]`，含 `is_start_point` 标记 |
+| GET | `/api/knowledge-points/{id}/gap-analysis` | **卡点根因回溯**（F3.8）：沿 `hard` 边反向可达，返回该知识点的全部硬前置与"最可能的断层"排序。`?student_evidence=` 可传入学生本轮暴露的误区 id 以提高精度 |
+
+`/learning-path` 的 `reason` **必须来自边上的 `reason`**（P10 产出），前端逐条展示 —— 这样"为什么这个要排在前面"是可解释的，不是黑盒拓扑排序的结果。
+
+`/gap-analysis` 响应：
+```json
+{
+  "target_kp": { "kp_id": "kp_5t13", "name": "TCP 拥塞控制" },
+  "hard_prerequisites": [
+    { "kp_id": "kp_5t09", "name": "滑动窗口机制", "depth": 1, "reason": "不理解窗口就无法理解 cwnd 的调节对象" }
+  ],
+  "likely_gap": {
+    "kp_id": "kp_5t09",
+    "name": "滑动窗口机制",
+    "evidence": "本轮命中误区『把拥塞窗口与接收窗口混为一谈』",
+    "source": { "material_id": "mat_a1", "page": 88 }
+  },
+  "suggestion": "你这一题卡在 TCP 拥塞控制，但根因更可能是滑动窗口没吃透 —— 建议先回第 88 页，再回来学拥塞控制。"
+}
+```
+
+`/knowledge-graph` 响应：
+```json
+{
+  "nodes": [
+    { "id": "kp_3c81", "name": "快速排序的分区思想", "difficulty": 3, "chapter_id": "ch_2", "section_id": "sec_2_2", "needs_review": false }
+  ],
+  "edges": [
+    { "source": "kp_2f04", "target": "kp_3c81", "relation_type": "hard" }
+  ],
+  "stats": { "node_count": 42, "edge_count": 67, "cycle_count": 0, "pruned_count": 2, "conflict_count": 3, "hard_edge_count": 41, "soft_edge_count": 26 }
+}
+}
+```
+
+> `stats.cycle_count` 必须在 UI 上展示为 0 —— **把 DAG 无环这个工程指标变成评委可见的信任信号**。
+>
+> 同时展示 `pruned_count`（因成环被剪除的边数）与 `conflict_count`（结构-语义冲突边数）：**"检出了 2 条会成环的边并已剪除"比只写"环数 0"更有说服力** —— 前者证明系统真的在检查，而不只是恰好没出错（对应 B1-2 / B1-4）。
+
+### 4.5 导出
+
+| 方法 | 路径 | 说明 |
+|---|---|---|
+| GET | `/api/export/knowledge-points?format=json` | 全字段 JSON 导出 |
+| GET | `/api/export/knowledge-points?format=csv` | 扁平 CSV，含溯源列 |
+
+### 4.6 质量报告
+
+```
+GET /api/report/quality
+```
+
+```json
+{
+  "materials": { "total": 6, "done": 5, "failed": 1, "avg_quality_score": 0.88 },
+  "knowledge_points": {
+    "total": 184,
+    "structure_complete_rate": 1.0,
+    "five_field_complete_rate": 0.97,
+    "grounding_rate": 1.0,
+    "needs_review_count": 6
+  },
+  "graph": { "edge_count": 267, "cycle_count": 0, "pruned_count": 2, "conflict_count": 3, "reason_complete_rate": 1.0, "prerequisite_sampling_pass_rate": 0.84 },
+  "qa": { "session_count": 3, "turn_count": 41, "grounded_rate": 1.0, "refuse_count": 5 }
+}
+```
+
+> 这个接口是「质量报告页」（F4.3）的数据源，也是 Demo 视频里的一个亮点镜头 —— 把工程严谨度可视化。
+
+---
+
+## 5. 答疑辅导（Stage 3）
+
+### 5.1 会话
+
+| 方法 | 路径 | 说明 |
+|---|---|---|
+| POST | `/api/qa/sessions` | Body: `{ "material_scope": ["mat_a1"], "student_label": "demo" }` → `{ session_id }` |
+| GET | `/api/qa/sessions/{id}` | 会话详情 + 全部轮次 |
+| DELETE | `/api/qa/sessions/{id}` | 删除 |
+| GET | `/api/qa/sessions/{id}/report` | 会话诊断报告（汇总全部卡点与建议练习） |
+
+### 5.2 提问（SSE 流式）
+
+```
+POST /api/qa/sessions/{id}/ask
+Accept: text/event-stream
+Body: { "question": "这题为什么用快排不用冒泡？" }
+```
+
+SSE 事件序列（顺序固定）：
+```
+event: retrieved
+data: {"kp_ids":["kp_3c81","kp_2f04"],"block_ids":["blk_9f2a"],"is_out_of_scope":false}
+
+event: state
+data: {"turn_type":"probe","state":"S1_PROBE","hint_level":0}
+
+event: delta
+data: {"text":"先想一个问题："}
+
+event: delta
+data: {"text":"如果数组已经是升序的，快排还需要比较多少次？"}
+
+event: diagnosis
+data: {"knowledge_points":[{"kp_id":"kp_3c81","name":"快速排序的分区思想","difficulty":3}],
+       "stuck_at":{"step":"尚未建立分区与最终位置的关系","evidence_kp_id":"kp_3c81","evidence_misconception_id":null},
+       "next_practice":[{"kp_id":"kp_3c81","task":"手写一次 Hoare 分区过程"}]}
+
+event: done
+data: {"turn_id":"turn_88","latency_ms":2310,"usage":{"input_tokens":1820,"output_tokens":96}}
+```
+
+**约定**
+- `retrieved` 必须先于任何 `delta` —— 前端据此先渲染溯源卡片，让"先检索再回答"这件事**在界面上可见**。
+- 越界时：`retrieved.is_out_of_scope = true`，`state` 事件为 `turn_type: "refuse"`，`delta` 内容为拒答模板，**不得包含任何材料外知识断言**。
+- 进入降级讲解时：`state` 事件 `turn_type: "explain"`，前端据此展示"连续两次没答上，我直接讲"的提示。
+- 连接中断：客户端用 `Last-Event-ID` 重连，服务端从最后一个 `seq` 续推。
+
+### 5.3 状态机查询（供前端渲染进度）
+
+```
+GET /api/qa/sessions/{id}/state
+```
+
+```json
+{
+  "state": "S2_HINT1",
+  "hint_level": 1,
+  "consecutive_failures": 1,
+  "current_kp_id": "kp_3c81",
+  "next_action": "hint2",
+  "explain_threshold": 2
+}
+```
+
+> **为什么要有这个接口**：苏格拉底状态机是产品的核心差异化，但它是"看不见的逻辑"。把它暴露成接口 + 前端可视化（如三轮进度指示器），就能让评委**看得见引导策略的存在**。这是技术创新性得分的具体抓手。
+
+---
+
+## 6. 任务
+
+| 方法 | 路径 | 说明 |
+|---|---|---|
+| GET | `/api/jobs/{job_id}` | `{ status, progress, stage_detail, result, error }` |
+| GET | `/api/jobs?target_id=&job_type=` | 按资源查任务 |
+
+`stage_detail` 示例：`"正在识别第 7/20 页"`、`"正在抽取 3.2 交换排序 的知识点"`。**必须是人类可读中文**，前端直接展示，不加工。
+
+---
+
+## 7. 接口清单速查
+
+| # | 方法 | 路径 | 所属 | 阶段 |
+|---|---|---|---|---|
+| 1 | GET | `/api/health` | 运维 | — |
+| 2 | GET | `/api/meta/capabilities` | 元信息 | — |
+| 3 | POST | `/api/materials` | 素材 | Stage 1 |
+| 4 | GET | `/api/materials` | 素材 | Stage 1 |
+| 5 | GET | `/api/materials/{id}` | 素材 | Stage 1 |
+| 6 | GET | `/api/materials/{id}/blocks` | 素材 | Stage 1 |
+| 7 | GET | `/api/materials/{id}/markdown` | 素材 | Stage 1 |
+| 8 | GET | `/api/materials/{id}/outline` | 素材 | Stage 1 |
+| 9 | GET | `/api/materials/{id}/questions` | 素材 | Stage 1 |
+| 10 | POST | `/api/materials/{id}/reparse` | 素材 | Stage 1 |
+| 11 | DELETE | `/api/materials/{id}` | 素材 | Stage 1 |
+| 12 | POST | `/api/extract/knowledge` | 抽取 | Stage 2 |
+| 13 | GET | `/api/knowledge-points` | 知识点 | Stage 2 |
+| 14 | GET | `/api/knowledge-points/{id}` | 知识点 | Stage 2 |
+| 15 | GET | `/api/knowledge-graph` | 图谱 | Stage 2 |
+| 16 | GET | `/api/learning-path` | 路径 | Stage 2 |
+| 17 | GET | `/api/export/knowledge-points` | 导出 | Stage 2 |
+| 18 | GET | `/api/report/quality` | 报告 | 全 |
+| 19 | POST | `/api/qa/sessions` | 答疑 | Stage 3 |
+| 20 | GET | `/api/qa/sessions/{id}` | 答疑 | Stage 3 |
+| 21 | POST | `/api/qa/sessions/{id}/ask` | 答疑（SSE） | Stage 3 |
+| 22 | GET | `/api/qa/sessions/{id}/state` | 答疑 | Stage 3 |
+| 23 | GET | `/api/qa/sessions/{id}/report` | 答疑 | Stage 3 |
+| 24 | DELETE | `/api/qa/sessions/{id}` | 答疑 | Stage 3 |
+| 25 | GET | `/api/jobs/{job_id}` | 任务 | — |
+| 26 | GET | `/api/jobs` | 任务 | — |
+| **27** | GET | `/api/knowledge-points/{id}/gap-analysis` | **卡点根因回溯（v1.2 新增）** | Stage 3 |
+
+**共 27 个端点。** 任何新增端点需走 SPEC §12 变更流程。
+
+---
+
+## 8. 前端路由与端点对应
+
+| 路由 | 页面 | 主要端点 |
+|---|---|---|
+| `/` | 概览（可选） | `/api/report/quality` |
+| `/materials` | 素材工作台 | 3、4、5、6、7、10、11、25 |
+| `/graph` | 知识图谱 | 12、13、14、15 |
+| `/path` | 学习路径 | 16 |
+| `/tutor` | 答疑辅导 | 19–24 |
+| `/report` | 质量报告 | 18 |

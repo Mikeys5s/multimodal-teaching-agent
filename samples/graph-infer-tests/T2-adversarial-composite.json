@@ -1,0 +1,24 @@
+{
+  "_comment": "构造的对抗性测试输入（非真实抽取产出）。用途：一次性验证四类完整性检查 —— 环、缺 reason、自环、稀疏性违规。期望：环被剪除、自环被剪除、缺 reason 被列出、稀疏性违规被列出。",
+  "test_case": "T2-adversarial-composite",
+  "expected": {
+    "has_cycle": true,
+    "has_missing_reason": true,
+    "has_self_loop": true,
+    "has_sparsity_violation": true,
+    "cycle_after_prune": 0,
+    "self_loop_after_prune": 0
+  },
+  "edges": [
+    { "prereq_name": "知识点A", "dependent_name": "知识点B", "relation_type": "hard", "reason": "不懂 A 无法理解 B", "confidence": 0.90 },
+    { "prereq_name": "知识点B", "dependent_name": "知识点C", "relation_type": "hard", "reason": "", "confidence": 0.80 },
+    { "prereq_name": "知识点C", "dependent_name": "知识点A", "relation_type": "hard", "reason": "C 反过来限定 A", "confidence": 0.55 },
+
+    { "prereq_name": "知识点X", "dependent_name": "知识点X", "relation_type": "hard", "reason": "自环，应被拒", "confidence": 0.90 },
+
+    { "prereq_name": "知识点U", "dependent_name": "知识点Z", "relation_type": "hard", "reason": "U 是 Z 的基础", "confidence": 0.80 },
+    { "prereq_name": "知识点V", "dependent_name": "知识点Z", "relation_type": "hard", "reason": "V 是 Z 的基础", "confidence": 0.80 },
+    { "prereq_name": "知识点W", "dependent_name": "知识点Z", "relation_type": "hard", "reason": "W 是 Z 的基础", "confidence": 0.80 },
+    { "prereq_name": "知识点Y", "dependent_name": "知识点Z", "relation_type": "hard", "reason": "Y 是 Z 的基础", "confidence": 0.80 }
+  ]
+}

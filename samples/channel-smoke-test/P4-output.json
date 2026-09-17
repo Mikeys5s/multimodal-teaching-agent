@@ -1,0 +1,203 @@
+{
+  "contract": "P4",
+  "version": "v1",
+  "material_id": "mat_smoke_cn_systems_approach_c6",
+  "section_id": "sec_6_3_1",
+  "section_label": "6.3.1 Additive Increase/Multiplicative Decrease",
+  "knowledge_points": [
+    {
+      "name": "拥塞窗口 CongestionWindow",
+      "summary_md": "TCP 为每条连接维护的状态变量，源端用它限制自己在任意时刻允许在途的未确认数据量。它是后续所有拥塞控制机制的作用对象。",
+      "kp_type": "concept",
+      "difficulty": 2,
+      "difficulty_reason": "概念本身直观（就是「允许多少数据在途」），无需数学；但它是后面全部机制的操作对象，不理解它就无法理解任何一条拥塞控制规则。",
+      "examples": [],
+      "misconceptions": [
+        {
+          "description": "把拥塞窗口当成固定配置值，而不是随网络状况动态调整的变量",
+          "cause": "误以为它是「设置一次就生效」的参数，与实际动态调节的语义不符",
+          "remedy": "强调它是每条连接的状态变量，随丢包与 ACK 持续变化",
+          "trigger_pattern": "学生说「拥塞窗口设成多少」或「配置拥塞窗口」"
+        }
+      ],
+      "source_block_id": "blk_c6-3-1-02",
+      "source_page": null,
+      "source_quote": "TCP maintains a new state variable for each connection, called CongestionWindow, which is used by the source to limit how much data it is allowed to have in transit at a given time.",
+      "confidence": 0.95
+    },
+    {
+      "name": "拥塞窗口与通告窗口取小",
+      "summary_md": "实际允许的在途未确认数据上限，取拥塞窗口与接收方通告窗口的较小值 —— 拥塞控制与流量控制共同作用于同一个上限，二者缺一不可。",
+      "kp_type": "method",
+      "difficulty": 3,
+      "difficulty_reason": "需要同时理解两个窗口各自的语义与来源（一个防拥塞、一个防接收方溢出），并理解为什么必须取小而不是相加或取大。",
+      "examples": [],
+      "misconceptions": [
+        {
+          "description": "把拥塞窗口与通告窗口混为一谈，认为是同一个东西的两个名字",
+          "cause": "二者都是「窗口」且都限制发送量，字面上容易混淆",
+          "remedy": "明确二者是并列的两个约束：一个是网络侧的限制，一个是接收方侧的限制；发送方取小",
+          "trigger_pattern": "学生说「窗口不就是接收方的那个吗」或把 cwnd 与 rwnd 互换使用"
+        }
+      ],
+      "source_block_id": "blk_c6-3-1-05",
+      "source_page": null,
+      "source_quote": "TCP is modified such that the maximum number of bytes of unacknowledged data allowed is now the minimum of the congestion window and the advertised window.",
+      "supporting_quote": "The congestion window is congestion control's counterpart to flow control's advertised window.",
+      "confidence": 0.93
+    },
+    {
+      "name": "加性增 Additive Increase",
+      "summary_md": "每成功发送一个拥塞窗口的数据（即上一 RTT 发出的包全部被确认）就把拥塞窗口增加约一个包；实现上每收到一个 ACK 增加 MSS × (MSS / CongestionWindow)。增长是线性的。",
+      "kp_type": "method",
+      "difficulty": 3,
+      "difficulty_reason": "公式本身简单，但需要理解「每 ACK 增加一点、累积到一个 RTT 后净增约一个包」这层换算关系，否则会把『每 ACK 加一个 MSS』误当成正确做法。",
+      "examples": [],
+      "misconceptions": [
+        {
+          "description": "认为每收到一个 ACK 就把窗口加一个 MSS，导致增长远快于线性",
+          "cause": "把「每个 RTT 增一个包」错记成「每个 ACK 增一个包」",
+          "remedy": "对照原文的增量公式：每个 ACK 的增量是 MSS×(MSS/cwnd)，一个 RTT 累积下来才约等于一个包",
+          "trigger_pattern": "学生写出 cwnd += MSS 这样的更新公式"
+        }
+      ],
+      "source_block_id": "blk_c6-3-1-07",
+      "source_page": null,
+      "source_quote": "Every time the source successfully sends a CongestionWindow's worth of packets—that is, each packet sent out during the last round-trip time (RTT) has been ACKed—it adds the equivalent of 1 packet to CongestionWindow.",
+      "supporting_quote": "Increment = MSS x (MSS/CongestionWindow)",
+      "confidence": 0.94
+    },
+    {
+      "name": "乘性减 Multiplicative Decrease",
+      "summary_md": "TCP 把超时解释为拥塞信号，每次超时把拥塞窗口降为原来的一半。这是 AIMD 中「减」的一半。",
+      "kp_type": "method",
+      "difficulty": 2,
+      "difficulty_reason": "规则本身只有一句话（超时即减半），容易记住；难点不在规则而在理解它为什么要配合 AIMD 的不对称性。",
+      "examples": [],
+      "misconceptions": [
+        {
+          "description": "认为超时应该把窗口清零或重设为 1，而不是减半",
+          "cause": "把「慢启动的冷启动置 1」与「超时后的减半」混在一起",
+          "remedy": "区分两种情形：连接初始或粗粒度超时才回到慢启动；普通超时只做减半",
+          "trigger_pattern": "学生说「超时了窗口就归零重来」"
+        }
+      ],
+      "source_block_id": "blk_c6-3-1-04",
+      "source_page": null,
+      "source_quote": "each time a timeout occurs, the source sets CongestionWindow to half of its previous value. This halving of the CongestionWindow for each timeout corresponds to the 'multiplicative decrease' part of AIMD.",
+      "confidence": 0.95
+    },
+    {
+      "name": "AIMD 的不对称性与稳定性",
+      "summary_md": "AIMD 的关键性质在于源端降低窗口的速度远快于提升窗口的速度；这种不对称性被证明是拥塞控制机制能够稳定的必要条件。",
+      "kp_type": "theorem",
+      "difficulty": 4,
+      "difficulty_reason": "需要从「为什么要不对称」推到「不对称为什么带来稳定」，属于机制设计层面的理解，不是记规则能达到的。",
+      "examples": [],
+      "misconceptions": [
+        {
+          "description": "把方向搞反，以为 AIMD 是「升得快、降得慢」",
+          "cause": "字面看到 additive（加）在前就以为加是主要的、强的那一半",
+          "remedy": "回到原文表述：源端愿意降低窗口的速度远快于提升的速度，先保网络不崩、再逐步试探带宽",
+          "trigger_pattern": "学生说「快加慢减」或认为轻微丢包也不该大幅降窗"
+        }
+      ],
+      "source_block_id": "blk_c6-3-1-09",
+      "source_page": null,
+      "source_quote": "The important concept to understand about AIMD is that the source is willing to reduce its congestion window at a much faster rate than it is willing to increase its congestion window.",
+      "supporting_quote": "It has been shown that AIMD is a necessary condition for a congestion-control mechanism to be stable.",
+      "confidence": 0.92
+    },
+    {
+      "name": "慢启动 Slow Start",
+      "summary_md": "TCP 用于从冷启动迅速抬起拥塞窗口的机制：初始把拥塞窗口设为 1 个包，此后每 RTT 把在途包数翻倍（指数增长），直到到达 CongestionThreshold 为止。",
+      "kp_type": "method",
+      "difficulty": 3,
+      "difficulty_reason": "规则不难，但「慢启动其实是快增长」这一层反直觉的命名需要专门理解，否则后续与拥塞避免的对比会全错。",
+      "examples": [],
+      "misconceptions": [
+        {
+          "description": "从字面理解「慢启动」为增长很慢的机制",
+          "cause": "命名与行为相反，材料原文自己都用 ironically called 来点明这层反差",
+          "remedy": "明确「慢」是相对什么而言：它是把包在时间上摊开、避免突发，而非增长速度慢",
+          "trigger_pattern": "学生说「慢启动的时候窗口涨得比较慢」"
+        }
+      ],
+      "source_block_id": "blk_c6-3-2-02",
+      "source_page": null,
+      "source_quote": "TCP therefore provides a second mechanism, ironically called slow start, which is used to increase the congestion window rapidly from a cold start.",
+      "supporting_quote": "The end result is that TCP effectively doubles the number of packets it has in transit every RTT.",
+      "confidence": 0.95
+    },
+    {
+      "name": "慢启动为何「慢」",
+      "summary_md": "慢启动的「慢」是相对于一次性把整个通告窗口的数据全部发出而言 —— 它把包在时间上摊开以避免突发；其指数增长其实比线性增长更快。",
+      "kp_type": "concept",
+      "difficulty": 4,
+      "difficulty_reason": "要求把「与谁比较」这件事说清楚。同一个机制与线性增长比是快的，与一次性发完整窗口比是慢的，参照系不明确就会答错。",
+      "examples": [],
+      "misconceptions": [
+        {
+          "description": "认为慢启动的增长速度比拥塞避免（加性增）更慢",
+          "cause": "混淆了「与加性增比较」和「与一次性发完整窗口比较」两个参照系",
+          "remedy": "对照原文：指数增长 faster than linear growth，但它 much slower than 一次性发完整个通告窗口",
+          "trigger_pattern": "学生说「慢启动阶段涨得比拥塞避免慢」"
+        }
+      ],
+      "source_block_id": "blk_c6-3-2-08",
+      "source_page": null,
+      "source_quote": "In other words, even though its exponential growth is faster than linear growth, slow start is much 'slower' than sending an entire advertised window's worth of data all at once.",
+      "confidence": 0.91
+    },
+    {
+      "name": "快速重传 Fast Retransmit",
+      "summary_md": "一个启发式机制：发送方通过重复 ACK 推断有包乱序到达、更早的包可能已丢失，从而比常规超时更早地重传。实践中等到三个重复 ACK 才重传。它是对超时重传的增强，而非替代。",
+      "kp_type": "method",
+      "difficulty": 3,
+      "difficulty_reason": "需要先理解重复 ACK 为什么会指示丢包（即"乱序 vs 丢失"的推断），再理解启发式的阈值为什么取 3，最后理解它与超时机制是并列增强关系。",
+      "examples": [],
+      "misconceptions": [
+        {
+          "description": "认为有了快速重传就不再需要超时重传",
+          "cause": "把「更快」理解成「取代」，忽略了启发式机制可能失效的情形",
+          "remedy": "对照原文：它 does not replace regular timeouts, it just enhances that facility",
+          "trigger_pattern": "学生说「快速重传取代了超时重传」或问「为什么还要有超时」"
+        },
+        {
+          "description": "认为收到第一个重复 ACK 就应立即重传",
+          "cause": "不知道重复 ACK 也可能由单纯的乱序造成",
+          "remedy": "说明为什么要等到三个重复 ACK —— 单个重复 ACK 无法区分乱序与丢失",
+          "trigger_pattern": "学生说「收到重复 ACK 就重传」而不给出阈值"
+        }
+      ],
+      "source_block_id": "blk_c6-3-3-03",
+      "source_page": null,
+      "source_quote": "Fast retransmit is a heuristic that sometimes triggers the retransmission of a dropped packet sooner than the regular timeout mechanism.",
+      "supporting_quote": "In practice, TCP waits until it has seen three duplicate ACKs before retransmitting the packet.",
+      "supporting_quote_2": "The fast retransmit mechanism does not replace regular timeouts; it just enhances that facility.",
+      "confidence": 0.93
+    },
+    {
+      "name": "快速恢复 Fast Recovery",
+      "summary_md": "消除快速重传检测到丢包与加性增开始之间那段慢启动的机制。有了它之后，慢启动只在连接初始和粗粒度超时时使用；其余时间拥塞窗口遵循纯 AIMD。",
+      "kp_type": "method",
+      "difficulty": 4,
+      "difficulty_reason": "要先理解慢启动在上述间隙中会造成什么代价，才能理解「删掉这一段」是优化；同时要理解它与其他机制的边界（何时还用慢启动）。",
+      "examples": [],
+      "misconceptions": [
+        {
+          "description": "认为快速恢复之后一定重新进入慢启动",
+          "cause": "把快速恢复与慢启动的触发条件混为一谈",
+          "remedy": "明确触发边界：只有连接初始和粗粒度超时才进慢启动；快速恢复路径直接减半并回到加性增",
+          "trigger_pattern": "学生说「丢包后进入慢启动」而不区分是超时还是重复 ACK 触发"
+        }
+      ],
+      "source_block_id": "blk_c6-3-3-06",
+      "source_page": null,
+      "source_quote": "This mechanism, which is called fast recovery, effectively removes the slow start phase that happens between when fast retransmit detects a lost packet and additive increase begins.",
+      "supporting_quote": "In other words, slow start is only used at the beginning of a connection and whenever a coarse-grained timeout occurs. At all other times, the congestion window is following a pure additive increase/multiplicative decrease pattern.",
+      "confidence": 0.92
+    }
+  ],
+  "coverage_note": "本节共抽出 9 个知识点，均在 3–12 的粒度区间内。两点如实记录：(1) 本材料正文内【没有习题】，exercises 一律为空数组 —— 典型例题的来源需另行确定（材料末章的 Exercises 或人工补充），否则 A2-2 五要素中的「典型例题」无法达成；(2) 材料没有独立的 Congestion Avoidance 子节，对应语义由 6.3.1 的 additive increase 承担。"
+}

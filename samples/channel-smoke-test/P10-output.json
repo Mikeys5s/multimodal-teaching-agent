@@ -1,0 +1,129 @@
+{
+  "contract": "P10",
+  "version": "v1",
+  "material_id": "mat_smoke_cn_systems_approach_c6",
+  "candidate_scope": "跨节候选对（6.3.1 / 6.3.2 / 6.3.3 之间）+ 同节内结构性边",
+  "edges": [
+    {
+      "prereq_name": "拥塞窗口 CongestionWindow",
+      "dependent_name": "乘性减 Multiplicative Decrease",
+      "relation_type": "hard",
+      "reason": "不知道「减半」减的是哪个变量、这个变量从哪来，乘性减这条规则就无从落地。它是乘性减的操作对象。",
+      "evidence": "TCP maintains a new state variable for each connection, called CongestionWindow ... each time a timeout occurs, the source sets CongestionWindow to half of its previous value.",
+      "confidence": 0.95,
+      "source_channel": "both",
+      "needs_review": false
+    },
+    {
+      "prereq_name": "拥塞窗口 CongestionWindow",
+      "dependent_name": "加性增 Additive Increase",
+      "relation_type": "hard",
+      "reason": "加性增的增量公式分母就是拥塞窗口（MSS/cwnd），不理解 cwnd 的语义与单位就无法理解这个公式为什么能实现线性增长。",
+      "evidence": "Increment = MSS x (MSS/CongestionWindow)",
+      "confidence": 0.95,
+      "source_channel": "both",
+      "needs_review": false
+    },
+    {
+      "prereq_name": "拥塞窗口 CongestionWindow",
+      "dependent_name": "慢启动 Slow Start",
+      "relation_type": "hard",
+      "reason": "慢启动的规则是「初始置 1 个包、之后每 RTT 翻倍」，前提是知道翻倍翻的是拥塞窗口。",
+      "evidence": "Specifically, the source starts out by setting CongestionWindow to one packet. ... TCP effectively doubles the number of packets it has in transit every RTT.",
+      "confidence": 0.94,
+      "source_channel": "both",
+      "needs_review": false
+    },
+    {
+      "prereq_name": "加性增 Additive Increase",
+      "dependent_name": "AIMD 的不对称性与稳定性",
+      "relation_type": "hard",
+      "reason": "「不对称」是加性增与乘性减两半的对比结论，只讲加性增这一半无法成立；且原文明确说 AIMD 是稳定的必要条件，前提是先理解两半各自的增长/下降速率。",
+      "evidence": "the source is willing to reduce its congestion window at a much faster rate than it is willing to increase its congestion window",
+      "confidence": 0.93,
+      "source_channel": "both",
+      "needs_review": false
+    },
+    {
+      "prereq_name": "乘性减 Multiplicative Decrease",
+      "dependent_name": "AIMD 的不对称性与稳定性",
+      "relation_type": "hard",
+      "reason": "同上 —— 不对称性必须同时握住「增」与「减」两侧的速率才能比较，缺任一侧都无法理解这个结论。",
+      "evidence": "This halving of the CongestionWindow for each timeout corresponds to the 'multiplicative decrease' part of AIMD.",
+      "confidence": 0.93,
+      "source_channel": "both",
+      "needs_review": false
+    },
+    {
+      "prereq_name": "加性增 Additive Increase",
+      "dependent_name": "慢启动 Slow Start",
+      "relation_type": "soft",
+      "reason": "不构成阻塞，但先理解加性增（线性）再学慢启动（指数），两者对比之下更容易记住慢启动为什么快、以及它在什么位置交棒给加性增。",
+      "evidence": "Slow start is used to rapidly increase the sending rate up to this value, and then additive increase is used beyond this point.",
+      "confidence": 0.88,
+      "source_channel": "both",
+      "needs_review": false
+    },
+    {
+      "prereq_name": "慢启动 Slow Start",
+      "dependent_name": "慢启动为何「慢」",
+      "relation_type": "hard",
+      "reason": "这条知识点本身就是对慢启动命名的解释（「慢」是相对一次性发完整个通告窗口而言），不理解慢启动的行为就无从讨论它慢在哪。",
+      "evidence": "even though its exponential growth is faster than linear growth, slow start is much 'slower' than sending an entire advertised window's worth of data all at once",
+      "confidence": 0.94,
+      "source_channel": "both",
+      "needs_review": false
+    },
+    {
+      "prereq_name": "慢启动 Slow Start",
+      "dependent_name": "快速恢复 Fast Recovery",
+      "relation_type": "hard",
+      "reason": "快速恢复做的事就是「删掉那段慢启动」，不知道慢启动是什么、代价在哪，就无法理解快速恢复优化了什么。",
+      "evidence": "fast recovery ... effectively removes the slow start phase that happens between when fast retransmit detects a lost packet and additive increase begins.",
+      "confidence": 0.94,
+      "source_channel": "both",
+      "needs_review": false
+    },
+    {
+      "prereq_name": "加性增 Additive Increase",
+      "dependent_name": "快速恢复 Fast Recovery",
+      "relation_type": "hard",
+      "reason": "快速恢复的收尾动作是「回到加性增」，且原文说此后遵循纯 AIMD。不理解加性增就不知道恢复到哪里去。",
+      "evidence": "at all other times, the congestion window is following a pure additive increase/multiplicative decrease pattern",
+      "confidence": 0.92,
+      "source_channel": "both",
+      "needs_review": false
+    },
+    {
+      "prereq_name": "乘性减 Multiplicative Decrease",
+      "dependent_name": "快速恢复 Fast Recovery",
+      "relation_type": "soft",
+      "reason": "快速恢复在检测到丢包时执行的正是减半动作（乘性减），先掌握乘性减会让这一步更好懂；但即使不单独掌握，也能从「减半」的直觉上跟上。",
+      "evidence": "instead simply cuts the congestion window in half (from 22 KB to 11 KB) and resumes additive increase",
+      "confidence": 0.85,
+      "source_channel": "both",
+      "needs_review": false
+    }
+  ],
+  "no_edge_reason": null,
+  "graph_check": {
+    "edge_count": 10,
+    "hard_edge_count": 8,
+    "soft_edge_count": 2,
+    "cycle_count": 0,
+    "reason_complete_rate": 1.0,
+    "max_in_degree": 3,
+    "max_out_degree": 3,
+    "sparsity_ok": true
+  },
+  "deferred_edges": [
+    {
+      "prereq_name": "TCP 的流量控制与通告窗口（第 5 章）",
+      "dependent_name": "拥塞窗口与通告窗口取小",
+      "relation_type": "hard",
+      "reason": "原文明确把拥塞窗口称为 flow control's advertised window 的 counterpart，并要求两者取小 —— 不先理解通告窗口从哪来、为什么存在，就无法理解为什么要取小而不是取大。",
+      "deferred_because": "P10 契约要求名称逐字来自输入清单，而第 5 章的知识点本次不在输入内。按规则【正确未输出】。",
+      "action": "待第 5 章（Ch 5 End-to-End Protocols）的知识点抽完入库后，用覆盖两章的候选集再跑一轮 P10 补齐。"
+    }
+  ]
+}

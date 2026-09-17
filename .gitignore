@@ -1,3 +1,7 @@
+# ============================================================
+#  团队基础规则（由 RyeYen 初始化，勿删）
+# ============================================================
+
 # Secrets and local configuration
 .env
 .env.*
@@ -10,20 +14,26 @@ __pycache__/
 *.py[cod]
 .venv/
 venv/
+env/
 .pytest_cache/
 .mypy_cache/
 .ruff_cache/
+*.egg-info/
+.coverage
+htmlcov/
 
 # Node.js
 node_modules/
 .npm/
 .pnpm-store/
+dist/
+dist-ssr/
+.vite/
+*.local
 
 # Build and coverage output
 build/
-dist/
 coverage/
-htmlcov/
 *.log
 
 # IDE and operating system files
@@ -43,3 +53,32 @@ temp/
 *.pt
 *.pth
 *.safetensors
+
+
+# ============================================================
+#  本项目补充规则（析知 XiZhi）
+# ============================================================
+
+# ---- SQLite 数据库（运行时产物，含 WAL 模式产生的旁文件）----
+# 注意：团队基础规则里没有这三条，SQLite 的 -wal / -shm 很容易被漏掉
+*.db
+*.db-wal
+*.db-shm
+
+# ---- AI 工作记忆 ----
+# .learnbuddy 是本项目的 AI 协作工作记忆（含内部讨论记录与本机路径），
+# 不作为作品交付内容提交。注意：这个目录不是缓存，本地不要删除。
+.learnbuddy/
+
+# ---- 平台预装技能（非本项目产出）----
+# 只保留自家编写的技能，其余不提交
+skills/*
+!skills/xizhi-graph-infer/
+
+# ---- 临时脚本 ----
+.tmp_*
+*.tmp
+
+# ---- 赛事原始材料 ----
+# 赛事手册为组委会文档，不在公开仓库中分发
+*赛事手册*.docx

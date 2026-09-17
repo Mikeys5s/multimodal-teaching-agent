@@ -1,0 +1,35 @@
+{
+  "ok": true,
+  "target": "快速恢复 Fast Recovery",
+  "likely_gap": {
+    "knowledge_point": "拥塞窗口 CongestionWindow",
+    "breadth_from_target": 2,
+    "depended_by_count": 3,
+    "misconception_hit": false
+  },
+  "why": [
+    "它距目标有 2 层依赖，属于断层较深的位置",
+    "后续有 3 个知识点依赖它，是关键地基"
+  ],
+  "message": "你这一题卡在「快速恢复 Fast Recovery」，但根因更可能是「拥塞窗口 CongestionWindow」没吃透 —— 建议先回去补它，再回来学目标知识点。",
+  "candidates": [
+    {
+      "knowledge_point": "拥塞窗口 CongestionWindow",
+      "breadth_from_target": 2,
+      "depended_by_count": 3,
+      "misconception_hit": false
+    },
+    {
+      "knowledge_point": "加性增 Additive Increase",
+      "breadth_from_target": 1,
+      "depended_by_count": 3,
+      "misconception_hit": false
+    },
+    {
+      "knowledge_point": "慢启动 Slow Start",
+      "breadth_from_target": 1,
+      "depended_by_count": 2,
+      "misconception_hit": false
+    }
+  ]
+}

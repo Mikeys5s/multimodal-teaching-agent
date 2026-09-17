@@ -1,0 +1,30 @@
+{
+  "node_count": 9,
+  "edge_count": 10,
+  "hard_edge_count": 8,
+  "soft_edge_count": 2,
+  "pruned_edge_count": 0,
+  "cycle_count": 0,
+  "nodes_in_cycle": [],
+  "self_loops": [],
+  "reason_complete_rate": 1.0,
+  "missing_reason": [],
+  "sparsity_ok": true,
+  "sparsity_violations": [],
+  "max_in_degree": 3,
+  "max_out_degree": 3,
+  "isolated_nodes": [
+    "快速重传 Fast Retransmit",
+    "拥塞窗口与通告窗口取小"
+  ],
+  "no_prereq_nodes": [
+    "拥塞窗口 CongestionWindow"
+  ],
+  "checks": {
+    "B1-2_cycle_zero": true,
+    "B1-5_reason_complete": true,
+    "no_self_loop": true,
+    "sparsity_within_limit": true,
+    "no_isolated_node": false
+  }
+}
