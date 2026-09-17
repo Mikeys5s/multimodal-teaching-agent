@@ -17,6 +17,7 @@ from sqlalchemy import (
     CheckConstraint,
     Float,
     ForeignKey,
+    ForeignKeyConstraint,
     Index,
     Integer,
     Text,
@@ -26,7 +27,15 @@ from sqlalchemy import (
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db import Base
-from app.models._common import KP_TYPES, RELATION_TYPES, SOURCE_CHANNELS, sql_in
+from app.models._common import (
+    KP_TYPES,
+    RELATION_TYPES,
+    SOURCE_CHANNELS,
+    sql_in,
+    utc_iso_check,
+    utc_now_iso,
+    utc_server_default,
+)
 from app.models.outline import Section
 
 
@@ -42,18 +51,13 @@ class KnowledgePoint(Base):
     # ---- 层级：三个字段都是 NOT NULL ----
     # section_id 非空是"三级结构完整率 100%"（A2-1）的数据库层保证：
     # 宁可写入失败，也不允许出现挂在节外面的裸知识点。
-    section_id: Mapped[str] = mapped_column(
-        Text, ForeignKey("sections.id", ondelete="CASCADE"), nullable=False
-    )
-    chapter_id: Mapped[str] = mapped_column(
-        Text,
-        ForeignKey("chapters.id", ondelete="CASCADE"),
-        nullable=False,
-        doc="冗余字段，便于按章查询",
-    )
-    material_id: Mapped[str] = mapped_column(
-        Text, ForeignKey("materials.id", ondelete="CASCADE"), nullable=False, doc="冗余字段"
-    )
+    #
+    # 这三个字段**不各挂单列外键**，而是由 __table_args__ 里一条复合外键统一约束。
+    # 单列外键只能保证"这些 id 各自存在"，保证不了"它们同属一条链"——
+    # 而错链的数据会让"按章查询"和质量报告悄悄出错。
+    section_id: Mapped[str] = mapped_column(Text, nullable=False)
+    chapter_id: Mapped[str] = mapped_column(Text, nullable=False, doc="冗余字段，便于按章查询")
+    material_id: Mapped[str] = mapped_column(Text, nullable=False, doc="冗余字段，便于按材料查询")
 
     # ---- 内容 ----
     name: Mapped[str] = mapped_column(Text, nullable=False)
@@ -84,21 +88,38 @@ class KnowledgePoint(Base):
         Integer, nullable=False, server_default=text("0"), doc="待核实标记；缺失字段或低置信度置 1"
     )
     seq: Mapped[int] = mapped_column(Integer, nullable=False, doc="节内顺序，从 0 开始")
-    created_at: Mapped[str] = mapped_column(Text, nullable=False)
+    created_at: Mapped[str] = mapped_column(
+        Text, nullable=False, default=utc_now_iso, server_default=utc_server_default()
+    )
 
     section: Mapped[Section] = relationship(back_populates="knowledge_points")
 
     __table_args__ = (
         # 同一节内不允许重名 —— 否则依赖边会指向"哪个重名的？"，无法解释
         UniqueConstraint("section_id", "name", name="uq_kp_section_name"),
+        # ★ 层级链一致性（隐患 A 的修复）：
+        #   (section_id, chapter_id, material_id) 这一整组必须真的存在于 sections 表里。
+        #   于是"节属于 A 材料、知识点却写 B 材料"这类错链数据在写入时就被拒绝。
+        ForeignKeyConstraint(
+            ["section_id", "chapter_id", "material_id"],
+            ["sections.id", "sections.chapter_id", "sections.material_id"],
+            ondelete="CASCADE",
+            onupdate="CASCADE",
+            name="fk_kp_section_chain",
+        ),
         CheckConstraint("difficulty BETWEEN 1 AND 5", name="difficulty_range"),
         CheckConstraint(f"kp_type IN ({sql_in(KP_TYPES)})", name="kp_type"),
         CheckConstraint("needs_review IN (0, 1)", name="needs_review_boolean"),
         CheckConstraint("seq >= 0", name="seq_non_negative"),
         CheckConstraint("length(trim(source_quote)) > 0", name="source_quote_not_blank"),
+        CheckConstraint(utc_iso_check("created_at"), name="created_at_utc_iso"),
         Index("idx_kp_section", "section_id", "seq"),
         Index("idx_kp_difficulty", "difficulty"),
         Index("idx_kp_review", "needs_review"),
+        # 让 chapter_id / material_id 这两个冗余字段真的能被高效使用，
+        # 否则"冗余以便按章查询"只是一句没有兑现的注释
+        Index("idx_kp_chapter", "chapter_id"),
+        Index("idx_kp_material", "material_id"),
     )
 
     def __repr__(self) -> str:
@@ -157,7 +178,9 @@ class KpPrerequisite(Base):
         doc="★ 是否因 DAG 环校验被剪除。**软删除**：被剪的边保留记录，"
         "它是「系统发现并处理了矛盾」的证据，比只报「环数 0」更有说服力",
     )
-    created_at: Mapped[str] = mapped_column(Text, nullable=False)
+    created_at: Mapped[str] = mapped_column(
+        Text, nullable=False, default=utc_now_iso, server_default=utc_server_default()
+    )
 
     __table_args__ = (
         CheckConstraint(f"relation_type IN ({sql_in(RELATION_TYPES)})", name="relation_type"),
@@ -167,6 +190,7 @@ class KpPrerequisite(Base):
         CheckConstraint("needs_review IN (0, 1)", name="needs_review_boolean"),
         CheckConstraint("pruned IN (0, 1)", name="pruned_boolean"),
         CheckConstraint("length(trim(reason)) > 0", name="reason_not_blank"),
+        CheckConstraint(utc_iso_check("created_at"), name="created_at_utc_iso"),
         Index("idx_edges_prereq", "prereq_kp_id"),
         Index("idx_edges_pruned", "pruned"),
         Index("idx_edges_review", "needs_review"),

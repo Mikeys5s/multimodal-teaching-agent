@@ -99,12 +99,82 @@ def test_foreign_keys_exist_in_migrated_db(migrated_db: Engine) -> None:
     """关键外键不能缺 —— 缺了会留下孤儿数据。"""
     insp = inspect(migrated_db)
 
-    kp_fks = {fk["referred_table"] for fk in insp.get_foreign_keys("knowledge_points")}
-    assert {"sections", "chapters", "materials", "material_blocks"} <= kp_fks
+    # knowledge_points 的层级引用改为**一条复合外键**指向 sections，
+    # 所以这里不再期待它直接引用 chapters —— 那是旧设计。
+    kp_fks = insp.get_foreign_keys("knowledge_points")
+    kp_targets = {fk["referred_table"] for fk in kp_fks}
+    assert {"sections", "materials", "material_blocks"} <= kp_targets
+
+    chain = [fk for fk in kp_fks if fk["referred_table"] == "sections"]
+    assert chain, "knowledge_points 缺少指向 sections 的外键"
+    assert set(chain[0]["constrained_columns"]) == {"section_id", "chapter_id", "material_id"}, (
+        f"指向 sections 的外键不是复合的：{chain[0]['constrained_columns']}"
+    )
 
     edge_fks = [fk for fk in insp.get_foreign_keys("kp_prerequisites")]
     assert len(edge_fks) == 2
     assert all(fk["referred_table"] == "knowledge_points" for fk in edge_fks)
+
+
+def test_composite_chain_fk_exists_in_migrated_db(migrated_db: Engine) -> None:
+    """★ 复合外键必须在迁移建出的库里真实存在 —— 它是"层级链一致性"的唯一保证。"""
+    insp = inspect(migrated_db)
+
+    sec_fks = insp.get_foreign_keys("sections")
+    chain = [fk for fk in sec_fks if fk["referred_table"] == "chapters"]
+    assert chain, "sections 缺少指向 chapters 的外键"
+    assert set(chain[0]["constrained_columns"]) == {"chapter_id", "material_id"}, (
+        f"sections 的链外键不是复合的：{chain[0]['constrained_columns']}"
+    )
+
+
+def test_composite_fk_is_actually_enforced(migrated_db: Engine) -> None:
+    """光有约束声明不够 —— 要确认它**真的拦得住**跨链数据。
+
+    这是"迁移建出的库"与"模型定义"之外的第三层验证：
+    结构一致 ≠ 行为正确。SQLite 的复合外键需要父侧有对应唯一索引才会生效，
+    而唯一索引本身也可能是"看起来有、其实形状不对"。
+    """
+    from sqlalchemy import text
+    from sqlalchemy.exc import IntegrityError
+
+    with migrated_db.begin() as conn:
+        conn.execute(
+            text(
+                "INSERT INTO materials (id,filename,file_hash,stored_path,mime_type,size_bytes,"
+                "source_type,status,created_at,updated_at) VALUES "
+                "('mat_a','a.pdf','h1','','application/pdf',1,'pdf_text','done',"
+                "'2026-09-17T12:00:00+00:00','2026-09-17T12:00:00+00:00'),"
+                "('mat_b','b.pdf','h2','','application/pdf',1,'pdf_text','done',"
+                "'2026-09-17T12:00:00+00:00','2026-09-17T12:00:00+00:00')"
+            )
+        )
+        conn.execute(
+            text(
+                "INSERT INTO chapters (id,material_id,number,title,seq) VALUES "
+                "('ch_a1','mat_a','1','A1',0),('ch_b1','mat_b','1','B1',0)"
+            )
+        )
+        conn.execute(
+            text(
+                "INSERT INTO sections (id,material_id,chapter_id,number,title,seq) VALUES "
+                "('sec_a1','mat_a','ch_a1','1.1','A1.1',0)"
+            )
+        )
+
+    cross_chain_sql = text(
+        "INSERT INTO knowledge_points (id,section_id,chapter_id,material_id,name,summary_md,"
+        "difficulty,kp_type,source_material_id,source_quote,needs_review,seq,created_at) "
+        "VALUES ('kp_bad','sec_a1','ch_b1','mat_a','跨链','说明',3,'concept','mat_a','原文',0,0,"
+        "'2026-09-17T12:00:00+00:00')"
+    )
+
+    try:
+        with migrated_db.begin() as conn:
+            conn.execute(cross_chain_sql)
+    except IntegrityError:
+        return  # 正确：跨链数据被拒绝
+    raise AssertionError("迁移建出的库里，跨链知识点竟然写进去了 —— 复合外键没有生效")
 
 
 def test_pragmas_are_active_on_migrated_db(migrated_db: Engine) -> None:

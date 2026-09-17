@@ -10,18 +10,46 @@ from __future__ import annotations
 from collections.abc import Iterable
 from datetime import UTC, datetime
 
+from sqlalchemy import TextClause, text
+
 # ---------------------------------------------------------------------------
 # 时间
 # ---------------------------------------------------------------------------
 
+# 库里时间字段的唯一合法格式（UTC，带 +00:00 偏移）。
+#
+# 为什么必须收敛到「唯一格式」：字段是 TEXT，排序靠字符串字典序。
+# 只要混进一个带本地偏移的时间（如 2026-09-17T20:34:56+08:00），
+# 字典序就会把一个"实际更早"的时间排到后面 —— **而且全程不报错**。
+# 统一 UTC 单一格式后，字典序才等价于时间序。
+UTC_ISO_FORMAT = "%Y-%m-%dT%H:%M:%S+00:00"
+
 
 def utc_now_iso() -> str:
-    """UTC ISO8601 字符串（秒精度）。
+    """当前时间的 UTC ISO8601 字符串，格式与 `UTC_ISO_FORMAT` 严格一致。"""
+    return datetime.now(UTC).strftime(UTC_ISO_FORMAT)
 
-    统一存 UTC，不存本地时间 —— 否则一旦有人在不同时区跑脚本，
-    `created_at` 就没法比大小了。
+
+def utc_iso_check(column: str) -> str:
+    """生成校验时间字段格式的 CHECK 表达式。
+
+    做法：把存进去的字符串**再走一遍 strftime 归一化**，再比对是否与原文一致。
+
+    为什么不用 GLOB 模式匹配：GLOB 只校验"形状"。实测
+    `2026-13-17T12:34:56+00:00`（13 月）能骗过 GLOB，但会被 strftime
+    归一化成 NULL 从而被拒。此外它还会拒绝带本地时区偏移的时间，
+    强制全库统一 UTC。
     """
-    return datetime.now(UTC).replace(microsecond=0).isoformat()
+    return f"{column} IS strftime('{UTC_ISO_FORMAT}', {column})"
+
+
+def utc_server_default() -> TextClause:
+    """时间列的数据库默认值 —— 绕过 ORM 直接写库时也是正确格式。
+
+    与 `utc_now_iso()`（ORM 默认值）一起构成两层防护，CHECK 再兜底。
+    三层下来，"时间格式写错"这件事基本不可能发生。
+    """
+    return text(f"(strftime('{UTC_ISO_FORMAT}','now'))")
 
 
 # ---------------------------------------------------------------------------
