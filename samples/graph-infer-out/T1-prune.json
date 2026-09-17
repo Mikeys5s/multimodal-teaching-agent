@@ -1,0 +1,103 @@
+{
+  "pruned_count": 1,
+  "rounds": [
+    {
+      "round": 1,
+      "cycle": [
+        "知识点A",
+        "知识点B",
+        "知识点C",
+        "知识点A"
+      ],
+      "pruned_edge": {
+        "prereq_name": "知识点C",
+        "dependent_name": "知识点A"
+      },
+      "pruned_confidence": 0.55,
+      "candidates": [
+        {
+          "prereq_name": "知识点C",
+          "dependent_name": "知识点A",
+          "confidence": 0.55
+        },
+        {
+          "prereq_name": "知识点B",
+          "dependent_name": "知识点C",
+          "confidence": 0.8
+        },
+        {
+          "prereq_name": "知识点A",
+          "dependent_name": "知识点B",
+          "confidence": 0.9
+        }
+      ]
+    }
+  ],
+  "cycle_count_after": 0,
+  "edges_after_prune": [
+    {
+      "prereq_name": "知识点A",
+      "dependent_name": "知识点B",
+      "relation_type": "hard",
+      "reason": "不懂 A 的定义就无法理解 B 的成立条件",
+      "confidence": 0.9,
+      "pruned": false,
+      "pruned_reason": ""
+    },
+    {
+      "prereq_name": "知识点B",
+      "dependent_name": "知识点C",
+      "relation_type": "hard",
+      "reason": "C 的推导过程直接引用了 B 的结论",
+      "confidence": 0.8,
+      "pruned": false,
+      "pruned_reason": ""
+    },
+    {
+      "prereq_name": "知识点C",
+      "dependent_name": "知识点A",
+      "relation_type": "hard",
+      "reason": "C 的结论反过来限定了 A 的适用范围",
+      "confidence": 0.55,
+      "pruned": true,
+      "pruned_reason": "cycle_detected"
+    },
+    {
+      "prereq_name": "知识点D",
+      "dependent_name": "知识点E",
+      "relation_type": "soft",
+      "reason": "先会 D 会让 E 更顺，但不构成阻塞",
+      "confidence": 0.85,
+      "pruned": false,
+      "pruned_reason": ""
+    }
+  ],
+  "verify_after_prune": {
+    "node_count": 5,
+    "edge_count": 3,
+    "hard_edge_count": 2,
+    "soft_edge_count": 1,
+    "pruned_edge_count": 1,
+    "cycle_count": 0,
+    "nodes_in_cycle": [],
+    "self_loops": [],
+    "reason_complete_rate": 1.0,
+    "missing_reason": [],
+    "sparsity_ok": true,
+    "sparsity_violations": [],
+    "max_in_degree": 1,
+    "max_out_degree": 1,
+    "isolated_nodes": [],
+    "no_prereq_nodes": [
+      "知识点A",
+      "知识点D"
+    ],
+    "checks": {
+      "B1-2_cycle_zero": true,
+      "B1-5_reason_complete": true,
+      "no_self_loop": true,
+      "sparsity_within_limit": true,
+      "no_isolated_node": true
+    }
+  }
+}

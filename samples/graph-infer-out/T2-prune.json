@@ -1,0 +1,174 @@
+{
+  "pruned_count": 2,
+  "rounds": [
+    {
+      "round": 1,
+      "cycle": [
+        "知识点A",
+        "知识点B",
+        "知识点C",
+        "知识点A"
+      ],
+      "pruned_edge": {
+        "prereq_name": "知识点C",
+        "dependent_name": "知识点A"
+      },
+      "pruned_confidence": 0.55,
+      "candidates": [
+        {
+          "prereq_name": "知识点C",
+          "dependent_name": "知识点A",
+          "confidence": 0.55
+        },
+        {
+          "prereq_name": "知识点B",
+          "dependent_name": "知识点C",
+          "confidence": 0.8
+        },
+        {
+          "prereq_name": "知识点A",
+          "dependent_name": "知识点B",
+          "confidence": 0.9
+        }
+      ]
+    },
+    {
+      "round": 2,
+      "cycle": [
+        "知识点X",
+        "知识点X"
+      ],
+      "pruned_edge": {
+        "prereq_name": "知识点X",
+        "dependent_name": "知识点X"
+      },
+      "pruned_confidence": 0.9,
+      "candidates": [
+        {
+          "prereq_name": "知识点X",
+          "dependent_name": "知识点X",
+          "confidence": 0.9
+        }
+      ]
+    }
+  ],
+  "cycle_count_after": 0,
+  "edges_after_prune": [
+    {
+      "prereq_name": "知识点A",
+      "dependent_name": "知识点B",
+      "relation_type": "hard",
+      "reason": "不懂 A 无法理解 B",
+      "confidence": 0.9,
+      "pruned": false,
+      "pruned_reason": ""
+    },
+    {
+      "prereq_name": "知识点B",
+      "dependent_name": "知识点C",
+      "relation_type": "hard",
+      "reason": "",
+      "confidence": 0.8,
+      "pruned": false,
+      "pruned_reason": ""
+    },
+    {
+      "prereq_name": "知识点C",
+      "dependent_name": "知识点A",
+      "relation_type": "hard",
+      "reason": "C 反过来限定 A",
+      "confidence": 0.55,
+      "pruned": true,
+      "pruned_reason": "cycle_detected"
+    },
+    {
+      "prereq_name": "知识点X",
+      "dependent_name": "知识点X",
+      "relation_type": "hard",
+      "reason": "自环，应被拒",
+      "confidence": 0.9,
+      "pruned": true,
+      "pruned_reason": "cycle_detected"
+    },
+    {
+      "prereq_name": "知识点U",
+      "dependent_name": "知识点Z",
+      "relation_type": "hard",
+      "reason": "U 是 Z 的基础",
+      "confidence": 0.8,
+      "pruned": false,
+      "pruned_reason": ""
+    },
+    {
+      "prereq_name": "知识点V",
+      "dependent_name": "知识点Z",
+      "relation_type": "hard",
+      "reason": "V 是 Z 的基础",
+      "confidence": 0.8,
+      "pruned": false,
+      "pruned_reason": ""
+    },
+    {
+      "prereq_name": "知识点W",
+      "dependent_name": "知识点Z",
+      "relation_type": "hard",
+      "reason": "W 是 Z 的基础",
+      "confidence": 0.8,
+      "pruned": false,
+      "pruned_reason": ""
+    },
+    {
+      "prereq_name": "知识点Y",
+      "dependent_name": "知识点Z",
+      "relation_type": "hard",
+      "reason": "Y 是 Z 的基础",
+      "confidence": 0.8,
+      "pruned": false,
+      "pruned_reason": ""
+    }
+  ],
+  "verify_after_prune": {
+    "node_count": 9,
+    "edge_count": 6,
+    "hard_edge_count": 6,
+    "soft_edge_count": 0,
+    "pruned_edge_count": 2,
+    "cycle_count": 0,
+    "nodes_in_cycle": [],
+    "self_loops": [],
+    "reason_complete_rate": 0.8333,
+    "missing_reason": [
+      {
+        "prereq_name": "知识点B",
+        "dependent_name": "知识点C"
+      }
+    ],
+    "sparsity_ok": false,
+    "sparsity_violations": [
+      {
+        "node": "知识点Z",
+        "in_degree": 4,
+        "out_degree": 0
+      }
+    ],
+    "max_in_degree": 4,
+    "max_out_degree": 1,
+    "isolated_nodes": [
+      "知识点X"
+    ],
+    "no_prereq_nodes": [
+      "知识点A",
+      "知识点U",
+      "知识点V",
+      "知识点W",
+      "知识点Y"
+    ],
+    "checks": {
+      "B1-2_cycle_zero": true,
+      "B1-5_reason_complete": false,
+      "no_self_loop": true,
+      "sparsity_within_limit": false,
+      "no_isolated_node": false
+    }
+  }
+}

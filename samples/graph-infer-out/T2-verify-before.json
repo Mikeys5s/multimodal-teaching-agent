@@ -1,0 +1,50 @@
+{
+  "node_count": 9,
+  "edge_count": 8,
+  "hard_edge_count": 8,
+  "soft_edge_count": 0,
+  "pruned_edge_count": 0,
+  "cycle_count": 1,
+  "nodes_in_cycle": [
+    "知识点X",
+    "知识点C",
+    "知识点A",
+    "知识点B"
+  ],
+  "self_loops": [
+    {
+      "node": "知识点X"
+    }
+  ],
+  "reason_complete_rate": 0.875,
+  "missing_reason": [
+    {
+      "prereq_name": "知识点B",
+      "dependent_name": "知识点C"
+    }
+  ],
+  "sparsity_ok": false,
+  "sparsity_violations": [
+    {
+      "node": "知识点Z",
+      "in_degree": 4,
+      "out_degree": 0
+    }
+  ],
+  "max_in_degree": 4,
+  "max_out_degree": 1,
+  "isolated_nodes": [],
+  "no_prereq_nodes": [
+    "知识点U",
+    "知识点V",
+    "知识点W",
+    "知识点Y"
+  ],
+  "checks": {
+    "B1-2_cycle_zero": false,
+    "B1-5_reason_complete": false,
+    "no_self_loop": false,
+    "sparsity_within_limit": false,
+    "no_isolated_node": true
+  }
+}

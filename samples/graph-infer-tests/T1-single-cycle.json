@@ -1,0 +1,16 @@
+{
+  "_comment": "构造的对抗性测试输入（非真实抽取产出）。用途：验证 DAG 环路检测与剪枝算法（B1-2）。图结构：唯一一个三元环 A→B→C→A，其中 C→A 的 confidence 最低，期望被剪除，剪后必须无环。",
+  "test_case": "T1-single-cycle",
+  "expected": {
+    "cycle_before": 1,
+    "pruned_count": 1,
+    "pruned_edge": { "prereq_name": "知识点C", "dependent_name": "知识点A" },
+    "cycle_after": 0
+  },
+  "edges": [
+    { "prereq_name": "知识点A", "dependent_name": "知识点B", "relation_type": "hard", "reason": "不懂 A 的定义就无法理解 B 的成立条件", "confidence": 0.90 },
+    { "prereq_name": "知识点B", "dependent_name": "知识点C", "relation_type": "hard", "reason": "C 的推导过程直接引用了 B 的结论", "confidence": 0.80 },
+    { "prereq_name": "知识点C", "dependent_name": "知识点A", "relation_type": "hard", "reason": "C 的结论反过来限定了 A 的适用范围", "confidence": 0.55 },
+    { "prereq_name": "知识点D", "dependent_name": "知识点E", "relation_type": "soft", "reason": "先会 D 会让 E 更顺，但不构成阻塞", "confidence": 0.85 }
+  ]
+}
