@@ -7,6 +7,22 @@
 
 ---
 
+## ⚠️ 0. 先做这一件事：把仓库目录加入杀毒软件白名单
+
+**实测发生过两次**：`.git/objects/pack/` 被清空、`.venv/Lib/site-packages/` 下所有包变成
+**0 个文件**（目录结构和 `.dist-info` 还在）。
+
+**判断依据**：目录结构完整、只丢文件 → **不是磁盘故障，是有程序在按规则删除/隔离**。
+进程里能看到杀毒软件（本机是火绒 `HipsDaemon` / `HipsTray`）。
+
+**请把 `D:\muti_tagent` 加入杀毒软件的排除目录。** 否则会反复发生 ——
+表现为测试突然报 `No module named fastapi`、git 报 `not a valid object`。
+
+**在这个问题解决之前**：**勤提交、勤推送**。本机随时可能再被清，
+而远端的东西不会丢。不要攒一大堆改动最后一起推。
+
+---
+
 ## 1. 环境准备
 
 ```bash
@@ -44,6 +60,7 @@ python -m venv .venv
 | 提交前不看 `git status` + `git diff --staged` | 容易把 `.env`、数据库文件、几个 GB 的模型一起推上去 | 泄露密钥 / 仓库臃肿，且公开仓库不可撤回 |
 | 用 `rm` 删项目里的文件 | 本机删除机制走回收站，沙箱内走不通 | 报 `SAFE_DELETE_FAIL_CLOSED`。**改用重命名移走**（见坑 4） |
 | 手工给 `created_at` 传任意时间字符串 | 时间列是 TEXT，排序靠字典序 | 混进带本地偏移的时间会让排序**静默出错**。现在有 CHECK 兜底，会直接报错 |
+| **直接用 `git branch -f main origin/main` 更新本地 main** | `origin/main` 是**本地缓存**，`git fetch` 失败过一次它就可能停在旧位置 | 本地 main 被设到旧提交 → 下一个 `git switch main` 会**删掉新文件**（见坑 6） |
 
 ---
 
@@ -56,6 +73,38 @@ python -m venv .venv
 **恢复**：
 ```bash
 .venv/Scripts/python.exe -m ensurepip
+```
+
+---
+
+### 坑 1b · pip 镜像不可达导致装不上依赖
+
+**现象**：
+```
+ERROR: Could not find a version that satisfies the requirement setuptools>=68
+       (from versions: none)
+ERROR: Failed to build '<项目目录>' when installing build dependencies
+```
+`from versions: none` 说明**索引本身不可达**，不是版本约束问题。
+注意：**`curl` 测镜像返回 200 不代表 pip 能拿到版本列表** —— 实测清华源在 curl 正常时 pip 仍然失败。
+
+**根因**：`pip install -e .` 默认走**构建隔离**，会去下载 `setuptools`；而 venv 里恰好没有它，
+下载又失败，整个安装就挂。
+
+**恢复**：
+```bash
+# ① 先补 setuptools（换官方源）
+.venv/Scripts/python.exe -m pip install setuptools -i https://pypi.org/simple
+
+# ② 再装项目，跳过构建隔离
+.venv/Scripts/python.exe -m pip install -e ".[dev]" --no-build-isolation -i https://pypi.org/simple
+```
+
+**降级方案**（连可编辑安装都做不了时）：直接装依赖列表即可 ——
+从 `backend/` 目录下跑代码时 `import app` 本来就能工作：
+```bash
+.venv/Scripts/python.exe -m pip install -q fastapi "uvicorn[standard]" "sqlalchemy>=2" \
+  alembic pydantic-settings python-multipart pytest pytest-cov httpx ruff -i https://pypi.org/simple
 ```
 
 ---
@@ -124,6 +173,68 @@ python -c "import os; os.rename(r'<源>', r'<目标>')"
 
 **处理**：需要网络的命令（`pip install`、`git push/fetch`、`curl`）要用**沙箱外**执行；
 纯本地命令（建目录、写文件、跑测试）留在沙箱内即可。
+
+---
+
+### 坑 6 · 用远端跟踪引用更新本地分支 —— 会删文件
+
+**这是第二危险的坑**（仅次于"批量删文件"），实测栽过一次，代价是工作区被清空。
+
+**危险写法**：
+```bash
+git branch -f main origin/main    # ← origin/main 是本地缓存，可能已过期
+git switch main                    # ← 于是切到旧提交，把新文件全删掉
+```
+
+**为什么 `origin/main` 会过期**：它**只是本地记录**，只在 `git fetch` 成功时才更新。
+一旦某次 fetch 失败或异常，它就会停在旧位置 —— 而 `git branch -f` 完全不会校验。
+
+**征兆（看到就必须停下，不要继续往下跑）**：
+```
+error: cannot lock ref 'refs/remotes/origin/main': is at fca4e1f... but expected ccfb2a8
+ ! ccfb2a8..6e783de  main -> origin/main  (unable to update local ref)
+```
+> **`cannot lock ref` = 本地记录不可信。** 看到它就该先修引用，而不是继续操作。
+
+**正确做法**：
+```bash
+# ① 取权威值，不依赖本地缓存
+git ls-remote origin refs/heads/main
+
+# ② 用权威 sha 直接更新
+git update-ref refs/remotes/origin/main <权威sha>
+git branch -f main <权威sha>
+git switch main
+```
+
+**已经中招了怎么办**（顺序不能乱）：
+```
+1. git update-ref refs/remotes/origin/main <权威sha>   # 先修引用
+2. 杀掉卡死的 git 进程                                  # 见坑 7
+3. 移走 .git/index.lock                                # 进程死了才移得动
+4. git restore .                                       # 文件从索引恢复，不会丢
+```
+
+---
+
+### 坑 7 · 卡死的 git 进程 + `index.lock` 移不走
+
+**现象**：`fatal: Unable to create '.git/index.lock': File exists`，
+但按提示"手动删掉锁文件"**删不掉**，报 `WinError 32 另一个程序正在使用此文件`。
+
+**原因**：有一个 git 进程真的还活着并持有它 —— 典型是 `git switch` 卡在删除大量文件上
+（也就是坑 6 发生时会连带产生）。
+
+**正确顺序**（不要反复重试删锁，只会浪费时间）：
+```bash
+# 1) 查进程
+powershell -NoProfile -Command "Get-Process | Where-Object { \$_.ProcessName -match '^git$' }"
+# 2) 杀掉
+powershell -NoProfile -Command "Stop-Process -Id <PID> -Force"
+# 3) 移锁（用重命名，不用删除）
+python -c "import os; os.rename(r'<repo>\.git\index.lock', r'<别处>\index.lock.old')"
+# 4) 再执行 git 操作
+```
 
 ---
 
