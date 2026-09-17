@@ -24,6 +24,15 @@ EXPECTED_TABLES = {
     "sections",
     "knowledge_points",
     "kp_prerequisites",
+    # 第二批 8 张表
+    "kp_examples",
+    "kp_misconceptions",
+    "kp_embeddings",
+    "questions",
+    "qa_sessions",
+    "qa_turns",
+    "jobs",
+    "llm_calls",
 }
 
 

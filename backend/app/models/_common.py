@@ -80,6 +80,38 @@ RELATION_TYPES: tuple[str, ...] = ("hard", "soft")
 # 这条边由哪条线索产生（双通道融合，SPEC §1.5）
 SOURCE_CHANNELS: tuple[str, ...] = ("structure", "semantic", "both")
 
+# kp_examples / questions 共用的题型（data-model §2.6 / §2.9）
+QUESTION_TYPES: tuple[str, ...] = (
+    "single_choice",
+    "multi_choice",
+    "fill_blank",
+    "short_answer",
+    "coding",
+    "true_false",
+    "other",
+)
+
+# kp_misconceptions.source —— ★ 必须区分来源：
+# llm_inferred 的条目不得被当成人类确认过的结论展示
+MISCONCEPTION_SOURCES: tuple[str, ...] = ("material", "llm_inferred", "human")
+
+# qa_turns.turn_type（data-model §2.10）—— 苏格拉底状态机的对外可见状态
+TURN_TYPES: tuple[str, ...] = (
+    "probe",  # 首轮反问
+    "hint1",  # 一级提示
+    "hint2",  # 二级提示
+    "explain",  # 降级为直接讲解（连续 2 次答不上，由代码层强制）
+    "confirm",  # 确认理解
+    "refuse",  # 越界拒答
+    "student_answer",
+    "student_question",
+)
+QA_ROLES: tuple[str, ...] = ("student", "tutor")
+
+# jobs（data-model §2.11）
+JOB_TYPES: tuple[str, ...] = ("parse", "extract_knowledge", "embed", "reindex")
+JOB_STATUSES: tuple[str, ...] = ("queued", "running", "done", "failed")
+
 
 # ---------------------------------------------------------------------------
 # CHECK 约束辅助
