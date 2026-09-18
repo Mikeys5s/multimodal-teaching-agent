@@ -2,7 +2,7 @@ import { request, requestText } from './api'
 import type {
   Block,
   Capabilities,
-  ExportFormat,
+  ExportKpOut,
   GapAnalysis,
   Health,
   Job,
@@ -16,6 +16,7 @@ import type {
   MaterialQuery,
   Outline,
   Paginated,
+  PragmaOut,
   QualityReport,
   QaSession,
   QaSessionDetail,
@@ -41,12 +42,14 @@ export interface CreateQaSessionRequest {
 }
 
 /**
- * 全部 27 个端点（api-spec §7）。函数名与端点一一对应，便于前端按路由接入。
+ * 全部 28 个端点（api-spec §7，v1.3）。函数名与端点一一对应，便于前端按路由接入。
  * 注意：/qa/sessions/{id}/ask 是 SSE 流式接口，不走此模块，见 lib/sse.ts（D8 实现）。
  */
 export const api = {
   /* ---------------- 2. 健康检查与元信息 ---------------- */
   health: () => request<Health>('/health'),
+  /** v1.3 补登记的第 28 个端点：读回实际 SQLite pragma（演示前自检页用） */
+  healthPragma: () => request<PragmaOut>('/health/pragma'),
   capabilities: () => request<Capabilities>('/meta/capabilities'),
 
   /* ---------------- 3. 素材（Stage 1） ---------------- */
@@ -64,7 +67,8 @@ export const api = {
     request<Block[]>(`/materials/${id}/blocks`, {
       query: { page_no: q.page_no, block_type: q.block_type },
     }),
-  getMarkdown: (id: string) => requestText(`/materials/${id}/markdown`),
+  /** 整篇拼接 Markdown —— 非 JSON 响应（v1.3）：标识走 `X-Request-ID` 响应头 */
+  getMarkdown: (id: string) => requestText(`/materials/${id}/markdown`, {}, 'text/markdown'),
   getOutline: (id: string) => request<Outline>(`/materials/${id}/outline`),
   listQuestions: (id: string) => request<Question[]>(`/materials/${id}/questions`),
   reparseMaterial: (id: string) =>
@@ -96,12 +100,27 @@ export const api = {
     }),
   getLearningPath: (kpId: string) =>
     request<LearningPathStep[]>('/learning-path', { query: { kp_id: kpId } }),
-  getGapAnalysis: (kpId: string, studentEvidence?: string) =>
+  /**
+   * 卡点根因回溯（api-spec §4.4）。
+   * `studentEvidence` 是 `kp_misconceptions.id` 列表 —— v1.3 明确为**可重复查询参数**，
+   * 会展开成 `?student_evidence=a&student_evidence=b`。
+   * 无效 id **被忽略而非报错**（只影响排序精度），所以不需要预先校验。
+   */
+  getGapAnalysis: (kpId: string, studentEvidence: string[] = []) =>
     request<GapAnalysis>(`/knowledge-points/${kpId}/gap-analysis`, {
       query: { student_evidence: studentEvidence },
     }),
-  exportKnowledgePoints: (format: ExportFormat) =>
-    requestText('/export/knowledge-points', { query: { format } }),
+  /**
+   * 导出知识点（api-spec §4.5 / 端点 18）。
+   * ⚠️ **两个分支的响应性质不同**（已核对 `backend/app/api/report.py`）：
+   *   - `format=json` → `application/json` **包封**，走普通 `request`；
+   *   - `format=csv`  → 原始 `text/csv`，属 v1.3 的非 JSON 例外（标识走 `X-Request-ID`）。
+   * 所以拆成两个函数，避免调用方拿到 string 还是数组要靠猜。
+   */
+  exportKnowledgePointsJson: () =>
+    request<ExportKpOut[]>('/export/knowledge-points', { query: { format: 'json' } }),
+  exportKnowledgePointsCsv: () =>
+    requestText('/export/knowledge-points', { query: { format: 'csv' } }, 'text/csv'),
 
   /* ---------------- 质量报告 ---------------- */
   getQualityReport: () => request<QualityReport>('/report/quality'),

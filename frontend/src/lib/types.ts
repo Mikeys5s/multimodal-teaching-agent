@@ -1,7 +1,17 @@
 /**
- * 全局类型定义 —— 严格对齐 docs/api-spec.md v1.2。
+ * 全局类型定义 —— 严格对齐 docs/api-spec.md **v1.3**（2026-09-17 冻结，共 28 个端点）。
  * 任何字段改动都必须先改 api-spec，再改这里（SPEC §9.2 接口冻结纪律：
  * 允许「新增端点 / 新增可选字段」，不允许改已有字段名或类型）。
+ *
+ * v1.3 相对 v1.2 的 6 处变更中，对本文件有影响的是：
+ *   ① 新增 `GET /api/health/pragma`（端点数 27 → 28）→ 见 `PragmaOut`
+ *   ② 非 JSON 响应（markdown / CSV）的请求标识走 `X-Request-ID` **响应头**
+ *      → 见 `REQUEST_ID_HEADER`，实现见 `api.ts` 的 `requestText()`
+ *   ③ SSE 事件补 `id:` 字段（与 `data.seq` 一致、会话内单调递增）
+ *      → 5 个 SSE 负载类型均新增必填 `seq`
+ *   ④ `gap-analysis` 的 `student_evidence` 为**可重复**查询参数 → 见 `GapAnalysisQuery`
+ *   ⑤ `needs_review` 查询参数统一为布尔 `true` / `false`（传 `1`/`0` → 400）
+ *   ⑥ 分页补默认值与越界行为 → 见 `PageQuery`
  */
 
 /* ------------------------------------------------------------------ *
@@ -48,6 +58,32 @@ export interface Paginated<T> {
   page_size: number
 }
 
+/* ------------------------------------------------------------------ *
+ * 1.1 非 JSON 响应的例外条款（api-spec §1.1，v1.3 明确）
+ * ------------------------------------------------------------------ */
+
+/**
+ * 非 JSON 响应的请求标识**不在 body 里，而在响应头**。
+ * 涉及：`GET /api/materials/{id}/markdown`（text/markdown）、
+ *        `GET /api/export/knowledge-points?format=csv`（text/csv）。
+ *
+ * 约定（v1.3）：成功 → 原始内容 + `X-Request-ID` 响应头；
+ *              **失败 → 仍返回 JSON 包封**（Content-Type 切回 application/json）。
+ * 所以下载类请求要**先看 `Content-Type` 再决定解析分支**，不要只看 HTTP 状态码。
+ */
+export const REQUEST_ID_HEADER = 'X-Request-ID'
+
+/** 非 JSON 响应的两种 Content-Type */
+export type NonJsonContentType = 'text/markdown' | 'text/csv'
+
+/* ------------------------------------------------------------------ *
+ * 1.3 分页（api-spec §1.3）
+ * ------------------------------------------------------------------ */
+
+/**
+ * 默认值由规格写死（v1.3 补充）：`page` 默认 **1**、`page_size` 默认 **20**、上限 **100**。
+ * 越界（非整数 / 超出 1–100）后端返回 `400 INVALID_PARAM` —— 分页控件按这个写，不要自己猜。
+ */
 export interface PageQuery {
   page?: number
   page_size?: number
@@ -62,6 +98,18 @@ export interface Health {
   db: string
   llm: string
   version: string
+}
+
+/**
+ * `GET /api/health/pragma`（v1.3 补登记，第 28 个端点）—— 读回当前连接的
+ * **实际** SQLite pragma 值，供演示前的自检页使用。
+ *
+ * ★ `pragmas.foreign_keys` 必须为 `"1"`：这是「外键约束到底生效了没」的
+ * 可验证答案，而不是靠读代码猜。
+ */
+export interface PragmaOut {
+  pragmas: Record<string, string>
+  db_file: string
 }
 
 /** 上传白名单项；前端据此渲染上传提示，不硬编码（api-spec §2） */
@@ -171,15 +219,33 @@ export interface Outline {
 
 export type QuestionType = 'single_choice' | 'multi_choice' | 'fill_blank' | 'short_answer'
 
+/**
+ * 从素材抽出的**原始**题目（`GET /api/materials/{id}/questions`）。
+ * 与 `Example`（kp_examples）的区别：可能尚未归属到知识点，且**可能没有答案**。
+ */
 export interface Question {
   id: string
+  material_id: string
+  source_page: number | null
+  source_block_id: string | null
   question_type: QuestionType
   stem_md: string
-  options_json: string[] | null
+  /**
+   * 选项数组的 **JSON 字符串** —— 后端字段名就是这个（`QuestionOut.options_json: str`），
+   * 不是数组。前端取值要 `JSON.parse(options_json)`，不要当数组直接用。
+   */
+  options_json: string | null
+  /** 材料未给答案时为 null */
   answer_md: string | null
-  analysis_md?: string | null
-  kp_id?: string | null
-  source_page?: number | null
+  /**
+   * ★ 材料里就没有答案 —— 与 Stage 1 的「存疑处」一一对应（v1.3 显式登记）。
+   * 这是「宁缺毋错」原则的对外体现：展示时**要让它看起来像「材料里没给」**，
+   * 而不是像「数据缺了一块」。
+   */
+  answer_missing: boolean
+  extraction_confidence: number | null
+  /** 归属知识点，Stage 2 回填 */
+  pk_kp_id: string | null
 }
 
 /* ------------------------------------------------------------------ *
@@ -234,6 +300,11 @@ export interface KnowledgePointQuery extends PageQuery {
   difficulty_min?: Difficulty
   difficulty_max?: Difficulty
   kp_type?: KpType
+  /**
+   * v1.3 统一为**严格布尔**：只能传 `true` / `false`。
+   * ⚠️ 传 `1` / `0` 返回 `400 INVALID_PARAM`（规格明确「不静默兼容」）。
+   * 不传 = 不过滤。
+   */
   needs_review?: boolean
   q?: string
 }
@@ -333,6 +404,21 @@ export interface GapLikely {
   source: { material_id: string; page: number }
 }
 
+/**
+ * `GET /api/knowledge-points/{id}/gap-analysis` 的查询参数（api-spec §4.4，v1.3）。
+ *
+ * `student_evidence` 是**可重复**的参数，传的是 `kp_misconceptions.id`：
+ * ```
+ * ?student_evidence=mis_a&student_evidence=mis_b
+ * ```
+ * 传了它，命中的误区会纳入「最可能断层」的排序依据。
+ * ⚠️ **无效值会被忽略而不是报错** —— 它只影响排序精度，不该让整个请求失败，
+ * 所以前端**不需要预先校验**这些 id。
+ */
+export interface GapAnalysisQuery {
+  student_evidence?: string[]
+}
+
 /** 卡点根因回溯（F3.8 / api-spec §4.4） */
 export interface GapAnalysis {
   target_kp: { kp_id: string; name: string }
@@ -342,6 +428,35 @@ export interface GapAnalysis {
 }
 
 export type ExportFormat = 'json' | 'csv'
+
+/**
+ * 导出条目（`GET /api/export/knowledge-points`）—— 扁平结构、**含溯源列**，
+ * 便于用 Excel 直接核对。字段名与 `backend/app/schemas/report.py::ExportKpOut`
+ * 及 `tests/test_schemas.py` 的钉表逐字一致（16 个字段）。
+ *
+ * ⚠️ `format=csv` 时是**非 JSON 响应**：请求标识走 `X-Request-ID` 响应头，
+ * 失败时仍返回 JSON 包封（见 `REQUEST_ID_HEADER`）。
+ */
+export interface ExportKpOut {
+  id: string
+  name: string
+  summary_md: string
+  /** 后端为朴素整数，未收窄到 1–5 */
+  difficulty: number
+  difficulty_reason: string | null
+  kp_type: string
+  chapter_number: string | null
+  chapter_title: string
+  section_number: string | null
+  section_title: string
+  source_material_id: string
+  source_material_name: string
+  source_page: number | null
+  /** 原文引用 —— 导出件里「可核对」的关键列 */
+  source_quote: string
+  prerequisite_count: number
+  needs_review: boolean
+}
 
 /* ------------------------------------------------------------------ *
  * 5. 质量报告（api-spec §4.6）
@@ -438,27 +553,55 @@ export interface QaSessionReport {
   suggested_practice: { kp_id: string; task: string }[]
 }
 
-/* SSE 事件负载（api-spec §5.2） */
+/* ------------------------------------------------------------------ *
+ * SSE 事件负载（api-spec §5.2）
+ *
+ * 三条硬约定（v1.3 ③，**已落在后端代码里，不只是文档**）：
+ *   1. 每个事件必须带 `id:` 行，且与 `data.seq` **一致** ——
+ *      `Last-Event-ID` 断线续推完全依赖它，没有 `id:` 行就没法续推。
+ *   2. `id:` 行必须在 `event:` 行**之前**。浏览器按行解析，顺序错了
+ *      `Last-Event-ID` 取不到值。
+ *   3. `seq` 在**一个会话内单调递增，跨轮次不重置**。
+ *
+ * 事件顺序固定：`retrieved` → `state` → `delta`* → `diagnosis` → `done`，
+ * 其中 **`retrieved` 必须先于任何 `delta`** —— 前端据此**先渲染溯源卡片**，
+ * 让「先检索再回答」这件事在界面上可见。
+ *
+ * 事件模型以后端 `app/schemas/qa.py` 的 5 个 `Sse*Event` 类为准，不要自建一套。
+ * ------------------------------------------------------------------ */
+
 export interface SseRetrieved {
+  seq: number
   kp_ids: string[]
   block_ids: string[]
+  /** 越界时为 true，此时后续 delta 必须是拒答模板 */
   is_out_of_scope: boolean
 }
 
 export interface SseState {
+  seq: number
   turn_type: TurnType
   state: SocraticState
   hint_level: number
 }
 
 export interface SseDelta {
+  seq: number
   text: string
 }
 
+export interface SseDiagnosis {
+  seq: number
+  knowledge_points: DiagnosisKnowledgePoint[]
+  stuck_at: DiagnosisStuckAt | null
+  next_practice: { kp_id: string; task: string }[]
+}
+
 export interface SseDone {
+  seq: number
   turn_id: string
-  latency_ms: number
-  usage: { input_tokens: number; output_tokens: number }
+  latency_ms: number | null
+  usage: { input_tokens: number | null; output_tokens: number | null } | null
 }
 
 /* ------------------------------------------------------------------ *
