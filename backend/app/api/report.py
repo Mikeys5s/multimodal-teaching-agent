@@ -13,7 +13,10 @@ from sqlalchemy.orm import Session
 
 from app.core.response import CsvResponse, Envelope, ok, text_response
 from app.db import get_db
+from app.quality import check_acceptance as quality_check_acceptance
+from app.quality import compute as quality_compute
 from app.schemas.report import (
+    AcceptanceRowOut,
     ExportKpOut,
     GraphStatsReportOut,
     KnowledgePointStatsOut,
@@ -58,37 +61,55 @@ EXPORT_COLUMNS = (
     response_model=Envelope[QualityReportOut],
     summary="质量报告",
     description=(
-        "四段式统计：素材 / 知识点 / 图谱 / 答疑。\n\n"
+        "四段式统计：素材 / 知识点 / 图谱 / 答疑，外加 `acceptance`（验收指标逐条实测）。\n\n"
         "其中 `structure_complete_rate`（A2-1）、`grounding_rate`（A2-3）、"
         "`graph.cycle_count`（B1-2）、`graph.reason_complete_rate`（B1-5）、"
-        "`qa.grounded_rate`（幻觉率 0）**直接对应验收指标**。"
+        "`qa.grounded_rate`（幻觉率 0）**直接对应验收指标**。\n\n"
+        "**数据来源**：全部由 `app/quality.py::compute()` 从数据库实测得出，"
+        "与 `scripts/evaluate.py` **同源** —— 不存在'报告页一套数字、验收另一套'。"
     ),
 )
 def quality_report(db: DbSession) -> Envelope[QualityReportOut]:
+    # ★ 全部实测，不再有写死的数字。
+    #
+    # 这里曾经是一整块 mock（`total=184` / `edge_count=267` / …），与
+    # `scripts/evaluate.py` 并行存在两套数字 —— 它们**会分叉，而且不报错**。
+    # 现在两边都调同一个 `compute()`：报告页给评委看的数字，
+    # 就是 `evaluate.py` 算出来的数字。
+    report = quality_compute(db)
+
     return ok(
         QualityReportOut(
-            materials=MaterialStatsOut(total=6, done=5, failed=1, avg_quality_score=0.88),
+            materials=MaterialStatsOut(
+                total=report["materials"]["total"],
+                done=report["materials"]["done"],
+                failed=report["materials"]["failed"],
+                avg_quality_score=report["materials"]["avg_quality_score"],
+            ),
             knowledge_points=KnowledgePointStatsOut(
-                total=184,
-                structure_complete_rate=1.0,  # A2-1
-                five_field_complete_rate=0.97,
-                grounding_rate=1.0,  # A2-3
-                needs_review_count=6,
+                total=report["knowledge_points"]["total"],
+                structure_complete_rate=report["knowledge_points"]["structure_complete_rate"],
+                five_field_complete_rate=report["knowledge_points"]["five_field_complete_rate"],
+                grounding_rate=report["knowledge_points"]["grounding_rate"],
+                needs_review_count=report["knowledge_points"]["needs_review_count"],
             ),
             graph=GraphStatsReportOut(
-                edge_count=267,
-                cycle_count=0,  # B1-2 ★
-                pruned_count=2,  # 「检出并剪除」
-                conflict_count=3,  # B1-4
-                reason_complete_rate=1.0,  # B1-5
-                prerequisite_sampling_pass_rate=0.84,
+                edge_count=report["graph"]["edge_count"],
+                cycle_count=report["graph"]["cycle_count"],
+                pruned_count=report["graph"]["pruned_count"],
+                conflict_count=report["graph"]["conflict_count"],
+                reason_complete_rate=report["graph"]["reason_complete_rate"],
+                prerequisite_sampling_pass_rate=report["graph"][
+                    "prerequisite_sampling_pass_rate"
+                ],
             ),
             qa=QaStatsOut(
-                session_count=3,
-                turn_count=41,
-                grounded_rate=1.0,  # 幻觉率 0 的对偶指标
-                refuse_count=5,  # 拒答是能力，不是缺陷
+                session_count=report["qa"]["session_count"],
+                turn_count=report["qa"]["turn_count"],
+                grounded_rate=report["qa"]["grounded_rate"],
+                refuse_count=report["qa"]["refuse_count"],
             ),
+            acceptance=[AcceptanceRowOut(**row._asdict()) for row in quality_check_acceptance(report)],
         )
     )
 
