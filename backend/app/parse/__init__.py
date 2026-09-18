@@ -28,8 +28,14 @@
 | `sections.py` | 章/节骨架推断、节级片段切分 |
 | `persist.py` | 落 `material_blocks` |
 
-⚠️ 依赖装在可选组：pip install -e ".[parse]"（OCR 相关依赖本批次不需要，也不该装：
-paddleocr + paddlepaddle 有几个 GB，与 A1-2 要求的"文本层 PDF 不走 OCR"直接冲突）。
+⚠️ 依赖装在可选组，**分成轻重两组**：
+  · `pip install -e ".[parse]"`  —— 轻量解析依赖（pymupdf / python-docx /
+    python-pptx，几十 MB）。**要复现本模块的用例只装这一组就够**。
+  · `pip install -e ".[ocr]"`    —— paddleocr + paddlepaddle，**几个 GB**。
+    本批次不需要它们：A1-2 的口径就是"文本层 PDF 不走 OCR"，扫描版只识别不解析。
+    （下限锁在 paddleocr 3.x / paddlepaddle 3.x：PyPI 上 `paddlepaddle` 只有
+    3.0.0 起才有 win + cp313 wheel，2.x 在 Python 3.13 上装不上；而
+    `paddleocr 2.9.1` 又依赖 numpy<2.0，与本环境的 numpy 2.x 冲突。）
 """
 
 from __future__ import annotations

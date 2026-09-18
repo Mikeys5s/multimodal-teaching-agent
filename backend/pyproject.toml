@@ -28,15 +28,24 @@ dev = [
     "httpx>=0.28",          # FastAPI TestClient 依赖它
     "ruff>=0.8",
 ]
-# 解析链路：P1 需要时才装。
-# ⚠️ 不要和 dev 一起装 —— paddleocr + paddlepaddle 有几个 GB，
-#    和 P2/P3 的日常开发完全无关。
+# 解析链路（轻量）：P1 与任何要复现解析用例的人都装这个 —— 几十 MB。
 parse = [
     "pymupdf>=1.25",
     "python-docx>=1.1",
     "python-pptx>=1.0",
-    "paddleocr>=2.9",
-    "paddlepaddle>=2.6",
+]
+# OCR（重）：**几个 GB**，与后端日常开发和本批次的解析用例都无关，默认不要装。
+# 本批次（A1-2）明确"文本层 PDF 不走 OCR"，装它属于纯成本。
+#
+# ⚠️ 版本下限为什么是 3.x 而不是 2.x（实测结论，不要再改回去）：
+#   · PyPI 的 `paddlepaddle` **只有 3.0.0 起**才提供 win + cp313 的 wheel，
+#     `paddlepaddle` 2.x 最新（2.6.2）**没有 cp313 wheel** → Python 3.13 上装不上；
+#   · 退一步装 `paddleocr 2.9.1` 也不行：它依赖 `numpy<2.0`，与本环境的
+#     numpy 2.3.5 直接冲突。
+#   所以在本环境（Windows + Python 3.13）**只能锁 3.x**。
+ocr = [
+    "paddleocr>=3.7,<4",
+    "paddlepaddle>=3.3,<4",
 ]
 
 [tool.setuptools.packages.find]
