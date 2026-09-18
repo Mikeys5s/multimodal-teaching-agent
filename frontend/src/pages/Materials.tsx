@@ -1,6 +1,7 @@
 import { RefreshCw } from 'lucide-react'
 import { useMemo, useState } from 'react'
 
+import { ExtractPanel } from '@/components/materials/ExtractPanel'
 import { JobProgressPanel } from '@/components/materials/JobProgressPanel'
 import type { ActiveUpload } from '@/components/materials/JobProgressPanel'
 import { MaterialPreviewDrawer } from '@/components/materials/MaterialPreviewDrawer'
@@ -18,6 +19,7 @@ import type { Material, UploadRejected } from '@/lib/types'
  * 素材工作台（P3 · D2 + D3 交付）。
  * 覆盖 SPEC §5.1 的 F1.1 上传 / F1.3 解析方式可见 / F1.6 素材清单 /
  * F1.7 进度与失败可见 / F1.8 Markdown 预览与页码定位；对应路由 /materials（api-spec §8）。
+ * P3 追加 Stage 2 入口：知识点抽取为异步任务（202 + job_id），进度见 ExtractPanel。
  */
 export default function Materials() {
   const capabilities = useRequest(() => api.capabilities(), [])
@@ -172,6 +174,17 @@ export default function Materials() {
           )}
         </div>
       </section>
+
+      {/* 知识点抽取（Stage 2 入口）：异步任务 + 轮询进度 + 完成后去图谱/路径 */}
+      <ExtractPanel
+        materials={materials}
+        loading={materialsReq.loading}
+        materialsError={materials.length === 0 ? materialsReq.error : null}
+        onReloadMaterials={() => void materialsReq.reload()}
+        onJobSettled={() => {
+          void materialsReq.reload()
+        }}
+      />
 
       {/* key 绑定素材 id：切换素材时重置抽屉内部状态（页签、定位页、复制提示） */}
       {preview && (
