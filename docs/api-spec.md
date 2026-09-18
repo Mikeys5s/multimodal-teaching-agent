@@ -329,6 +329,27 @@ GET /api/knowledge-points/{id}/gap-analysis?student_evidence=<误区id>&student_
 }
 ```
 
+**`edges` 的方向语义（v1.5 明确 —— 之前只在代码注释里，文档没写）**
+
+| 层 | 前置 | 后置 |
+|---|---|---|
+| **API**（本接口的 `edges`） | **`source`** | **`target`** |
+| 数据库 `kp_prerequisites` | `prereq_kp_id` | `kp_id` |
+
+> **`source` 是前置，`target` 是后置。** 即 **「要学会 `target`，得先会 `source`」**。
+>
+> 例：`{ "source": "kp_2f04", "target": "kp_3c81" }`
+> 读作 **「要学会 `kp_3c81`，得先会 `kp_2f04`」**。
+>
+> ⚠️ **前端画箭头时不要搞反。** 这一条出错**不会报任何错** ——
+> 只会让图谱里的依赖箭头与学习路径**整个反过来**，
+> 而"顺着箭头看"的人会得到完全错误的学习顺序。
+> **所以它是文档级的硬约定，不是注释级的小事。**
+>
+> 代码里的定义（两处都有，但都在代码里、不在文档里，故在此固化）：
+> `backend/app/models/knowledge.py` 的 `KpPrerequisite` docstring、
+> `backend/app/schemas/graph.py` 的 `GraphEdgeOut` docstring。
+
 > `stats.cycle_count` 必须在 UI 上展示为 0 —— **把 DAG 无环这个工程指标变成评委可见的信任信号**。
 >
 > 同时展示 `pruned_count`（因成环被剪除的边数）与 `conflict_count`（结构-语义冲突边数）：**"检出了 2 条会成环的边并已剪除"比只写"环数 0"更有说服力** —— 前者证明系统真的在检查，而不只是恰好没出错（对应 B1-2 / B1-4）。
