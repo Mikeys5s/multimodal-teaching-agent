@@ -55,14 +55,54 @@ say "2/4 装 Docker"
 if command -v docker >/dev/null 2>&1 && docker compose version >/dev/null 2>&1; then
     ok "已安装：$(docker --version) / $(docker compose version --short 2>/dev/null || echo '?')"
 else
-    echo "  用官方脚本安装（含 compose 插件）..."
-    # 官方脚本会自带 apt 源 + GPG key，比手写源稳
-    curl -fsSL https://get.docker.com | sh
-    ok "安装完成：$(docker --version)"
+    # ⚠️ 必须准备两条路：**国内网络下 get.docker.com 会被 Connection reset**
+    #    实测 `curl: (35) Recv failure: Connection reset by peer`。
+    #    这不是"失败就算了"—— 装不上 Docker，整条部署链路都走不下去。
+    installed=0
+
+    echo "  路径 A：官方脚本（国内可能被重置，最多等 60 秒）..."
+    # --mirror Aliyun 让脚本改用阿里云 apt 源，比默认快得多
+    if curl -fsSL --connect-timeout 20 --max-time 60 https://get.docker.com -o /tmp/get-docker.sh 2>/dev/null; then
+        if sh /tmp/get-docker.sh --mirror Aliyun >/tmp/docker-install.log 2>&1; then
+            ok "官方脚本装上了：$(docker --version)"
+            installed=1
+        else
+            warn "官方脚本执行失败，末尾日志："
+            tail -5 /tmp/docker-install.log | sed 's/^/      /'
+        fi
+    else
+        warn "下载 get.docker.com 失败（国内常见）。转路径 B。"
+    fi
+
+    if [ "$installed" -eq 0 ]; then
+        echo "  路径 B：直接用 Ubuntu 仓库装（走本地 apt 镜像，通常更快更稳）..."
+        apt-get update -qq || true
+        # docker-compose-v2 是 Ubuntu 24.04 里的 compose 插件包名
+        if apt-get install -y -qq docker.io docker-compose-v2 >/tmp/apt-docker.log 2>&1; then
+            ok "apt 装上了：$(docker --version)"
+            installed=1
+        else
+            warn "apt 装 Docker 也失败了，末尾日志："
+            tail -8 /tmp/apt-docker.log | sed 's/^/      /'
+        fi
+    fi
+
+    if [ "$installed" -eq 0 ]; then
+        warn "两条路都没装成 Docker。请手工处理后再跑一次本脚本。"
+        exit 1
+    fi
 fi
 
 systemctl enable --now docker >/dev/null 2>&1 || true
 systemctl is-active --quiet docker && ok "docker 服务在跑" || warn "docker 服务没起来"
+
+# compose 是 `docker compose up` 的前提，单独确认一遍 —— 它单独缺了也部署不了
+if docker compose version >/dev/null 2>&1; then
+    ok "compose 可用：$(docker compose version --short 2>/dev/null)"
+else
+    warn "⚠️ docker compose 不可用！部署会失败。"
+    warn "   Ubuntu 上可试：apt-get install -y docker-compose-v2"
+fi
 
 # ---------------------------------------------------------------------------
 # 3. 配镜像源（★ 关键，不配拉不动）
