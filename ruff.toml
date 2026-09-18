@@ -1,0 +1,23 @@
+# 仓库根目录的 ruff 配置。
+#
+# ⚠️ 独立 `ruff.toml` 的顶层**不带 `[tool.ruff]` 前缀** ——
+#    那个前缀是 `pyproject.toml` 专用的，写在这里会报 `unknown field 'tool'`。
+#
+# ⚠️ `backend/` 有自己的 `backend/pyproject.toml`（更近，优先于本文件），
+#    所以本文件主要覆盖**根目录下的 `scripts/`**。
+#    两边规则刻意保持一致，避免"在 backend 里能过、在根目录过不了"这种分裂。
+
+line-length = 100
+target-version = "py311"
+
+[lint]
+select = ["E", "F", "I", "UP", "B"]
+ignore = ["E501"]  # 行宽交给 formatter，不在 lint 里卡
+
+[lint.per-file-ignores]
+# `scripts/*.py` 需要在 import 之前把 `backend/` 与 `skills/` 加进 `sys.path`，
+# 否则 `import app.*` 直接失败。这是**有意为之**，不是疏忽：
+#   · E402（import 不在文件顶部）—— 顶部必须先跑路径引导；
+#     每个 import 行仍保留 `# noqa: E402` 作为显式标记
+#   · I001（import 块未排序）—— 自动排序会把 import 挪到引导代码之前
+"scripts/*" = ["I001"]
