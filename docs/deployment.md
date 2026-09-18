@@ -47,14 +47,46 @@ curl -fsSL https://get.docker.com | sh
 docker --version && docker compose version
 ```
 
-> 国内机器拉 Docker Hub 可能很慢或超时。如果 `docker pull` 卡住，配一个镜像加速：
+> ⚠️ **必须配镜像加速 —— 这不是"可选优化"，是硬需求。**
+>
+> 本地实测（2026-09-18）：**`registry-1.docker.io` 直连超时**（12 秒无响应），
+> 不配镜像源根本拉不下来。配之前构建速度 **40 KB/s**（49 秒下 2 MB），
+> 配好之后 **13~30 MB/s** —— 差 500 倍。
+>
+> **别只配一个源**（社区镜像经常死）。下面两个是当时实测可用的：
+>
 > ```bash
 > sudo mkdir -p /etc/docker
 > sudo tee /etc/docker/daemon.json <<'EOF'
-> { "registry-mirrors": ["https://docker.m.daocloud.io", "https://dockerproxy.com"] }
+> {
+>   "registry-mirrors": [
+>     "https://docker.m.daocloud.io",
+>     "https://docker.1panel.live"
+>   ]
+> }
 > EOF
 > sudo systemctl restart docker
+>
+> # 确认生效
+> docker info --format '{{.RegistryConfig.Mirrors}}'
 > ```
+>
+> **挑源的方法**（别照抄，自己验证一次）：
+>
+> ```bash
+> # 200 或 401 都算可用（401 = 可达，只是要认证）；000 = 连不上
+> for m in https://docker.m.daocloud.io https://docker.1panel.live; do
+>   printf "%-38s " "$m"
+>   curl -s -o /dev/null -w "%{http_code}\n" --max-time 10 "$m/v2/"
+> done
+> ```
+>
+> **实测不可用 / 不可靠的**：`dockerproxy.com`（连不上）、
+> `hub-mirror.c.163.com`（连不上）、`mirror.ccs.tencentyun.com`（连不上）、
+> **`hub.rat.dev`（返回 302 重定向 —— 排在首位会拖慢甚至卡住构建）**。
+>
+> ⚠️ **改了 `daemon.json` 必须重启 Docker 才生效。**
+> Docker Desktop 可用 `docker desktop restart`；Linux 上是 `sudo systemctl restart docker`。
 
 ### 2.3 拉代码、起服务
 
@@ -147,4 +179,10 @@ print('迁移', con.execute('SELECT version_num FROM alembic_version').fetchone(
 - [ ] **前端未合并** —— `frontend/` 还在 P3 的分支上，M3 的完整界面需要它先合入
 - [ ] **HTTPS 未配置** —— 目前是裸 HTTP + IP。赛事要求不涉及，评审也只看能否访问；
       若后续要加，最省事的是前面挂一层 Caddy 自动签证书（但需要域名，仍受备案限制）
-- [ ] 部署脚本尚未在**真实服务器**上跑过 —— 本地无 Docker daemon，未验证过镜像构建
+- [x] ~~部署脚本尚未在真实服务器上跑过~~ —— **镜像已于 2026-09-18 本地验证通过**：
+      构建成功（294 MB）、容器 `healthy`、迁移自动执行（15 表 + 正确版本）、
+      `/api/health` 与 `/api/health/pragma` 均 200、`/api/nonexistent` 返回 JSON 404、
+      内存占用 **61.75 MB / 1.367 GiB**
+- [ ] **但还没在真实服务器上跑过** —— 服务器上要面对的是另一套变量：
+      镜像源是否同样慢、控制台防火墙放行了没、公网 IP 能不能访问。
+      首次部署请照 §2.3 走一遍，并**务必做 §2.4 的外网验证**
