@@ -1,6 +1,7 @@
-import { Check, Copy, FileText, X } from 'lucide-react'
+import { Check, Copy, FileText, ListChecks, X } from 'lucide-react'
 import { useMemo, useRef, useState } from 'react'
 
+import { QuestionsPanel } from '@/components/materials/QuestionsPanel'
 import { Button } from '@/components/ui/Button'
 import { EmptyState, ErrorState, LoadingState } from '@/components/ui/Feedback'
 import { useRequest } from '@/hooks/useRequest'
@@ -59,9 +60,13 @@ export interface MaterialPreviewDrawerProps {
  * 素材解析结果预览抽屉（SPEC §5.1 F1.8）。
  * 数据源：GET /api/materials/{id}/blocks（api-spec §3.3 明确它是「Markdown 预览数据源」）。
  * 点击右侧页码 → 滚动定位到该页首块，实现「点击可定位到对应页码」。
+ *
+ * 另一个页签「抽出的题目」走 GET /api/materials/{id}/questions，见 QuestionsPanel。
+ * 两个页签的数据源互相独立，题目接口失败不会影响 Markdown 预览。
  */
 export function MaterialPreviewDrawer({ material, onClose }: MaterialPreviewDrawerProps) {
   const blocksReq = useRequest(() => api.listBlocks(material.id), [material.id])
+  const [tab, setTab] = useState<'blocks' | 'questions'>('blocks')
   const [copied, setCopied] = useState(false)
   const [copyError, setCopyError] = useState<string | null>(null)
   const [activePage, setActivePage] = useState<number | null>(null)
@@ -141,57 +146,95 @@ export function MaterialPreviewDrawer({ material, onClose }: MaterialPreviewDraw
           </div>
         )}
 
+        {/* 页签：解析正文 / 抽出的题目 */}
+        <div
+          className="flex shrink-0 gap-1 border-b border-slate-200 px-4"
+          role="tablist"
+          aria-label="预览内容切换"
+        >
+          {(
+            [
+              { key: 'blocks', label: '解析正文', icon: <FileText className="h-3.5 w-3.5" /> },
+              { key: 'questions', label: '抽出的题目', icon: <ListChecks className="h-3.5 w-3.5" /> },
+            ] as const
+          ).map((item) => (
+            <button
+              key={item.key}
+              role="tab"
+              aria-selected={tab === item.key}
+              onClick={() => setTab(item.key)}
+              className={[
+                '-mb-px inline-flex items-center gap-1.5 border-b-2 px-3 py-2 text-xs font-medium transition-colors',
+                tab === item.key
+                  ? 'border-brand-600 text-brand-700'
+                  : 'border-transparent text-slate-500 hover:text-slate-700',
+              ].join(' ')}
+            >
+              {item.icon}
+              {item.label}
+            </button>
+          ))}
+        </div>
+
         {/* 正文 + 页码导航 */}
         <div className="flex min-h-0 flex-1">
-          <div ref={scrollRef} className="min-w-0 flex-1 overflow-auto px-6 py-4">
-            {blocksReq.loading && blocks.length === 0 && <LoadingState label="正在加载解析结果…" />}
-
-            {blocksReq.error && (
-              <ErrorState message={blocksReq.error} onRetry={() => void blocksReq.reload()} />
-            )}
-
-            {!blocksReq.loading && !blocksReq.error && blocks.length === 0 && (
-              <EmptyState
-                title="暂无解析结果"
-                description="该素材可能仍在解析中，或解析未产出可预览的文本块。"
-              />
-            )}
-
-            {grouped.map(([page, pageBlocks]) => (
-              <section key={page} data-page={page} className="mb-8 scroll-mt-4">
-                <div className="mb-2 flex items-center gap-2">
-                  <span className="rounded bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-500">
-                    第 {page} 页
-                  </span>
-                  <span className="h-px flex-1 bg-slate-100" />
-                </div>
-                {pageBlocks.map((block) => (
-                  <BlockView key={block.id} block={block} />
-                ))}
-              </section>
-            ))}
-          </div>
-
-          {/* 页码导航（点击定位） */}
-          <aside className="w-[76px] shrink-0 overflow-auto border-l border-slate-200 bg-slate-50/60 py-3">
-            <div className="mb-2 px-2 text-[11px] text-slate-400">页码</div>
-            <div className="flex flex-col items-stretch gap-0.5 px-2">
-              {grouped.map(([page]) => (
-                <button
-                  key={page}
-                  onClick={() => jumpTo(page)}
-                  className={[
-                    'rounded px-2 py-1 text-xs tabular-nums transition-colors',
-                    activePage === page
-                      ? 'bg-brand-100 font-medium text-brand-700'
-                      : 'text-slate-500 hover:bg-slate-100 hover:text-slate-700',
-                  ].join(' ')}
-                >
-                  {page}
-                </button>
-              ))}
+          {tab === 'questions' ? (
+            <div className="min-w-0 flex-1 overflow-auto bg-slate-50/50 px-5 py-4">
+              <QuestionsPanel materialId={material.id} />
             </div>
-          </aside>
+          ) : (
+            <>
+              <div ref={scrollRef} className="min-w-0 flex-1 overflow-auto px-6 py-4">
+                {blocksReq.loading && blocks.length === 0 && <LoadingState label="正在加载解析结果…" />}
+
+                {blocksReq.error && (
+                  <ErrorState message={blocksReq.error} onRetry={() => void blocksReq.reload()} />
+                )}
+
+                {!blocksReq.loading && !blocksReq.error && blocks.length === 0 && (
+                  <EmptyState
+                    title="暂无解析结果"
+                    description="该素材可能仍在解析中，或解析未产出可预览的文本块。"
+                  />
+                )}
+
+                {grouped.map(([page, pageBlocks]) => (
+                  <section key={page} data-page={page} className="mb-8 scroll-mt-4">
+                    <div className="mb-2 flex items-center gap-2">
+                      <span className="rounded bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-500">
+                        第 {page} 页
+                      </span>
+                      <span className="h-px flex-1 bg-slate-100" />
+                    </div>
+                    {pageBlocks.map((block) => (
+                      <BlockView key={block.id} block={block} />
+                    ))}
+                  </section>
+                ))}
+              </div>
+
+              {/* 页码导航（点击定位） */}
+              <aside className="w-[76px] shrink-0 overflow-auto border-l border-slate-200 bg-slate-50/60 py-3">
+                <div className="mb-2 px-2 text-[11px] text-slate-400">页码</div>
+                <div className="flex flex-col items-stretch gap-0.5 px-2">
+                  {grouped.map(([page]) => (
+                    <button
+                      key={page}
+                      onClick={() => jumpTo(page)}
+                      className={[
+                        'rounded px-2 py-1 text-xs tabular-nums transition-colors',
+                        activePage === page
+                          ? 'bg-brand-100 font-medium text-brand-700'
+                          : 'text-slate-500 hover:bg-slate-100 hover:text-slate-700',
+                      ].join(' ')}
+                    >
+                      {page}
+                    </button>
+                  ))}
+                </div>
+              </aside>
+            </>
+          )}
         </div>
       </div>
     </div>

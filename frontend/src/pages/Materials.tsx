@@ -173,7 +173,10 @@ export default function Materials() {
         </div>
       </section>
 
-      {preview && <MaterialPreviewDrawer material={preview} onClose={() => setPreview(null)} />}
+      {/* key 绑定素材 id：切换素材时重置抽屉内部状态（页签、定位页、复制提示） */}
+      {preview && (
+        <MaterialPreviewDrawer key={preview.id} material={preview} onClose={() => setPreview(null)} />
+      )}
     </div>
   )
 }

@@ -84,7 +84,8 @@ export default function Tutor() {
 
   const handleAsk = async () => {
     const text = question.trim()
-    if (text === '' || busy) return
+    // streaming：上一轮还没结束（Ctrl/⌘ + Enter 绕过按钮的 disabled）时不再起第二条流
+    if (text === '' || busy || streaming) return
 
     setError(null)
     setQuestion('')
@@ -168,7 +169,8 @@ export default function Tutor() {
     )
   }
 
-  if (!materialsReq.data && materialsReq.loading) {
+  // 首帧 data 还是 null（effect 尚未发起请求），不能直接当成「没有材料」而闪一下空态
+  if (!materialsReq.data) {
     return <LoadingState label="正在读取材料清单…" />
   }
 

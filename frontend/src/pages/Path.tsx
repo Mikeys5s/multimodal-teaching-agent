@@ -40,7 +40,15 @@ export default function PathPage() {
       {target ? (
         <>
           <PathTimeline kpId={target.id} kpName={target.name} onRetarget={handleRetarget} />
-          <GapAnalysisPanel targetKpId={target.id} targetKpName={target.name} />
+          {/*
+            key 绑定目标 id：换目标时重挂面板，清掉上一目标粘贴的误区证据。
+            误区 id 属于旧知识点，带过去会让「最可能断层」按不相干的证据排序。
+          */}
+          <GapAnalysisPanel
+            key={target.id}
+            targetKpId={target.id}
+            targetKpName={target.name}
+          />
         </>
       ) : (
         <section className="xizhi-card">

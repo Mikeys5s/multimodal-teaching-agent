@@ -79,6 +79,9 @@ export function GraphCanvas({ nodes, edges, selectedId, onSelect }: GraphCanvasP
     [zoomAt],
   )
 
+  /** 视图是否有节点：从「筛选后为空」回到有节点时，容器是重新挂载的 DOM */
+  const hasNodes = nodes.length > 0
+
   // 滚轮缩放：React 的 onWheel 在部分浏览器上是 passive 的，这里挂原生监听以便 preventDefault
   useEffect(() => {
     const el = containerRef.current
@@ -90,7 +93,7 @@ export function GraphCanvas({ nodes, edges, selectedId, onSelect }: GraphCanvasP
     }
     el.addEventListener('wheel', onWheel, { passive: false })
     return () => el.removeEventListener('wheel', onWheel)
-  }, [zoomAt])
+  }, [zoomAt, hasNodes])
 
   const handlePointerDown = (event: ReactPointerEvent<SVGSVGElement>) => {
     if ((event.target as Element).closest('[data-node-id]')) return

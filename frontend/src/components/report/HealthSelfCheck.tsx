@@ -25,7 +25,9 @@ function CheckRow({
         {hint && <div className="mt-0.5 text-[11px] text-slate-400">{hint}</div>}
       </div>
       <div className="flex shrink-0 items-center gap-1.5">
-        <span className="font-mono text-xs text-slate-700">{value}</span>
+        <span className="font-mono text-xs" style={{ color }}>
+          {value}
+        </span>
         {ok !== null &&
           (ok ? (
             <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" aria-hidden />
