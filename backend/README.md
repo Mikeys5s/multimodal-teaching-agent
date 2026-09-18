@@ -15,8 +15,11 @@ python -m venv .venv
 
 # 2. 装依赖
 .venv/Scripts/python.exe -m pip install -e ".[dev]"     # P2 / P3 日常开发
-# P1 需要解析链路时另外装：
+# 要跑解析链路（含真实教材用例）时另外装 —— 几十 MB：
 # .venv/Scripts/python.exe -m pip install -e ".[parse]"
+# ⚠️ OCR 依赖在单独一组 [ocr]（paddleocr + paddlepaddle，**几个 GB**）：
+#    只有做图片/扫描页 OCR 才需要，日常开发与解析用例都**不需要**装。
+# .venv/Scripts/python.exe -m pip install -e ".[ocr]"
 
 # 3. 起服务
 .venv/Scripts/python.exe -m uvicorn app.main:app --reload --port 8000

@@ -76,10 +76,15 @@ cd backend
 |---|---|---|
 | 默认 | 所有人 | fastapi / uvicorn / sqlalchemy / alembic / pydantic-settings |
 | `[dev]` | P2、P3 | pytest / pytest-cov / httpx / ruff |
-| `[parse]` | **只有 P1** | pymupdf / python-docx / python-pptx / paddleocr / paddlepaddle |
+| `[parse]` | P1 · **以及任何要复现解析用例的人**（评委 / reviewer） | pymupdf / python-docx / python-pptx —— 几十 MB |
+| `[ocr]` | **只有 OCR 链路**（默认不要装） | paddleocr / paddlepaddle —— **几个 GB** |
 
-`[parse]` 里的 paddleocr + paddlepaddle 有**几个 GB**，跟后端日常开发无关。
+> **`[parse]` 与 `[ocr]` 已拆开**：想跑解析用例（含真实教材那 14 个默认 skip 的用例）**只需要 `[parse]`**，
+> 不需要装几个 GB 的 OCR 全家桶。真实教材用 `bash scripts/fetch-materials.sh` 一条命令准备好。
+
+`[ocr]` 里的 paddleocr + paddlepaddle 有**几个 GB**，跟后端日常开发无关。
 装了会拖慢每一次 `pip install`，还容易和 ABI 版本打架。
+版本下限锁在 `paddleocr>=3.7,<4` / `paddlepaddle>=3.3,<4`（实测：`paddlepaddle` 只有 3.0.0 起才提供 win+cp313 wheel，Python 3.13 上装不了 2.x）。
 
 ---
 
