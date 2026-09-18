@@ -31,12 +31,15 @@ LaTeX 排版教材**（*Computer Networks: A Systems Approach*, Release 6.1，
      用完即弃，绝不写进仓库。超页数那条用例直接对 489 页原文调用，
      因为它在解析**之前**就会报错（只读页数），不会拖慢测试。
 
-真实版式的观察（页眉 / 页码 / 图注 / 目录页）**不作为断言**
---------------------------------------------------------
-`test_real_layout_noise_is_reported_not_asserted` 只断言"结构完整性"这类
-不该随去噪功能变化的性质，把页眉/页码/图注/目录页的实际表现**打印出来**。
-理由：这些现象（尤其是页眉页码噪声）是**下一批**要改的东西，写成断言会变成
-"改对了反而报红"的钉子；而它们又必须被如实记录下来，作为下一批的输入。
+真实版式（页眉 / 页码 / 图注 / 目录页）：第一批只观察，本批已断言
+----------------------------------------------------------------
+第一批 `test_real_layout_noise_is_reported_not_asserted` **刻意不断言**噪声，
+因为当时去噪是下一批的任务，写成断言会变成"改对了反而报红"的钉子。
+
+**去噪已落地，期望已更新**：该用例改名为
+`test_real_layout_denoise_is_reported_and_asserted`，除了继续打印实测值，
+还断言去噪后的**新正确期望** —— 页首带 / 页脚带里不许再有块、不许再有纯数字块、
+`Figure x.y` 图注必须是 `image_caption`、章数回到真实结构。
 """
 
 from __future__ import annotations
@@ -53,7 +56,7 @@ import pytest
 
 from app.core.errors import ApiError, ErrorCode
 from app.models.ids import block_id
-from app.parse import MAX_PAGES, parse_material, to_markdown
+from app.parse import MAX_PAGES, parse_material, split_outline, to_markdown
 
 # ---------------------------------------------------------------------------
 # 素材定位与跳过策略
@@ -89,19 +92,22 @@ FOOTER_BAND_TOP = 730.0
 #: 因此**下限永远回到 SPEC 的 98%，不因去噪而下调** —— 去噪在分子与分母上是
 #: 同向的（分子少了页眉页脚，分母本来就不含页眉页脚），不会把比值压低。
 #:
-#: 本批**尚未**做页眉页脚去噪，所以分子里仍含这部分字符，而分母已不含 ——
-#: **比值略大于 1 属于预期**（实测 59186 / 57502 ≈ 1.029），不是缺陷；
-#: 下一批真正落地去噪后，分子回落到正文区字符量，比值自然回到 ≈1.000。
+#: **去噪已落地，期望已更新**：分子不再含页眉页脚字符，实测
+#: 57494 / 57502 = **99.99% ≈ 1.000**（分母仍按"整页 − 页眉页脚带"算）。
+#: 剩下 8 个字符的缺口来自**目录页里孤立成行的页码**（`37` / `95` / `4` / `5` /
+#: `7` / `8`）：它们不在页眉页脚带里，所以分母没扣、而分子被去噪去掉了 ——
+#: 这是去噪**故意**的结果（那 6 个块是目录的页码碎片，不是正文），
+#: 不是"少抽了正文"。正文有没有少抽由下面"逐字忠实性"与"逐页完整性"两条守。
 A1_2_MIN_COVERAGE = 0.98
 #: 覆盖率上限：两侧都已去掉空白，所以**大于 1** 只可能来自"同一段文字被写进
 #: 结果不止一次"（表格合并格被重复填那类缺陷在 PDF 侧的同型）。
 #:
-#: 上界卡在 **1.05**，只比"本批未去噪"的预期溢出（2.85% 的页眉页脚带）多留
-#: 约 2 个百分点的余量。换算成字符：正文区 57502 字符 → 允许抽出 ≤ 60377，
-#: 而今天抽出 59186，余量只剩约 1191 字符。也就是说**任何一段像样的正文被
-#: 重复写第二次**（单段通常几百到上千字符、整页更是两千字符量级）都会立刻
-#: 顶破这条上界；反过来，若把上界放到 1.10，就要写坏两三千字符才报红，
-#: 护栏形同虚设。它与 `test_real_subset_has_no_duplicate_block_on_the_same_page`
+#: 上界卡在 **1.05**。去噪之前分子含页眉页脚带（比值 ≈1.029），需要留出余量；
+#: 去噪之后比值回到 ≈1.000，离上界更远了 —— 这条护栏没有因此变松，它盯的一直是
+#: "有没有把同一段正文写两遍"：正文区 57502 字符 → 允许抽出 ≤ 60377，
+#: 而今天抽出 57494，余量约 2883 字符。**任何一段像样的正文被重复写第二次**
+#: （单段通常几百到上千字符）都会立刻顶破这条上界。
+#: 它与 `test_real_subset_has_no_duplicate_block_on_the_same_page`
 #: 互补：那条查"完全相同的块"，这条查"总量层面的放大"。
 A1_2_MAX_COVERAGE = 1.05
 
@@ -116,7 +122,11 @@ BODY_SENTENCES = (
 _CJK_RE = re.compile(r"[\u4e00-\u9fff]")
 _BLOCK_ANCHOR_RE = re.compile(r"<!-- block: (blk_[0-9a-f]{8}_\d{5}) -->")
 _PAGE_ANCHOR_RE = re.compile(r"<!-- page: (\d+) -->")
-_HEADING_TYPES = {"heading", "paragraph"}
+#: 文本层 PDF 的解析器**允许**产出的块类型。自第二批起多了 `image_caption`
+#: （`Figure x.y.: ...` / `Table x.y: ...` 这类带编号分隔符的图注），
+#: 所以这里从"heading/paragraph 两种"扩成三种 —— 其余的（table/code/question…）
+#: 仍然是 PDF 解析器**不该**产出的，列成白名单比"否定式断言"更严。
+_PDF_BLOCK_TYPES = {"heading", "paragraph", "image_caption"}
 
 pytestmark = pytest.mark.skipif(
     not (TEXTBOOK_PDF.is_file() and SCAN_SAMPLE_PDF.is_file()),
@@ -267,7 +277,7 @@ def test_real_subset_parses_with_correct_page_count_and_page_numbers(
     assert doc.blocks, "真实文本层教材抽出了 0 个块"
     assert all(b.page_no is not None for b in doc.blocks), "存在没有页码的块（破坏 A1-6）"
     assert {b.page_no for b in doc.blocks} <= set(range(1, SUBSET_PAGES + 1))
-    assert all(b.block_type in _HEADING_TYPES for b in doc.blocks)
+    assert all(b.block_type in _PDF_BLOCK_TYPES for b in doc.blocks)
     assert all(b.content_md.strip() for b in doc.blocks), "存在空白块"
 
 
@@ -338,9 +348,11 @@ def test_real_subset_text_coverage_meets_a1_2(
              = **已剔除页眉页脚带的正文区字符**（实测 59186 − 1684 = 57502）
 
     两侧都去掉空白，避免把排版空格算成抽取成果。分母剔除页眉页脚，是因为
-    书名/页码/running head 不是"应当抽出的正文"；分子这一批**还没去噪**，
-    所以仍含那部分字符，比值会**略大于 1**（≈1.029）——这是预期，不是缺陷，
-    下一批去噪落地后会回到 ≈1.000。下限始终是 SPEC 的 98%，不因去噪下调。
+    书名/页码/running head 不是"应当抽出的正文"。
+
+    **去噪已落地，期望已更新**：分子不再含页眉页脚（实测 57494 字符），
+    覆盖率 **99.99% ≈ 1.000**，落在 [98%, 105%] 内。剩的 8 字符缺口是目录页里
+    孤立成行的页码（分子去掉、分母没扣），属于去噪的**预期**结果。
 
     这条与下面的**逐字忠实性**用例分工明确：那条管"抽出来的字对不对"
     （错字 / 捏造 / 错位），这条管"**该抽的有没有少抽**"——少抽不会产生任何
@@ -357,7 +369,7 @@ def test_real_subset_text_coverage_meets_a1_2(
         f"[真实素材] 文本量：抽出 {extracted} 字符 / 整页 {page_total} 字符"
         f"（扣页眉页脚带 {noise_total} 字符）→ 正文区 {body_total} 字符"
         f" → 覆盖率 {coverage * 100:.2f}%（口径 ["
-        f"{A1_2_MIN_COVERAGE:.0%}, {A1_2_MAX_COVERAGE:.0%}]，本批未去噪故略高于 100% 属预期）"
+        f"{A1_2_MIN_COVERAGE:.0%}, {A1_2_MAX_COVERAGE:.0%}]，去噪已落地故应 ≈100%）"
     )
     assert page_total > 0
     assert 0 <= noise_total < page_total, "页眉页脚带扣得不合理（把整页都扣没了）"
@@ -371,17 +383,26 @@ def test_real_subset_text_coverage_meets_a1_2(
         f"（正文区 {body_total} 字符却抽出 {extracted}）—— 有内容被重复写"
     )
 
-    # 少抽的**逐页**护栏：只要某页有正文文本，就必须至少抽出一个块。
+    # 少抽的**逐页**护栏：只要某页**正文区**有文本，就必须至少抽出一个块。
     # 覆盖率是个比值，整页被丢掉时可以靠别处的重复写掩盖过去；这条不能。
-    # （实测第 2 页是完全空白页，`get_text()` 为空，因此它不被要求有块。）
-    pages_with_text = {p for p, t in subset_page_text.items() if t}
+    #
+    # 口径修正（去噪落地后）：判据从"整页 `get_text()` 非空"改成"**正文区**非空"。
+    # 理由是去噪之后，"整页只印着页眉与页码"的页（实测第 8 页：只有书名页眉、
+    # 页码 `4` 与 running head `TABLE OF CONTENTS`，正文区 0 字符）本来就该产出
+    # 0 个块 —— 用整页字符判会把它误报成"整页少抽"。分母口径与覆盖率一致，
+    # 依旧由 `subset_page_noise_chars` 提供，所以这条护栏**没有变松**：
+    # 正文区有字的页，一个块都不许少。
+    # （第 2 页整页空白，`get_text()` 为空，同样不被要求有块。）
+    pages_with_text = {
+        p for p, t in subset_page_text.items() if len(t) - subset_page_noise_chars.get(p, 0) > 0
+    }
     pages_with_blocks = {b.page_no for b in doc.blocks if b.page_no is not None}
     dropped = sorted(pages_with_text - pages_with_blocks)
     _report(
-        f"[真实素材] 逐页完整性：有正文的页 {len(pages_with_text)} 个，"
+        f"[真实素材] 逐页完整性：正文区有字的页 {len(pages_with_text)} 个，"
         f"其中有块的 {len(pages_with_text & pages_with_blocks)} 个，整页被丢={dropped}"
     )
-    assert not dropped, f"这些页有正文却一个块都没抽出（整页少抽）：{dropped}"
+    assert not dropped, f"这些页正文区有字却一个块都没抽出（整页少抽）：{dropped}"
 
 
 def test_real_subset_has_no_duplicate_block_on_the_same_page(subset_parsed: Any) -> None:
@@ -561,18 +582,26 @@ def test_real_textbook_is_not_misclassified_as_scan(subset_parsed: Any) -> None:
 
 
 # ---------------------------------------------------------------------------
-# 8. 真实版式的观察（**报告，不作断言**）
+# 8. 真实版式（去噪前只报告；去噪落地后按**新期望**断言）
 # ---------------------------------------------------------------------------
 
 
-def test_real_layout_noise_is_reported_not_asserted(
+def test_real_layout_denoise_is_reported_and_asserted(
     subset_parsed: Any, subset_page_text: dict[int, str]
 ) -> None:
-    """★ 真实版式观察：页眉 / 页码 / 图注 / 目录页在块表里的实际表现。
+    """★ 真实版式：页眉 / 页码 / 图注 / 目录页在块表里的实际表现。
 
-    这里**刻意只打印、不针对噪声下断言**：页眉页脚去噪是下一批的任务，
-    把"每页多出 2 个噪声块"写成断言，等于让下一批改对之后反而报红。
-    断言只保留"不该随去噪变化"的结构完整性。
+    **去噪已落地，期望已更新**：第一批这里只打印、不下断言（当时去噪是下一批的
+    任务，写死断言会让"改对之后反而报红"）。现在去噪已经落地，断言换成**新的正确
+    期望**，它比"只打印"严格得多：
+
+      · 页首带 / 页脚带里**不许再有块**（页眉 24 块、页脚带 52 块都要消失）；
+      · **不许再有纯数字块**（第一批 32 块，且全是 `heading_level=1`）；
+      · 以 `Figure` / `Table` 开头的块**必须**是 `image_caption`（第一批全是
+        `paragraph`、`image_caption` 零产出）；
+      · 章数必须回到教材真实结构（第一章 `Foundation`，前 30 页只覆盖到 1.3）。
+
+    其余仍是"报告"：目录行 / 块长度 / 跨页重复短文本的实测值打印出来供核对。
 
     观测口径（LaTeX 教材的版心，与 A1-2 分母扣除项**同一条带**）：
       · 页首带 `bbox.top < HEADER_BAND_TOP` (60)  —— 书名页眉
@@ -580,6 +609,7 @@ def test_real_layout_noise_is_reported_not_asserted(
     """
     doc = subset_parsed
     total = len(doc.blocks)
+    chapters = split_outline(doc)
 
     top_band = [b for b in doc.blocks if b.bbox and b.bbox[1] < HEADER_BAND_TOP]
     bottom_band = [b for b in doc.blocks if b.bbox and b.bbox[1] > FOOTER_BAND_TOP]
@@ -603,7 +633,7 @@ def test_real_layout_noise_is_reported_not_asserted(
     }
     repeated = Counter(b.content_md.strip() for b in doc.blocks if len(b.content_md.strip()) <= 80)
 
-    _report("\n===== 真实版式观察（30 页子集，非断言）=====")
+    _report("\n===== 真实版式（30 页子集；第一批只观察，本批已断言）=====")
     _report(f"总块={total}；块类型分布={dict(Counter(b.block_type for b in doc.blocks))}")
     lengths = sorted(len(b.content_md) for b in doc.blocks)
     _report(
@@ -653,14 +683,44 @@ def test_real_layout_noise_is_reported_not_asserted(
             f"其中页码在**行首**的={len(toc_head_numbered)}")
     _report(f"   目录行样例={[b.content_md.strip()[:60] for b in toc_leadered[:3]]}")
     _report("   → 结论：目录行**已被拼成整行**（页码在行首是这本 LaTeX 教材的版式，"
-            "不是碎块）；碎块问题只体现在页脚 running head / 页码被拆成独立块。")
+            "不是碎块）；目录页里孤立成行的页码碎片已被去噪去掉。")
 
     _report(f"\n[跨页重复的短文本] {repeated.most_common(6)}")
 
-    # ---- 只断言"结构完整性"（不随去噪变化）----
+    # ---- 结构完整性（不随去噪变化）----
     assert all(b.bbox is not None for b in doc.blocks), "真实 PDF 的块必须带 bbox"
     assert all(
         b.line_start is not None and b.line_end is not None and b.line_start <= b.line_end
         for b in doc.blocks
     ), "行号缺失或倒置"
     assert all(b.page_no in subset_page_text for b in doc.blocks)
+
+    # ---- ★ 去噪后的**新正确期望**（第一批这里是"只打印、不断言"）----
+    assert not top_band, f"页首带里仍有 {len(top_band)} 个块（页眉没去干净）：{top_band[:3]}"
+    assert not bottom_band, (
+        f"页脚带里仍有 {len(bottom_band)} 个块（页码/running head 没去干净）：{bottom_band[:3]}"
+    )
+    assert not pure_digits, f"仍有纯数字块（页码）：{[(b.page_no, b.content_md) for b in pure_digits[:5]]}"
+
+    # 以 Figure/Table 开头的**短块**必须全部是 image_caption（实测 12 块）。
+    short_captions = [b for b in captions if len(b.content_md) <= 300]
+    _report(f"   → 短图注 {len(short_captions)} 块，全部 image_caption="
+            f"{all(b.block_type == 'image_caption' for b in short_captions)}")
+    assert short_captions, "以 Figure/Table 开头的图注一块都没认出来"
+    assert all(b.block_type == "image_caption" for b in short_captions), (
+        f"图注没判成 image_caption：{[(b.page_no, b.block_type) for b in short_captions[:3]]}"
+    )
+
+    # 例外（刻意保留）：p14 那段**以 "Figure 1.3" 开头的正文**（628 字符）不是图注。
+    # 只看"以 Figure 开头"会把一段正文错判成图注并切碎 —— 这是防误判的关键证据。
+    assert [len(b.content_md) for b in long_captions] == [628], (
+        f"疑似粘连的块变了：{[(b.page_no, len(b.content_md)) for b in long_captions]}"
+    )
+    assert long_captions[0].block_type == "paragraph", (
+        "以 Figure 开头的**正文**被错判成了图注（会切碎正文）"
+    )
+    assert "shows a pair of" in long_captions[0].content_md
+
+    # 章数回到教材真实结构（本批前 30 页只覆盖到第一章 1.3）
+    assert len(chapters) <= 3, f"章数仍然失真：{len(chapters)} 章"
+    _report(f"   → 章数={len(chapters)}（教材真实结构：前 30 页只到第一章 1.3）")
