@@ -37,41 +37,39 @@ http://<公网IP>:8000/docs       → OpenAPI 文档（演示与调试用）
 | 防火墙 | 放行 **22（SSH）** 与 **8000（HTTP）** |
 | 数据盘 | 不需要额外数据盘 |
 
-### 2.2 装 Docker
+### 2.2 初始化服务器（一条命令）
 
 ```bash
-# 官方脚本，装完 docker + compose plugin
-curl -fsSL https://get.docker.com | sh
-
-# 验证
-docker --version && docker compose version
+sudo bash scripts/server-bootstrap.sh
 ```
 
-> ⚠️ **必须配镜像加速 —— 这不是"可选优化"，是硬需求。**
+**脚本做四件事**（可重复执行）：校验系统 → 装 Docker + compose →
+**配 Docker 镜像源** → 体检（内核/内存/磁盘/端口/防火墙）。
+
+> **为什么不写成"复制粘贴这几条命令"**：顺序和幂等性容易搞错，
+> 而且**镜像源那步是硬需求、漏了会卡住整条链路**（见下方说明）。
+> 写成脚本就不会漏 —— 详细理由见 `scripts/server-bootstrap.sh` 的注释。
+
+**它做不了的一件事 —— 必须手工**：
+
+> ⚠️ **阿里云控制台的「防火墙」里放行 8000 端口。**
+>
+> 云主机有**两层**防火墙：① 控制台防火墙 ② 系统内的 ufw。
+> **只放开一层，症状是"本机能通、外网不通"** —— 这是最常见的坑。
+> 脚本只能体检第二层，第一层要手工点。
+
+#### 附：为什么镜像源是硬需求（脚本已配好，这里是理由与备选）
+
+> ⚠️ **这不是"可选优化"。**
 >
 > 本地实测（2026-09-18）：**`registry-1.docker.io` 直连超时**（12 秒无响应），
 > 不配镜像源根本拉不下来。配之前构建速度 **40 KB/s**（49 秒下 2 MB），
-> 配好之后 **13~30 MB/s** —— 差 500 倍。
+> 配好之后 **13~30 MB/s** —— **差 500 倍**。
 >
-> **别只配一个源**（社区镜像经常死）。下面两个是当时实测可用的：
+> **别只配一个源**（社区镜像经常死）。脚本用的是当时实测可用的两个：
+> `docker.m.daocloud.io`（返回 401 = 可达）、`docker.1panel.live`（返回 200）。
 >
-> ```bash
-> sudo mkdir -p /etc/docker
-> sudo tee /etc/docker/daemon.json <<'EOF'
-> {
->   "registry-mirrors": [
->     "https://docker.m.daocloud.io",
->     "https://docker.1panel.live"
->   ]
-> }
-> EOF
-> sudo systemctl restart docker
->
-> # 确认生效
-> docker info --format '{{.RegistryConfig.Mirrors}}'
-> ```
->
-> **挑源的方法**（别照抄，自己验证一次）：
+> **自己验证源的方法**（社区镜像变化快，别照抄）：
 >
 > ```bash
 > # 200 或 401 都算可用（401 = 可达，只是要认证）；000 = 连不上
@@ -81,12 +79,11 @@ docker --version && docker compose version
 > done
 > ```
 >
-> **实测不可用 / 不可靠的**：`dockerproxy.com`（连不上）、
-> `hub-mirror.c.163.com`（连不上）、`mirror.ccs.tencentyun.com`（连不上）、
+> **实测不可用 / 不可靠的**：`dockerproxy.com`、`hub-mirror.c.163.com`、
+> `mirror.ccs.tencentyun.com`（都连不上）、
 > **`hub.rat.dev`（返回 302 重定向 —— 排在首位会拖慢甚至卡住构建）**。
 >
-> ⚠️ **改了 `daemon.json` 必须重启 Docker 才生效。**
-> Docker Desktop 可用 `docker desktop restart`；Linux 上是 `sudo systemctl restart docker`。
+> ⚠️ **改了 `daemon.json` 必须重启 Docker 才生效**（脚本里已处理）。
 
 ### 2.3 拉代码、起服务
 
