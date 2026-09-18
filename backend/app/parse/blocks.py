@@ -72,6 +72,15 @@ _CN_CHAPTER_RE = re.compile(r"^\s*(第\s*[0-9一二三四五六七八九十百]+
 _CN_SECTION_RE = re.compile(r"^\s*(第\s*[0-9一二三四五六七八九十百]+\s*节)\s*[:：.、]?\s*(.*)$")
 # `一、` —— 中文教材里章 → 节 → 一、 三级常见
 _CN_ORDINAL_RE = re.compile(r"^\s*([一二三四五六七八九十]+)\s*[、.．]\s*(.*)$")
+# `Chapter 1. Foundation` / `Chapter 3: Routing`
+#   · 只认**带编号分隔符**（`.`/`:`/`：`/`、`）的写法 —— 与图注识别同一套取舍：
+#     "以 Chapter 开头"太弱，正文里 `Chapter 1 describes the ...` 是完整句子
+#     （真实教材的正文里就有），只看前缀会把它判成标题并把一段正文切碎。
+#     分隔符是**必需**信号，没有就返回 None（宁可漏判，不误判）。
+#   · 编号原貌保留为 `Chapter 1`，标题取分隔符之后的部分。
+_EN_CHAPTER_RE = re.compile(
+    r"^\s*((?:Chapter|CHAPTER|chapter)\s*\d{1,3})\s*[.．:：、]\s+(?=\S)(.+)$"
+)
 
 # 各形式对应的层级。中文顿号序号在教材里普遍是第三级，故记 3。
 _CN_ORDINAL_DEPTH = 3
@@ -97,6 +106,12 @@ def split_heading_number(text: str) -> HeadingNumber | None:
     m = _CN_ORDINAL_RE.match(line)
     if m:
         return HeadingNumber(number=m.group(1), title=m.group(2).strip(), depth=_CN_ORDINAL_DEPTH)
+
+    # `Chapter 1. Foundation` —— 英文教材的章标题。放在中文规则之后、通用数字规则
+    # 之前：它一定是章级（depth=1），而 `_NUM_RE` 只认"行首就是数字"，认不出它。
+    m = _EN_CHAPTER_RE.match(line)
+    if m:
+        return HeadingNumber(number=m.group(1), title=m.group(2).strip(), depth=1)
 
     m = _NUM_RE.match(line)
     if m:
