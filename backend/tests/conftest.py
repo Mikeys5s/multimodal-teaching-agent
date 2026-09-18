@@ -1,24 +1,55 @@
 """测试夹具（归属：P2）。
 
-关键点：测试引擎**必须走和生产同一套 pragma 设置**（`apply_sqlite_pragmas`）。
-如果测试自己建引擎却忘了开 `foreign_keys`，就会出现
-"外键测试在测试环境通过、在生产环境不生效" —— 这是最糟糕的一种假绿。
+## 关键点 1：测试引擎必须走和生产同一套 pragma
+
+见下面 `engine` fixture 的注释。
+
+## 关键点 2：⚠️ 整个测试会话**绝不能碰真实的 `backend/app.db`**
+
+历史问题（Issue #12）：干净环境先跑 `pytest` 会在 `backend/` 下留下一个真实的
+`app.db`（表建好了但没有 `alembic_version`），导致随后的
+`alembic upgrade head` 报 `table already exists`。
+
+**根因**：有些测试要打真实接口（`TestClient(app)`），而 app 的 engine 指向
+`settings.db_file`，默认就是 `backend/app.db`。
+
+**修法**：在 `import app.*` **之前**把 `DB_PATH` 指到一个临时目录。
+这样 app 的 engine 从一开始就落在临时库里，污染不了仓库。
+
+> ⚠️ 必须放在文件最顶部、且在任何 `app.*` 导入之前 ——
+> `app.config.settings` 是在**导入时**求值的，晚一步就来不及了。
 """
 
 from __future__ import annotations
 
-from collections.abc import Iterator
-from pathlib import Path
+import os
+import pathlib
+import tempfile
 
-import pytest
-from alembic.config import Config
-from sqlalchemy import Engine, create_engine
-from sqlalchemy.orm import Session
+# ---------------------------------------------------------------------------
+# ⚠️ 必须是本文件最先执行的事情（早于任何 app.* 导入）
+# ---------------------------------------------------------------------------
+_TEST_DB_DIR = pathlib.Path(tempfile.mkdtemp(prefix="xizhi-pytest-"))
+# 用 setdefault：外部显式传了 DB_PATH 就尊重它
+os.environ.setdefault("DB_PATH", str(_TEST_DB_DIR / "test_app.db"))
 
-import app.models  # noqa: F401  确保所有模型被注册进 Base.metadata
-from alembic import command
-from app.config import BACKEND_ROOT
-from app.db import Base, apply_sqlite_pragmas
+from collections.abc import Iterator  # noqa: E402
+from pathlib import Path  # noqa: E402
+
+import pytest  # noqa: E402
+from alembic.config import Config  # noqa: E402
+from sqlalchemy import Engine, create_engine  # noqa: E402
+from sqlalchemy.orm import Session  # noqa: E402
+
+import app.models  # noqa: E402, F401  确保所有模型被注册进 Base.metadata
+from alembic import command  # noqa: E402
+from app.config import BACKEND_ROOT  # noqa: E402
+from app.db import Base, apply_sqlite_pragmas  # noqa: E402
+
+
+def pytest_report_header(config: pytest.Config) -> str:
+    """把临时库位置打出来，方便排查"测试是不是又写到真实库去了"。"""
+    return f"xizhi tests: DB_PATH={os.environ.get('DB_PATH')}"
 
 
 @pytest.fixture
