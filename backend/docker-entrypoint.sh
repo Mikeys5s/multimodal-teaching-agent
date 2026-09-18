@@ -17,23 +17,44 @@ echo "[entrypoint] 迁移完成"
 
 echo "[entrypoint] 自检数据库 ..."
 python -c "
-import sqlite3, sys
-from app.config import settings
+import sys
+from sqlalchemy import text
 
-db = settings.db_file
-con = sqlite3.connect(db)
-tables = sorted(r[0] for r in con.execute(
-    \"SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'\"
-))
-ver = con.execute('SELECT version_num FROM alembic_version').fetchone()
+from app.config import settings
+from app.db import engine
+
+# ⚠️ 这里**必须**走 app 自己的 engine，不能用裸 sqlite3.connect()。
+#    原因：pragma（foreign_keys / WAL / busy_timeout）挂在
+#    event.listens_for(engine, 'connect') 上 —— 也就是**每条新连接**都会设一遍。
+#    裸连接绕过了那个监听器，读到的会是 SQLite 的默认值 foreign_keys=0，
+#    于是在日志里印出一个**假警报**：
+#        外键开关 : 0      ← 看起来像外键没生效，其实应用里是好的
+#    （这条是本地跑镜像时发现的：日志说 0、接口 /api/health/pragma 说 1，
+#      两个数对不上，查下去才确定是自检脚本自己的问题。）
+with engine.connect() as conn:
+    db = settings.db_file
+    tables = sorted(
+        r[0]
+        for r in conn.execute(
+            text(
+                \"SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'\"
+            )
+        )
+    )
+    ver = conn.execute(text('SELECT version_num FROM alembic_version')).fetchone()
+    fk = conn.execute(text('PRAGMA foreign_keys')).scalar()
+    jm = conn.execute(text('PRAGMA journal_mode')).scalar()
+
 print(f'  库文件   : {db}')
 print(f'  表数量   : {len(tables)}')
 print(f'  迁移版本 : {ver[0] if ver else \"（缺失！）\"}')
-fk = con.execute('PRAGMA foreign_keys').fetchone()[0]
-print(f'  外键开关 : {fk}')
+print(f'  外键开关 : {fk}   journal_mode: {jm}')
 
 if not ver:
     print('  [!!] 没有 alembic_version 记录 —— 迁移可能没生效', file=sys.stderr)
+    sys.exit(1)
+if str(fk) != '1':
+    print('  [!!] 外键没打开！写入会产生脏数据', file=sys.stderr)
     sys.exit(1)
 "
 
