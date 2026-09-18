@@ -43,9 +43,28 @@ to_posix() { # C:\Users\x  ->  /c/Users/x
   printf '%s' "$1" | sed -e 's|^\([a-zA-Z]\):|/\L\1|' -e 's|\\|/|g'
 }
 
+# ⚠️ 找「用户主目录」时不要用 `$USERNAME` 拼 ——
+#    `$USERNAME` 是**登录名**，它和主目录名**可以不一样**
+#    （实测本机主目录是 `C:\Users\XiaoZH`，而 `$USERNAME` 不是这个；
+#     某些环境下 `$USERNAME` 干脆是空的）。用 `$USERNAME` 拼出来的路径不存在，
+#     venv 会建到一个奇怪的地方去。**优先用 `$USERPROFILE` / `$HOME`。**
+detect_home_win() {
+  if [ -n "${USERPROFILE:-}" ] && [ -d "$(to_posix "$USERPROFILE")" ]; then
+    printf '%s' "$USERPROFILE"; return
+  fi
+  if [ -n "${HOME:-}" ] && [ -d "$HOME" ]; then
+    to_win "$HOME"; return
+  fi
+  # 最后才退回 $USERNAME（并明确提示这是不保险的兜底）
+  printf 'C:\\Users\\%s' "${USERNAME:-admin}"
+}
+
+HOME_WIN="$(detect_home_win)"
+VENV_HOME_WIN="${XIZHI_VENV_HOME:-${HOME_WIN}\\.venvs}"
+
 LINK_POSIX="${XIZHI_VENV_LINK:-$BACKEND/.venv}"
 LINK_WIN="$(to_win "$LINK_POSIX")"
-TARGET_WIN="${XIZHI_VENV_DIR:-C:\\Users\\${USERNAME:-admin}\\.venvs\\xizhi-backend}"
+TARGET_WIN="${XIZHI_VENV_DIR:-${VENV_HOME_WIN}\\xizhi-backend}"
 TARGET_POSIX="$(to_posix "$TARGET_WIN")"
 
 REBUILD=0
@@ -57,6 +76,7 @@ bad() { printf '  [!!] %s\n' "$*"; }
 die() { bad "$*"; exit 1; }
 
 echo "仓库根目录 : $REPO_ROOT"
+echo "用户主目录 : $HOME_WIN"
 echo "junction   : $LINK_WIN"
 echo "外部 venv  : $TARGET_WIN"
 
@@ -66,9 +86,11 @@ echo "外部 venv  : $TARGET_WIN"
 say "[0/5] 找 Python"
 PY=""
 for cand in \
-  "C:/Users/${USERNAME:-admin}/.workbuddy/binaries/python/versions/3.13.12/python.exe" \
+  "$(to_posix "$HOME_WIN")/.workbuddy/binaries/python/versions/3.13.12/python.exe" \
   "$(command -v python 2>/dev/null || true)" \
-  "$(command -v python3 2>/dev/null || true)" ; do
+  "$(command -v python3 2>/dev/null || true)" \
+  "/c/Python313/python.exe" \
+  "/c/Python312/python.exe" ; do
   [ -n "$cand" ] && [ -x "$cand" ] || continue
   if "$cand" -c 'import sys; sys.exit(0 if sys.version_info[:2] >= (3, 11) else 1)' 2>/dev/null; then
     PY="$cand"; break
