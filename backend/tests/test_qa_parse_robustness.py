@@ -326,11 +326,18 @@ def test_unsupported_format_is_decided_by_extension_not_by_content(tmp_path: Pat
 # ---------------------------------------------------------------------------
 
 
-def test_failures_do_not_pollute_following_parses(tmp_path: Path) -> None:
+def test_failures_do_not_pollute_following_parses(
+    ocr_available_stub: None, tmp_path: Path
+) -> None:
     """★ 场景 5：先制造一串失败，再解析正常文件必须仍然成功。
 
     解析链路的调用方是"逐个文件调用、捕获 ApiError 记到 materials.error_message"，
     所以单文件失败**绝对不能**污染全局状态（模块级缓存、pymupdf 全局文档等）。
+
+    `photo.png` 是坏图（`b"\\x89PNG"`）→ 期望 `UNSUPPORTED_FORMAT`，所以这里挂
+    `ocr_available_stub`：把 OCR 固定成"可用"才不会在 `ensure_available()` 就被拦成
+    "没装 OCR 依赖"，同时不触发一次真的 paddleocr import（省 ~3 s，也不起引擎）。
+    断言一条都没放松 —— 坏图必须在**读图**阶段报"格式不支持"。
     """
     good_pdf = make_ok_pdf(tmp_path / "good.pdf")
     good_docx = make_ok_docx(tmp_path / "good.docx")

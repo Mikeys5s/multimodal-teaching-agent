@@ -149,26 +149,17 @@ def _nows(text: str) -> str:
 
 
 def _break_ocr_import(monkeypatch: pytest.MonkeyPatch) -> None:
-    """让 `import paddleocr` 抛 `ImportError`：模拟"这台机器没装 `[ocr]`"。
+    """把 OCR 固定成"不可用"：模拟"这台机器没装 `[ocr]`"。
 
-    D3 之后扫描版 PDF 的默认路径是"OCR 可用就产块"，要守"不可用时降级"这条分支，
-    就得把 OCR 弄成不可用。两个缓存都要清（导入结果 + 可用性结论），否则会被前面
-    用例缓存住的 True 蒙混过关。
+    D3 之后扫描版 PDF 的默认路径是"OCR 可用就真起 paddle 引擎逐页产块"
+    （本机实测真实扫描件 140.4 s/页，3 页 ≈7 min），要守"不可用时降级"这条分支就得
+    把 OCR 弄成不可用 —— 直接按 `ocr._AVAILABLE`（可用性结论的缓存）即可，
+    与真没装 `[ocr]` 走的是**同一条代码路径**，但不起引擎、秒级完成。
     """
-    import importlib
-
     from app.parse import ocr
 
-    real_import = importlib.import_module
-
-    def _fake_import(name: str, *args: Any, **kwargs: Any) -> Any:
-        if name == "paddleocr":
-            raise ImportError("No module named 'paddleocr'")
-        return real_import(name, *args, **kwargs)
-
-    monkeypatch.setattr(ocr, "_PaddleOcrClass", None)
-    monkeypatch.setattr(ocr, "_AVAILABLE", None)
-    monkeypatch.setattr(ocr.importlib, "import_module", _fake_import)
+    monkeypatch.setattr(ocr, "_AVAILABLE", False)
+    monkeypatch.setattr(ocr, "_ENGINE", None)
 
 
 @pytest.fixture(scope="module")

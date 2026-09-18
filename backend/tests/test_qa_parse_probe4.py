@@ -104,8 +104,15 @@ def test_text_layer_still_wins_when_page_has_a_large_image(tmp_path: Path) -> No
 
 
 @pytest.mark.parametrize("pages", [1, 2, 7])
-def test_scan_detection_scales_with_page_count(tmp_path: Path, pages: int) -> None:
-    """扫描版判定在 1 / 2 / 7 页下都成立（抽样边界：页数少于抽样数时全取）。"""
+def test_scan_detection_scales_with_page_count(
+    ocr_unavailable: None, tmp_path: Path, pages: int
+) -> None:
+    """扫描版判定在 1 / 2 / 7 页下都成立（抽样边界：页数少于抽样数时全取）。
+
+    挂 `ocr_unavailable`：D3 之后扫描版会真起 paddle 引擎（本机 ≈17 s/页，
+    7 页 ≈2 min），而这条要验的是**抽样判定**与"不给假内容"，不是 OCR 认字能力。
+    固定成"本机没装 `[ocr]`"（与真没装是同一条代码路径），断言一条都没放松。
+    """
     doc = pymupdf.open()
     for _ in range(pages):
         page = doc.new_page()

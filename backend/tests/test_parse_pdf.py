@@ -200,9 +200,13 @@ def test_markdown_carries_page_and_block_anchors(text_pdf: Path) -> None:
 # ---------------------------------------------------------------------------
 # 扫描版（F1.2）
 # ---------------------------------------------------------------------------
+# ⚠️ 下面三条挂 `ocr_unavailable`：D3 之后扫描版会**真起 paddle 引擎**（本机实测
+# ≈17 s/页，真实扫描件 140 s/页），而这三条要守的是"判成扫描版就不许编内容"、
+# 不是"OCR 认得多准" —— 固定成"本机没装 `[ocr]`"即可，与真没装是同一条代码路径。
+# 断言一条都没放松。真跑 OCR 的用例在 `test_parse_ocr.py`（`XIZHI_RUN_OCR_SLOW=1` 开启）。
 
 
-def test_image_only_pdf_is_detected_as_scan(tmp_path: Path) -> None:
+def test_image_only_pdf_is_detected_as_scan(ocr_unavailable: None, tmp_path: Path) -> None:
     """★ F1.2：没有文本层 → 判为 pdf_scan，且**不产出伪造的块**。"""
     path = make_image_only_pdf(tmp_path / "scan.pdf")
     doc = parse_pdf(path)
@@ -211,15 +215,17 @@ def test_image_only_pdf_is_detected_as_scan(tmp_path: Path) -> None:
     assert doc.page_count == 1
 
 
-def test_scan_detection_does_not_claim_ocr_was_run(tmp_path: Path) -> None:
-    """本批次一行 OCR 都没跑，`parse_method` 就必须是 None —— 写 'ocr' 是假账。"""
+def test_scan_detection_does_not_claim_ocr_was_run(ocr_unavailable: None, tmp_path: Path) -> None:
+    """没有可用的 OCR 时一行都没跑，`parse_method` 就必须是 None —— 写 'ocr' 是假账。"""
     path = make_image_only_pdf(tmp_path / "scan.pdf")
     doc = parse_pdf(path)
     assert doc.parse_method is None
     assert doc.parse_method != "ocr"
 
 
-def test_scan_detection_explains_itself_with_chinese_note(tmp_path: Path) -> None:
+def test_scan_detection_explains_itself_with_chinese_note(
+    ocr_unavailable: None, tmp_path: Path
+) -> None:
     """判成扫描版却不告诉用户为什么，用户只会反复重试同一个文件。"""
     path = make_image_only_pdf(tmp_path / "scan.pdf")
     doc = parse_pdf(path)

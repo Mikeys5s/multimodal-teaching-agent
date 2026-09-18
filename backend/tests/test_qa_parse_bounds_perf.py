@@ -9,6 +9,12 @@
 
 性能用例的门限写死 90 秒（A1-5 的验收线），不写"当前值 + 余量" —— 后者会把
 一次性能回归固化成正例。
+
+⚠️ 本文件的扫描版用例**都不是在测 OCR**（D3 之后扫描版会默认真起 paddle 引擎，
+本机实测 ≈17 s/页、真实扫描件 140 s/页）—— 它们守的是"整页图无文本层 → `pdf_scan`
+且**不给假内容**"，所以统一挂 `ocr_unavailable` 夹具走降级路径：不 import paddleocr、
+不起引擎、秒级完成。**断言一条都没放松**（降级路径与"没装 `[ocr]`"是同一条代码路径）。
+真正验 OCR 认字能力的用例在 `test_parse_ocr.py`，那边用 `XIZHI_RUN_OCR_SLOW=1` 显式开启。
 """
 
 from __future__ import annotations
@@ -174,7 +180,9 @@ def test_markdown_build_is_fast_for_twenty_pages(tmp_path: Path) -> None:
 # ---------------------------------------------------------------------------
 
 
-def test_image_only_pdf_is_classified_as_scan(tmp_path: Path) -> None:
+def test_image_only_pdf_is_classified_as_scan(
+    ocr_unavailable: None, tmp_path: Path
+) -> None:
     """★ 场景 16：整页图片、无文本层 → `pdf_scan`。"""
     path = make_image_only_pdf(tmp_path / "scan.pdf")
 
@@ -184,14 +192,18 @@ def test_image_only_pdf_is_classified_as_scan(tmp_path: Path) -> None:
     assert doc.page_count == 1
 
 
-def test_scan_document_does_not_claim_ocr_or_text_extract(tmp_path: Path) -> None:
+def test_scan_document_does_not_claim_ocr_or_text_extract(
+    ocr_unavailable: None, tmp_path: Path
+) -> None:
     """扫描版既没跑 OCR、也没跑文本抽取 → `parse_method` 必须是 None。"""
     doc = parse_pdf(make_image_only_pdf(tmp_path / "scan.pdf"))
     assert doc.parse_method is None
     assert doc.parse_method not in ("ocr", "text_extract")
 
 
-def test_scan_document_explains_itself_in_chinese(tmp_path: Path) -> None:
+def test_scan_document_explains_itself_in_chinese(
+    ocr_unavailable: None, tmp_path: Path
+) -> None:
     """判成扫描版必须给出一条 high 级中文说明，否则用户只会反复重试同一个文件。"""
     doc = parse_pdf(make_image_only_pdf(tmp_path / "scan.pdf"))
     assert len(doc.uncertain_notes) == 1
@@ -203,7 +215,9 @@ def test_scan_document_explains_itself_in_chinese(tmp_path: Path) -> None:
     assert str(SCAN_MIN_CHARS_PER_PAGE) in note.message
 
 
-def test_multi_page_scan_is_detected_by_sampling(tmp_path: Path) -> None:
+def test_multi_page_scan_is_detected_by_sampling(
+    ocr_unavailable: None, tmp_path: Path
+) -> None:
     """多页扫描件：抽样必须覆盖到"有图无字"的页，不能只看第一页就下结论。"""
     doc = parse_pdf(make_image_only_pdf(tmp_path / "scan8.pdf", pages=8))
     assert doc.source_type == "pdf_scan"
@@ -305,7 +319,7 @@ def test_image_page_plus_very_short_text_page_is_classified_as_text(tmp_path: Pa
     assert not any("扫描" in note.message for note in parsed.uncertain_notes)
 
 
-def test_scan_document_page_count_is_reported(tmp_path: Path) -> None:
+def test_scan_document_page_count_is_reported(ocr_unavailable: None, tmp_path: Path) -> None:
     """扫描版也要如实回报页数（用户据此判断材料规模）。"""
     doc = parse_pdf(make_image_only_pdf(tmp_path / "scan3.pdf", pages=3))
     assert doc.source_type == "pdf_scan"

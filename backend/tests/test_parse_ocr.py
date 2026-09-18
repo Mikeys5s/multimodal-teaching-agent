@@ -11,22 +11,46 @@
   · **A2-7 可复现**：同一输入两次结果一致；
   · 性能：实测每页耗时 → **外推** 20 页是否满足 P2 拍的 ≤8 min 门限。
 
-跑这个文件很贵（Ocr ≈19–160 s/页，取决于页面密度）
-----------------------------------------------------
-所以：3 页真实扫描件**只跑一次**（`scan_run` 夹具），#2 / #3 / #6 / #7 共用；
-其余用例只用程序化生成的小图与小 PDF。**永远不要**在这里跑 20 页。
+跑这个文件很贵 —— 所以"真起引擎"的用例全部改成**显式开启**（opt-in）
+----------------------------------------------------------------------
+本机实测（Windows / 8 核 / paddle 3.3.1 + paddleocr 3.7.0 / PP-OCRv6_medium_det+rec）：
+
+  · 真实密集扫描页 **140.4 s/页**（183.8 / 193.4 / 44.0 s 三页，3 页共 ≈7 min）；
+  · 程序化 4 行中文小图 **18.4 s**；
+  · ⇒ **20 页外推 ≈47 min**，未达 P2 的 8 min 门限（根因见 `app/parse/ocr.py` 模块
+    docstring：本机 oneDNN 不可用，`enable_mkldnn=True` 会在第一个 det 前向崩，
+    只能 `run_mode=paddle`，CPU 上没有算子加速）。
+
+把这种量级挂在**每次** `pytest` 上，等于让全队每人每次等十几分钟，所以：
+
+**默认关**（不设环境变量时）：真起引擎的用例整体 skip，reason 里写清怎么开；
+**怎么开**：
+    XIZHI_RUN_OCR_SLOW=1 pytest -q tests/test_parse_ocr.py
+  （PowerShell：`$env:XIZHI_RUN_OCR_SLOW="1"`，随后 `pytest -q tests/test_parse_ocr.py`）
+  只跑其中一条（例如只验中文小图，≈18 s）：
+    XIZHI_RUN_OCR_SLOW=1 pytest -q tests/test_parse_ocr.py -k chinese_image
+**开着时的实测数字**（本机跑一遍 ≈8.5 min，见上面三行）。
+
+默认跑的那批：用**打桩引擎**测接线，不 import paddleocr、不起引擎
+------------------------------------------------------------------
+  · **降级路径**：没装 `[ocr]` 时扫描版 PDF → 0 块 + 中文 high 级说明（不崩、不判失败），
+    图片材料 → 中文报错；用 `ocr_unavailable` 夹具（`tests/conftest.py`）固定"不可用"；
+  · **进度钩子接线**（P2 的异步 job 靠它）：每页开始前回调一次、参数 `(当前页, 总页数)` ——
+    用 `_StubEngine` 打桩引擎（结果与真实 paddleocr 同形）跑，**不花一页 18–140 s**；
+  · **坏图的中文报错**、**计时的数学**（`ScanRun` 用绝对读数之差）。
+
+⚠️ 打桩只固定"引擎可用性"这个**外部条件**，产块 / 行号 / 进度 / 报错文案全部走真实
+代码路径 —— **断言一条都没放松**（降级路径与"真没装 `[ocr]`"是同一条路径）。
 
 素材在仓库之外，缺了整文件 skip
 -------------------------------
 与 `test_qa_parse_real_material.py` 同一约定：素材在 `.learnbuddy/materials/`
-（不进版本库），可用 `QA_MATERIALS_DIR` 指向别处。
-额外再加一条：**本机没装 `[ocr]` 可选依赖时也整文件 skip** —— 这个文件的所有用例
-都建立在"OCR 能用"之上（降级路径由用例 4 用 monkeypatch 单独守）。
+（不进版本库），可用 `QA_MATERIALS_DIR` 指向别处。只有**用到真实扫描件样本**的
+用例才需要它，所以那条 skipif 挂在对应的用例上，不再整文件 skip。
 """
 
 from __future__ import annotations
 
-import importlib
 import os
 import re
 import time
@@ -72,16 +96,29 @@ _IMAGE_LINES = (
 )
 
 
-def _skip_reason() -> str | None:
-    if not SCAN_SAMPLE_PDF.is_file():
-        return f"缺少真实扫描件样本，跳过（可用 QA_MATERIALS_DIR 指定素材目录）：{SCAN_SAMPLE_PDF}"
+#: 显式开启"真起 OCR 引擎"那个开关（见模块 docstring）。
+_OCR_SLOW_ENV = "XIZHI_RUN_OCR_SLOW"
+
+
+def _real_ocr_skip_reason() -> str | None:
+    """真起引擎的用例为什么被跳过（None = 可以跑）。"""
+    if os.environ.get(_OCR_SLOW_ENV) != "1":
+        return "真起 OCR 引擎，本机 140 s/页；设 XIZHI_RUN_OCR_SLOW=1 启用"
     if not ocr.ocr_available():
         return '未安装 OCR 可选依赖，跳过（pip install -e ".[ocr]"）'
     return None
 
 
-_REASON = _skip_reason()
-pytestmark = pytest.mark.skipif(_REASON is not None, reason=_REASON or "")
+_REAL_OCR_REASON = _real_ocr_skip_reason()
+
+#: 会真起 paddle 引擎的用例统一挂这个门（默认关，见模块 docstring）。
+requires_real_ocr = pytest.mark.skipif(_REAL_OCR_REASON is not None, reason=_REAL_OCR_REASON or "")
+
+#: 需要真实扫描件样本（仓库外素材）的用例挂这个门。
+requires_scan_sample = pytest.mark.skipif(
+    not SCAN_SAMPLE_PDF.is_file(),
+    reason=f"缺少真实扫描件样本，跳过（可用 QA_MATERIALS_DIR 指定素材目录）：{SCAN_SAMPLE_PDF}",
+)
 
 
 # ---------------------------------------------------------------------------
@@ -198,13 +235,69 @@ def make_image_only_pdf(path: Path, pages: int = 1) -> Path:
     return path
 
 
+def make_plain_image(path: Path) -> Path:
+    """一张纯色小图 —— 打桩用例只需要"一个合法图片文件"，不需要真认字（也就不要字体）。"""
+    from PIL import Image
+
+    Image.new("RGB", (120, 80), "white").save(path)
+    return path
+
+
+# ---------------------------------------------------------------------------
+# 打桩引擎：验"接线"（产块 / 行号 / 进度回调），不 import paddleocr、不跑模型
+# ---------------------------------------------------------------------------
+
+
+@dataclass
+class _StubEngine:
+    """假引擎：返回与真实 paddleocr **同形**的结果。
+
+    形状照 `app/parse/ocr.py::_lines_of_image` 的读法来：`rec_texts` / `rec_scores` /
+    `rec_boxes` 是**同一 list 的下标对齐关系**，`predict()` 返回一个 list（取 `[0]`）。
+    这样打桩走的还是 ocr.py 里真实的"行 → 块"转换、页码与行号赋值、进度回调 ——
+    只把"跑模型"这一步换掉。
+    """
+
+    lines: list[tuple[str, float]]
+    predictions: int = 0
+    closed: bool = False
+
+    def predict(self, image: object) -> list[dict[str, object]]:
+        self.predictions += 1
+        return [
+            {
+                "rec_texts": [text for text, _ in self.lines],
+                "rec_scores": [score for _, score in self.lines],
+                "rec_boxes": [[0.0, 0.0, 10.0, 10.0] for _ in self.lines],
+            }
+        ]
+
+    def close(self) -> None:
+        self.closed = True
+
+
+def _install_stub_engine(
+    monkeypatch: pytest.MonkeyPatch, lines: list[tuple[str, float]]
+) -> _StubEngine:
+    """把打桩引擎装进 `ocr._ENGINE` —— `get_engine()` 命中"已有实例"分支直接返回它。"""
+    engine = _StubEngine(lines=lines)
+    monkeypatch.setattr(ocr, "_AVAILABLE", True)
+    monkeypatch.setattr(ocr, "_ENGINE", engine)
+    return engine
+
+
+#: 打桩引擎返回的 4 行（与 `make_chinese_image` 画的是同一批文本）。
+_STUB_LINES: list[tuple[str, float]] = [(text, 0.99) for text in _IMAGE_LINES]
+
+
 # ---------------------------------------------------------------------------
 # 1. 程序化中文图：识别出**预期文本**（不是"不为空"这种松断言）
 # ---------------------------------------------------------------------------
 
 
+@requires_real_ocr
 def test_chinese_image_is_recognized_with_expected_text(tmp_path: Path) -> None:
-    """★ 程序化中文图 → OCR 后必须认得出预期文本子串。
+    """★ 程序化中文图 → OCR 后必须认得出预期文本子串（真引擎，≈18.4 s）。
 
     断言的是**具体子串**而不是"块数 > 0"：松断言在"OCR 只认出一堆乱码"时也会绿，
     那正好是 OCR 最需要被发现的故障。
@@ -229,9 +322,16 @@ def test_chinese_image_is_recognized_with_expected_text(tmp_path: Path) -> None:
         assert block.bbox is not None and len(block.bbox) == 4
 
 
-def test_image_page_number_and_line_numbers_are_one_based(tmp_path: Path) -> None:
-    """图片没有页码也要给 `page_no=1`，行号从 1 起连续 —— 否则前端溯源会指错。"""
-    doc = parse_material(make_chinese_image(tmp_path / "cn.png"))
+def test_image_page_number_and_line_numbers_are_one_based(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    """图片没有页码也要给 `page_no=1`，行号从 1 起连续 —— 否则前端溯源会指错。
+
+    这是**接线**用例（打桩引擎，秒级）：页码 / 行号的赋值发生在 `ocr.py` 的
+    "行 → 块"这一步，与模型认得多准无关。
+    """
+    _install_stub_engine(monkeypatch, _STUB_LINES)
+    doc = parse_material(make_plain_image(tmp_path / "plain.png"))
     assert doc.blocks
     assert {block.page_no for block in doc.blocks} == {1}
     assert [block.line_start for block in doc.blocks] == list(range(1, len(doc.blocks) + 1))
@@ -242,8 +342,10 @@ def test_image_page_number_and_line_numbers_are_one_based(tmp_path: Path) -> Non
 # ---------------------------------------------------------------------------
 
 
+@requires_real_ocr
+@requires_scan_sample
 def test_real_scan_sample_produces_ocr_blocks(scan_run: ScanRun) -> None:
-    """★ F1.2：3 页真实扫描件（无文本层）→ 逐页 OCR 产块，字段齐全。
+    """★ F1.2：3 页真实扫描件（无文本层）→ 逐页 OCR 产块，字段齐全（真引擎，≈7 min）。
 
     「字段齐全」是硬要求：`page_no` 让用户能翻回原页，`bbox` 让前端能框出位置，
     `ocr_confidence` 让角标能标"这句是机器认的，可能错"。少一个就等于丢失溯源能力。
@@ -269,54 +371,73 @@ def test_real_scan_sample_produces_ocr_blocks(scan_run: ScanRun) -> None:
     assert all(block.block_type == "paragraph" for block in doc.blocks)
 
 
+@requires_real_ocr
+@requires_scan_sample
 def test_progress_callback_is_called_once_per_page(scan_run: ScanRun) -> None:
     """★ 进度钩子（P2 接异步 job 用）：每页一次，参数是 `(当前页, 总页数)`。
 
     一页要跑 100 s 量级，所以"跑完再报进度"等于没进度 —— 回调必须在**每页开始前**
     发生，且页号 1-based、总页数恒定，P2 才能直接算出百分比。
+
+    真引擎版（顺带验证真实链路上的触发次数）；**接线本身**由下面打桩引擎那条在默认
+    模式下守着，所以这条默认不开也不会有覆盖缺口。
     """
     assert scan_run.calls == [(1, 3), (2, 3), (3, 3)], scan_run.calls
 
 
-def test_image_progress_callback_reports_single_page(tmp_path: Path) -> None:
-    """图片只有一页，回调也要报一次 `(1, 1)`，别让 P2 的 job 永远停在 0%。"""
+def test_scan_pdf_progress_is_reported_per_page_with_stub_engine(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    """★ 进度钩子接线（打桩引擎，秒级）：3 页扫描版 PDF → 每页开始前回调一次 `(页, 总页数)`。
+
+    它替代了"必须真跑 7 min OCR 才能验进度回调"的局面 —— 打桩只换掉"跑模型"，
+    `parse_scan_pdf` 的逐页循环、回调时机、页码都还是真实代码。
+    """
+    engine = _install_stub_engine(monkeypatch, _STUB_LINES)
     calls: list[tuple[int, int]] = []
-    parse_material(make_chinese_image(tmp_path / "cn.png"), on_page=lambda a, b: calls.append((a, b)))
+
+    doc = parse_material(
+        make_image_only_pdf(tmp_path / "scan3.pdf", pages=3), on_page=lambda a, b: calls.append((a, b))
+    )
+
+    assert calls == [(1, 3), (2, 3), (3, 3)], calls
+    # 打桩引擎每页预测一次 → 三页三次（顺带证明不是"只调了一次回调就完事"）
+    assert engine.predictions == 3
+    assert doc.source_type == "pdf_scan"
+    assert doc.parse_method == "ocr", "打桩引擎产出了块 → parse_method 必须是 ocr"
+    assert {b.page_no for b in doc.blocks} == {1, 2, 3}, "三页都要有块"
+    assert [b.page_no for b in doc.blocks] == sorted(b.page_no for b in doc.blocks)
+
+
+def test_image_progress_callback_reports_single_page(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    """图片只有一页，回调也要报一次 `(1, 1)`，别让 P2 的 job 永远停在 0%（打桩引擎）。"""
+    engine = _install_stub_engine(monkeypatch, _STUB_LINES)
+    calls: list[tuple[int, int]] = []
+    doc = parse_material(
+        make_plain_image(tmp_path / "plain.png"), on_page=lambda a, b: calls.append((a, b))
+    )
     assert calls == [(1, 1)]
+    assert engine.predictions == 1
+    assert doc.blocks, "打桩引擎产出的行必须真的落成块（否则这条是空转）"
 
 
 # ---------------------------------------------------------------------------
 # 4. 未装 OCR 依赖时的降级（扫描版 PDF 不崩、图片给中文报错）
 # ---------------------------------------------------------------------------
-
-
-def _break_paddleocr_import(monkeypatch: pytest.MonkeyPatch) -> None:
-    """让 `import paddleocr` 抛 `ImportError`（模拟"没装 `[ocr]`"）。
-
-    必须同时清掉两个缓存（导入结果 + 可用性结论），否则前面的用例早就把
-    "能用"缓存住了，这里会假绿。
-    """
-    real_import = importlib.import_module
-
-    def _fake_import(name: str, *args: object, **kwargs: object) -> object:
-        if name == "paddleocr":
-            raise ImportError("No module named 'paddleocr'")
-        return real_import(name, *args, **kwargs)
-
-    monkeypatch.setattr(ocr, "_PaddleOcrClass", None)
-    monkeypatch.setattr(ocr, "_AVAILABLE", None)
-    monkeypatch.setattr(ocr.importlib, "import_module", _fake_import)
+# 用 `ocr_unavailable` 夹具（见 `tests/conftest.py`）：把可用性结论固定成 False，
+# 等价于"这台机器没装 `[ocr]`"（同一条代码路径），**不起引擎、不 import paddleocr**。
 
 
 def test_scan_pdf_degrades_to_zero_blocks_without_ocr(
-    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+    ocr_unavailable: None, tmp_path: Path
 ) -> None:
     """★ 没装 OCR 时扫描版 PDF **保持现状**：0 块 + 一条 high 级中文说明，不抛错。
 
     不能因为"缺一个可选依赖"就把整份材料判失败 —— 用户看到的是"上传失败"，
     但材料本身没坏，是服务器少装了个包。
     """
-    _break_paddleocr_import(monkeypatch)
     assert ocr.ocr_available() is False
 
     doc = parse_pdf(make_image_only_pdf(tmp_path / "scan.pdf"))
@@ -332,14 +453,13 @@ def test_scan_pdf_degrades_to_zero_blocks_without_ocr(
 
 
 def test_image_material_without_ocr_reports_chinese_hint(
-    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+    ocr_unavailable: None, tmp_path: Path
 ) -> None:
     """★ 图片材料没有 OCR 就**没得退**（材料本身就是那张图）→ 中文报错 + 怎么补。
 
     文案必须点出 `[ocr]` 可选依赖与模型缓存目录：只说"解析失败"用户会一直重传。
     """
-    _break_paddleocr_import(monkeypatch)
-    image = make_chinese_image(tmp_path / "cn.png")
+    image = make_plain_image(tmp_path / "plain.png")
 
     with pytest.raises(ApiError) as excinfo:
         parse_material(image)
@@ -350,10 +470,13 @@ def test_image_material_without_ocr_reports_chinese_hint(
     assert "PADDLE_PDX_CACHE_HOME" in message
 
 
-def test_corrupt_image_reports_chinese_error(tmp_path: Path) -> None:
+def test_corrupt_image_reports_chinese_error(ocr_available_stub: None, tmp_path: Path) -> None:
     """坏掉的图片 → 中文 `UNSUPPORTED_FORMAT`（点名文件 + 给出替代做法），不崩栈。
 
     图片路径与 PDF 路径一样，坏输入必须收口成能直接展示的 `ApiError`。
+    这里挂 `ocr_available_stub`：必须让 `ensure_available()` 放行，才能验到**读图**
+    那一步的报错（真没装 `[ocr]` 的机器上会先报"缺依赖"，那是另一条用例的事）；
+    而读图一步就失败了，永远不会碰引擎。
     """
     bad = tmp_path / "坏图.png"
     bad.write_bytes(b"not an image at all")
@@ -369,8 +492,9 @@ def test_corrupt_image_reports_chinese_error(tmp_path: Path) -> None:
 # 5. A2-7 可复现
 # ---------------------------------------------------------------------------
 
+@requires_real_ocr
 def test_same_image_twice_gives_same_blocks(tmp_path: Path) -> None:
-    """★ 同一输入两次 → 块序列一致（A2-7）。
+    """★ 同一输入两次 → 块序列一致（A2-7，真引擎：同一张图跑两遍 ≈37 s）。
 
     这里比的是**块数与文本列表**，不比 `ocr_confidence` / `bbox` 的浮点末位：
     文本走的是 argmax 解码，实测逐字节稳定；而置信度与框坐标是浮点计算结果，
@@ -391,10 +515,12 @@ def test_same_image_twice_gives_same_blocks(tmp_path: Path) -> None:
 # ---------------------------------------------------------------------------
 
 
+@requires_real_ocr
+@requires_scan_sample
 def test_ocr_perf_is_measured_and_extrapolated(scan_run: ScanRun) -> None:
     """★ 性能：3 页实测 → 20 页外推，并守住"不许比今天更慢一倍"。
 
-    为什么用外推而不是真跑 20 页：本机一页 ≈159 s，20 页要 50 min 以上，
+    为什么用外推而不是真跑 20 页：本机一页 140.4 s（实测），20 页要 47 min 以上，
     真跑会把测试套件拖到不可用 —— 而"每页耗时"本身就是个稳定量，外推足够。
     """
     per_page = scan_run.per_page_sec
@@ -413,12 +539,14 @@ def test_ocr_perf_is_measured_and_extrapolated(scan_run: ScanRun) -> None:
     )
 
 
+@requires_real_ocr
+@requires_scan_sample
 @pytest.mark.skipif(
     not ocr.MKLDNN_ENABLED,
     reason=(
-        "本机 paddle 3.3.1 的 oneDNN 不可用（enable_mkldnn=True 会在 det 前向抛 "
-        "NotImplementedError），CPU 推理没有算子加速 → 8 min 门限在本机不可达，"
-        "故不在这里做门限断言（实测值由上一个用例打印）"
+        "8 min 门限口径待定（Issue #22）：本机实测 20 页外推 46.8 min 已确定不达标"
+        "（oneDNN 不可用，enable_mkldnn=True 会在 det 前向抛 NotImplementedError，"
+        "只能 run_mode=paddle），等 P2 重定门限后再做断言；实测值由上一个用例打印"
     ),
 )
 def test_ocr_perf_meets_the_20_page_gate(scan_run: ScanRun) -> None:
