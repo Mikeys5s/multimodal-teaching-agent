@@ -126,6 +126,29 @@ ok "克隆就绪：$CLONE"
 say "2/5 切到目标分支"
 cd "$CLONE" || die "进不去克隆目录"
 
+# ⚠️ 用 `mv` 改名，**不要用 `rm`**。
+#
+# 本机的删除是「移到回收站」实现的，回收站不可用时**直接 fail closed —— 文件纹丝不动**。
+# 实测 `rm -f .git/index.lock` 之后文件还在（0 字节、时间戳不变），
+# 于是下一句 git 仍然失败 —— **看着像"删了但没用"，其实是根本没删**。
+# 改名不受这套机制影响（处理 venv 时验证过）。
+clear_stale_lock() {
+    lock=".git/index.lock"
+    [ -f "$lock" ] || return 0
+    if [ -n "$(find "$lock" -mmin +1 2>/dev/null)" ]; then
+        warn "清掉陈旧的 .git/index.lock（>1 分钟，多半是上次被中断留下的）"
+    else
+        warn ".git/index.lock 存在但很新，等 3 秒"
+        "$(find_base_python 2>/dev/null || echo python)" \
+            -c "import time; time.sleep(3)" 2>/dev/null || true
+    fi
+    mv "$lock" "$lock.stale.$(date +%s)" 2>/dev/null || true
+    if [ -f "$lock" ]; then
+        die "陈旧锁清不掉（本机删除会被拦）—— 请手工把 .git/index.lock 改名后再跑"
+    fi
+}
+clear_stale_lock
+
 if [ -n "$PR" ]; then
     # ⚠️ 不要 fetch 到"当前已检出的分支"上 —— git 会拒绝：
     #    `fatal: refusing to fetch into branch 'refs/heads/review/pr30' checked out at ...`
