@@ -35,8 +35,17 @@ FROM node:22-alpine AS frontend
 WORKDIR /src
 COPY . .
 
+# ---- npm 源：同样默认走国内镜像 ----
+#
+# 理由和后端 pip 完全一样：直连 registry.npmjs.org 在国内可能慢到不可用，
+# 而 `npm ci` 要装几百个包，慢起来比 pip 更明显。
+# 前端产物现在还是可选的（`frontend/` 尚未进仓库），所以这条暂时没被真正跑到 ——
+# 等 P3 的前端合并进来它就会生效，**先放上免得那时候才发现**。
+ARG NPM_REGISTRY=https://registry.npmmirror.com
+RUN npm config set registry "${NPM_REGISTRY}"
+
 RUN if [ -f frontend/package.json ]; then \
-        echo "==> 检测到 frontend/package.json，开始构建前端"; \
+        echo "==> 检测到 frontend/package.json，开始构建前端（registry=${NPM_REGISTRY}）"; \
         cd frontend && npm ci && npm run build; \
     else \
         echo "==> 未检测到前端（frontend/package.json 不存在），跳过构建"; \
@@ -69,6 +78,23 @@ WORKDIR /app/backend
 
 COPY backend/ /app/backend/
 COPY --from=frontend /src/frontend/dist /app/frontend/dist
+
+# ---- pip 源：默认走阿里云镜像 ----
+#
+# ⚠️ 这一条不是"可选优化"，实测差了几个数量级：
+#
+#   · 服务器上直连 PyPI：`pip install -e .` **跑了 13 分钟还在转**（CPU 54%，不是卡死）
+#   · 换成阿里云镜像：**约 30 秒装完**，全部走预编译 wheel，无编译
+#
+# 直连其实是**通的**（HTTP 200 / 1.2s），但解析 + 下载的累计往返慢得离谱 ——
+# **「通」和「快」是两回事**，国内网络下尤其如此。
+#
+# 需要覆盖时（例如在境外构建）：
+#   docker build --build-arg PIP_INDEX_URL=https://pypi.org/simple/ --build-arg PIP_TRUSTED_HOST= .
+ARG PIP_INDEX_URL=https://mirrors.aliyun.com/pypi/simple/
+ARG PIP_TRUSTED_HOST=mirrors.aliyun.com
+ENV PIP_INDEX_URL=${PIP_INDEX_URL} \
+    PIP_TRUSTED_HOST=${PIP_TRUSTED_HOST}
 
 RUN pip install --no-cache-dir --upgrade pip setuptools wheel \
     && pip install --no-cache-dir -e . \
