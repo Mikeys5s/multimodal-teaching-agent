@@ -1,0 +1,52 @@
+# 换行符策略。
+#
+# ## 为什么必须显式声明
+#
+# 我们**在 Windows 上开发、在 Linux 容器里运行**。默认行为下 git 会把文本文件
+# 在工作区转成 CRLF —— 对 Python 无害，但**对容器里执行的文件是致命的**：
+#
+#   `#!/bin/sh` 变成 `#!/bin/sh\r` → 容器里报
+#   `/bin/sh^M: bad interpreter: No such file or directory`
+#
+# 这个报错**完全指不到真正原因**（看起来像文件不存在），
+# 而且只在 Linux 上出现 —— 本地怎么试都是好的。所以在这里一次性钉死。
+#
+# 这类问题的通用解法就是本文件：**按文件用途声明，而不是靠人记住**。
+
+# ---- 容器里要执行的：必须 LF ----
+*.sh                 text eol=lf
+Dockerfile           text eol=lf
+*.dockerfile         text eol=lf
+docker-compose*.yml  text eol=lf
+.dockerignore        text eol=lf
+
+# ---- 跨平台读取的配置：统一 LF，避免不同平台 diff 互相打架 ----
+*.yml                text eol=lf
+*.yaml               text eol=lf
+*.toml               text eol=lf
+*.ini                text eol=lf
+*.json               text eol=lf
+*.css                text eol=lf
+*.ts                 text eol=lf
+*.tsx                text eol=lf
+*.js                 text eol=lf
+*.jsx                text eol=lf
+*.mjs                text eol=lf
+
+# ---- 文档：LF 即可（反正是给人看的，也别在 diff 里来回跳）----
+*.md                 text eol=lf
+
+# ---- 二进制：不要做任何转换 ----
+*.png                binary
+*.jpg                binary
+*.jpeg               binary
+*.gif                binary
+*.webp               binary
+*.ico                binary
+*.pdf                binary
+*.docx               binary
+*.xlsx               binary
+*.pptx               binary
+*.db                 binary
+*.pack               binary
+*.idx                binary

@@ -1,0 +1,65 @@
+# 析知 XiZhi · 单容器部署（SPEC §4.7 / M3）
+#
+# ## 用法（在服务器上，仓库根目录）
+#
+#   docker compose up -d --build      # 首次部署 / 更新
+#   docker compose logs -f            # 看日志
+#   docker compose ps                 # 看健康状态
+#   docker compose down               # 停止（数据卷保留）
+#
+# ## 三个刻意的选择
+#
+# **① 只映射 8000，不碰 80/443。**
+# 国内云主机**未备案时 80/443 是被封的**。我们的交付物要求是"浏览器可直接访问的
+# 在线链接"，`http://<公网IP>:8000` 完全满足，而备案要 3~20 天，来不及。
+#
+# **② 数据落在具名卷 `/data`，不在镜像里。**
+# 这样 `down` / 重建镜像都不会丢数据库和上传的文件。
+# 也正因为如此，迁移必须放在**容器入口**跑（见 docker-entrypoint.sh 的注释）。
+#
+# **③ 限制内存，故意留出余量。**
+# 主机只有 2GB。给容器 1400M 上限，剩下的留给系统和 Docker 自己 ——
+# 不然一旦内存吃满，被 OOM killer 干掉的可能不只是容器。
+
+services:
+  xizhi:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: xizhi:latest
+    container_name: xizhi
+
+    # 机器重启 / 进程崩了都自动拉起来。评审期要求"一直可访问"，这条是底线。
+    restart: unless-stopped
+
+    ports:
+      # 只监听 8000；前面不加 `127.0.0.1:` —— 要让外网能访问
+      - "8000:8000"
+
+    environment:
+      # 生产模式：关掉 DEBUG（debug 开着才会挂 CORS 中间件，同源部署不需要）
+      DEBUG: "false"
+      APP_PORT: "8000"
+      DB_PATH: /data/xizhi.db
+      UPLOAD_DIR: /data/uploads
+      # 时区：日志时间对人友好
+      TZ: Asia/Shanghai
+
+    volumes:
+      - xizhi-data:/data
+
+    deploy:
+      resources:
+        limits:
+          memory: 1400M
+
+    logging:
+      # 默认 json-file 不限制大小，跑几天能把磁盘写满。限一下。
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+volumes:
+  xizhi-data:
+    # 具名卷，删容器不删数据。要彻底重置时才 `docker compose down -v`
