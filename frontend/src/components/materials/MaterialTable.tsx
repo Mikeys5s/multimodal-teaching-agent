@@ -1,4 +1,4 @@
-import { ChevronDown, ChevronRight, RefreshCw, Trash2 } from 'lucide-react'
+import { ChevronDown, ChevronRight, Eye, RefreshCw, Trash2 } from 'lucide-react'
 import { Fragment, useState } from 'react'
 
 import { StatusBadge } from '@/components/ui/Badge'
@@ -12,6 +12,7 @@ export interface MaterialTableProps {
   materials: Material[]
   loading?: boolean
   busyId?: string | null
+  onPreview: (material: Material) => void
   onReparse: (id: string) => void
   onDelete: (id: string) => void
 }
@@ -22,7 +23,7 @@ const HEADERS = ['', '文件名', '类型', '大小', '解析方式', '页数', 
  * 素材清单表（api-spec §3.2「这就是素材清单的数据源，字段设计直接对应 A1-4 验收」）。
  * 字段与 Material 类型一一对应，不额外加工；存疑处可展开查看明细。
  */
-export function MaterialTable({ materials, loading = false, busyId = null, onReparse, onDelete }: MaterialTableProps) {
+export function MaterialTable({ materials, loading = false, busyId = null, onPreview, onReparse, onDelete }: MaterialTableProps) {
   const [expanded, setExpanded] = useState<Set<string>>(new Set())
 
   const toggle = (id: string) => {
@@ -77,9 +78,13 @@ export function MaterialTable({ materials, loading = false, busyId = null, onRep
                     </button>
                   </td>
                   <td className="max-w-[240px] px-3 py-2">
-                    <div className="truncate font-medium text-slate-700" title={material.filename}>
+                    <button
+                      className="block max-w-full truncate text-left font-medium text-slate-700 hover:text-brand-600 hover:underline"
+                      title={`${material.filename}（点击预览解析结果）`}
+                      onClick={() => onPreview(material)}
+                    >
                       {material.filename}
-                    </div>
+                    </button>
                     <div className="text-xs text-slate-400">{formatDateTime(material.created_at)}</div>
                   </td>
                   <td className="whitespace-nowrap px-3 py-2 text-slate-600">
@@ -114,6 +119,15 @@ export function MaterialTable({ materials, loading = false, busyId = null, onRep
                   </td>
                   <td className="whitespace-nowrap px-3 py-2">
                     <div className="flex items-center gap-1">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        icon={<Eye className="h-3.5 w-3.5" />}
+                        onClick={() => onPreview(material)}
+                        title="预览解析结果（可跳转页码）"
+                      >
+                        预览
+                      </Button>
                       <Button
                         variant="ghost"
                         size="sm"

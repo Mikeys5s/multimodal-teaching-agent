@@ -3,6 +3,7 @@ import { useMemo, useState } from 'react'
 
 import { JobProgressPanel } from '@/components/materials/JobProgressPanel'
 import type { ActiveUpload } from '@/components/materials/JobProgressPanel'
+import { MaterialPreviewDrawer } from '@/components/materials/MaterialPreviewDrawer'
 import { MaterialTable } from '@/components/materials/MaterialTable'
 import { UploadDropzone } from '@/components/materials/UploadDropzone'
 import { Button } from '@/components/ui/Button'
@@ -14,9 +15,9 @@ import { api } from '@/lib/endpoints'
 import type { Material, UploadRejected } from '@/lib/types'
 
 /**
- * 素材工作台（P3 · D2 主交付）。
+ * 素材工作台（P3 · D2 + D3 交付）。
  * 覆盖 SPEC §5.1 的 F1.1 上传 / F1.3 解析方式可见 / F1.6 素材清单 /
- * F1.7 进度与失败可见；对应路由 /materials（api-spec §8）。
+ * F1.7 进度与失败可见 / F1.8 Markdown 预览与页码定位；对应路由 /materials（api-spec §8）。
  */
 export default function Materials() {
   const capabilities = useRequest(() => api.capabilities(), [])
@@ -27,6 +28,7 @@ export default function Materials() {
   const [uploading, setUploading] = useState(false)
   const [uploadError, setUploadError] = useState<string | null>(null)
   const [busyId, setBusyId] = useState<string | null>(null)
+  const [preview, setPreview] = useState<Material | null>(null)
 
   const jobIds = useMemo(() => activeUploads.map((item) => item.job_id), [activeUploads])
 
@@ -163,12 +165,15 @@ export default function Materials() {
               materials={materials}
               loading={materialsReq.loading && materials.length === 0}
               busyId={busyId}
+              onPreview={setPreview}
               onReparse={handleReparse}
               onDelete={handleDelete}
             />
           )}
         </div>
       </section>
+
+      {preview && <MaterialPreviewDrawer material={preview} onClose={() => setPreview(null)} />}
     </div>
   )
 }
