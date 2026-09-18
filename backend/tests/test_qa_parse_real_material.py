@@ -148,6 +148,29 @@ def _nows(text: str) -> str:
     return "".join(text.split())
 
 
+def _break_ocr_import(monkeypatch: pytest.MonkeyPatch) -> None:
+    """让 `import paddleocr` 抛 `ImportError`：模拟"这台机器没装 `[ocr]`"。
+
+    D3 之后扫描版 PDF 的默认路径是"OCR 可用就产块"，要守"不可用时降级"这条分支，
+    就得把 OCR 弄成不可用。两个缓存都要清（导入结果 + 可用性结论），否则会被前面
+    用例缓存住的 True 蒙混过关。
+    """
+    import importlib
+
+    from app.parse import ocr
+
+    real_import = importlib.import_module
+
+    def _fake_import(name: str, *args: Any, **kwargs: Any) -> Any:
+        if name == "paddleocr":
+            raise ImportError("No module named 'paddleocr'")
+        return real_import(name, *args, **kwargs)
+
+    monkeypatch.setattr(ocr, "_PaddleOcrClass", None)
+    monkeypatch.setattr(ocr, "_AVAILABLE", None)
+    monkeypatch.setattr(ocr.importlib, "import_module", _fake_import)
+
+
 @pytest.fixture(scope="module")
 def subset_pdf(tmp_path_factory: pytest.TempPathFactory) -> Path:
     """从 489 页原文里抽出前 `SUBSET_PAGES` 页，存到系统临时目录（不落进仓库）。"""
@@ -548,12 +571,19 @@ def test_real_subset_parse_is_byte_reproducible(subset_pdf: Path, subset_parsed:
 # ---------------------------------------------------------------------------
 
 
-def test_real_scan_sample_is_classified_as_scan_with_chinese_note() -> None:
+def test_real_scan_sample_is_classified_as_scan_with_chinese_note(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     """★ F1.2：真实扫描件样本（无文本层、含整页图）→ `pdf_scan` + 中文存疑说明。
 
-    本批次不做 OCR，所以 `blocks` 必须为空（不能编内容），且 `parse_method`
-    必须是 `None`（一行 OCR 都没跑，写 `"ocr"` 就是假账）。
+    **口径已随 D3（OCR 通道）更新**：OCR 可用时这份样本会真的逐页 OCR 产块
+    （由 `test_parse_ocr.py` 守）。本用例守的是**另一条分支**：OCR 不可用
+    （没装 `[ocr]` 可选依赖）时**不许编内容** —— `blocks` 必须为空、`parse_method`
+    必须是 `None`（一行 OCR 都没跑，写 `"ocr"` 就是假账），并且要给出中文说明。
     """
+    # 让 `import paddleocr` 抛 ImportError：模拟"这台机器没装 OCR 依赖"
+    _break_ocr_import(monkeypatch)
+
     doc = parse_material(SCAN_SAMPLE_PDF)
     notes = doc.uncertain_notes
 

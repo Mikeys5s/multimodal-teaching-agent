@@ -136,6 +136,9 @@ class ParsedBlock:
     heading_level: int | None = None
     bbox: BBox | None = None
     image_path: str | None = None
+    #: OCR 置信度（0–1）。只有走 OCR 的块（`parse_method="ocr"`）才有值，
+    #: 其余一律 None —— 文本层 PDF / DOCX 没跑过 OCR，填个数字就是假账。
+    ocr_confidence: float | None = None
 
     def __post_init__(self) -> None:
         if self.block_type not in BLOCK_TYPES:
@@ -172,6 +175,10 @@ class ParsedBlock:
             # 统一保留 2 位小数：让"同输入可复现"（A2-7）在浮点上也稳定，
             # 顺便让 bbox 的 JSON 串短一点。
             object.__setattr__(self, "bbox", tuple(round(float(v), 2) for v in self.bbox))
+        if self.ocr_confidence is not None and not 0.0 <= self.ocr_confidence <= 1.0:
+            # DB 侧只约束了"非空时是浮点"，范围是应用层的责任：置信度写成 95（而不是 0.95）
+            # 会让前端的角标阈值全线失灵，而且不报错。
+            raise ValueError(f"ocr_confidence 必须在 0–1，收到 {self.ocr_confidence}")
 
     @property
     def is_heading(self) -> bool:

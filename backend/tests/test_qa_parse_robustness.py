@@ -11,8 +11,13 @@
     pymupdf 的 `FileDataError` —— 后者会绕过全局异常处理器变成 500 + 英文堆栈；
   · `message` 必须含中文，且**不许**出现 `Traceback` / `Error` / `Exception` /
     `Errno` / 底层英文原话（"cannot open"、"broken document" 等）；
-  · 不支持格式的 `message` 必须**点名具体格式**（"PPTX"、"图片"、"音频"），
+  · 不支持格式的 `message` 必须**点名具体格式**（"PPTX"、"旧版 .doc"、"音频"），
     并给出替代做法（转 PDF / DOCX）。
+
+⚠️ **图片不再属于"未接格式"**（D3 之后）：`.png` / `.jpg` / `.jpeg` / `.webp` /
+`.tif` / `.tiff` 走 `app/parse/ocr.py` 的 OCR 通道（需要 `[ocr]` 可选依赖，见
+`test_parse_ocr.py`）。所以本文件把它们从"未接格式"名单里摘掉了 —— 它们现在
+只在**文件本身坏了**时才报错，那条中文文案由 `test_parse_ocr.py` 守。
 
 夹具全部程序化生成，不依赖仓库外的素材文件。
 """
@@ -258,17 +263,13 @@ def test_no_english_stacktrace_leaks_for_any_broken_input(tmp_path: Path) -> Non
         ("讲义.pptx", "PPTX"),
         ("讲义.ppt", "PPT"),
         ("讲义.doc", "旧版 .doc"),
-        ("扫描件.png", "图片"),
-        ("照片.jpg", "图片"),
-        ("照片.jpeg", "图片"),
-        ("照片.webp", "图片"),
         ("录音.mp3", "音频"),
         ("录音.wav", "音频"),
         ("录音.m4a", "音频"),
     ],
 )
 def test_pending_format_names_the_concrete_format(tmp_path: Path, filename: str, keyword: str) -> None:
-    """★ 场景 4：`.pptx` / 图片 / 音频 → `UNSUPPORTED_FORMAT` 且 message 点名格式。
+    """★ 场景 4：`.pptx` / 音频 → `UNSUPPORTED_FORMAT` 且 message 点名格式。
 
     笼统的"不支持"会让用户反复重试；点名"PPTX"并给出替代做法才有用。
     """

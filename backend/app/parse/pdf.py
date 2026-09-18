@@ -110,6 +110,7 @@ from typing import Any
 import pymupdf
 
 from app.core.errors import ApiError, ErrorCode
+from app.parse import ocr as ocr_mod
 from app.parse.blocks import (
     BBox,
     HeadingNumber,
@@ -836,6 +837,141 @@ def _looks_like_scan(doc: pymupdf.Document) -> tuple[bool, list[int], int]:
     return (not has_text_layer) and has_image_content, [i + 1 for i in indices], sum(chars)
 
 
+def _scan_baseline_message(sampled_pages: list[int], sampled_chars: int) -> str:
+    """扫描版判定的**依据**说明（三种结局共用同一段，保证口径一致）。"""
+    shown = "、".join(str(p) for p in sampled_pages)
+    return (
+        f"抽样 {len(sampled_pages)} 页（第 {shown} 页）共只提取到 {sampled_chars} 个字符"
+        f"（判定阈值：每页 {SCAN_MIN_CHARS_PER_PAGE} 个字符），"
+        "且这些页面里只有图像、没有可提取的文本层，判断这是一份扫描版 PDF。"
+    )
+
+
+def _scan_document(
+    doc: pymupdf.Document,
+    page_count: int,
+    sampled_pages: list[int],
+    sampled_chars: int,
+    on_page: ocr_mod.PageCallback | None,
+) -> ParsedDocument:
+    """扫描版 PDF 的产物 —— **OCR 可用就逐页 OCR 产块，不可用就降级**。
+
+    为什么"不可用"是降级而不是失败：扫描件是合法材料，用户没做错任何事。
+    报错会把"这份材料暂时读不了"变成"上传失败"，而 A1-7 的承诺是单文件失败
+    也要给能直接展示的中文原因。所以两条路径都返回 `source_type="pdf_scan"`，
+    区别只在有没有块、以及说明里写了什么。
+
+    ⚠️ `parse_method` 只在**真的产出了块**时才写 `"ocr"`：跑过 OCR 却一个字都没认出来
+    （纯空白页 / 纯图页）时记 `None` —— 否则前端会显示"解析成功"而内容为空，
+    这是本模块（以及 `ocr.py`）最忌讳的假账。
+    """
+    base = _scan_baseline_message(sampled_pages, sampled_chars)
+    first_page = sampled_pages[0] if sampled_pages else None
+
+    if not ocr_mod.ocr_available():
+        return ParsedDocument(
+            source_type="pdf_scan",
+            blocks=[],
+            page_count=page_count,
+            parse_method=None,
+            uncertain_notes=[
+                UncertainNote(
+                    kind="missing_field",
+                    severity="high",
+                    page=first_page,
+                    message=(
+                        f"{base}本机未安装 OCR 依赖，暂时无法提取文字："
+                        '在服务器上执行 pip install -e ".[ocr]" 后重新解析即可'
+                        "（离线环境还要先用 scripts/prefetch-ocr-models.py 预取模型）；"
+                        "也可以先上传文字版 PDF。"
+                    ),
+                )
+            ],
+        )
+
+    try:
+        # 先起引擎：模型缺失/损坏要在这里收口成"降级 + 说明"。放到循环外面，
+        # 是为了让 `on_page` 自己抛出的异常（P2 用它中断任务）原样透传，不被误吞。
+        ocr_mod.get_engine()
+    except ApiError as exc:
+        return ParsedDocument(
+            source_type="pdf_scan",
+            blocks=[],
+            page_count=page_count,
+            parse_method=None,
+            uncertain_notes=[
+                UncertainNote(
+                    kind="missing_field",
+                    severity="high",
+                    page=first_page,
+                    message=f"{base}OCR 引擎没能启动，因此没有提取文字：{exc.message}",
+                )
+            ],
+        )
+
+    result = ocr_mod.parse_scan_pdf(doc, on_page=on_page)
+    dropped = (
+        f"另有 {result.dropped_lines} 行置信度低于 {ocr_mod.MIN_CONFIDENCE:.2f} 没有写入块表"
+        "（OCR 在纯图 / 空白区域会认出错字，宁可丢也不编）。"
+        if result.dropped_lines
+        else ""
+    )
+    if not result.blocks:
+        return ParsedDocument(
+            source_type="pdf_scan",
+            blocks=[],
+            page_count=page_count,
+            parse_method=None,
+            uncertain_notes=[
+                UncertainNote(
+                    kind="missing_field",
+                    severity="high",
+                    page=first_page,
+                    message=(
+                        f"{base}本机 OCR 已启用并逐页识别了 {result.pages_ok} 页，"
+                        f"但这些页面里没有识别到可用的文字（可能是纯图页或空白页）。{dropped}"
+                        "请人工确认这份扫描件是否清晰、是否含正文。"
+                    ),
+                )
+            ],
+        )
+
+    notes = [
+        UncertainNote(
+            kind="low_confidence_ocr",
+            severity="medium",
+            page=first_page,
+            message=(
+                f"{base}正文由 OCR 逐页识别得到：{result.pages_ok} 页、"
+                f"{len(result.blocks)} 行、平均置信度 {result.mean_confidence:.2f}。"
+                "OCR 是「识别」而不是「读取」，可能把 l/1、rn/m 这类形近字符认错，"
+                f"请人工核对公式、代码与专有名词。{dropped}"
+            ),
+        )
+    ]
+    if result.failed_pages:
+        failed = "、".join(str(p) for p in result.failed_pages)
+        notes.append(
+            UncertainNote(
+                kind="other",
+                severity="medium",
+                page=result.failed_pages[0],
+                message=(
+                    f"第 {failed} 页 OCR 失败（渲染或识别出错）已跳过，这些页没有产出内容，"
+                    "其余页面正常。可以单独重新解析或人工补录这几页。"
+                ),
+            )
+        )
+
+    return ParsedDocument(
+        source_type="pdf_scan",
+        blocks=result.blocks,
+        page_count=page_count,
+        parse_method="ocr",
+        uncertain_notes=notes,
+    )
+
+
 def _classify(
     raw: _RawBlock,
     body_size: float,
@@ -988,14 +1124,18 @@ def _merge_continuation_lines(
     return merged
 
 
-def parse_pdf(path: str | Path) -> ParsedDocument:
-    """解析文本层 PDF，产出带页码 / 页内行号 / 版面坐标的块。
+def parse_pdf(path: str | Path, *, on_page: ocr_mod.PageCallback | None = None) -> ParsedDocument:
+    """解析 PDF，产出带页码 / 页内行号 / 版面坐标的块。
 
     失败一律抛 `ApiError`（中文文案）：加密、损坏、空文件、超过 `MAX_PAGES`，
     以及**页级/文档级解析中途**出的任何异常（`_open_pdf` 与解析主体各有一道
     兜底 except）—— `__init__.parse_material` 对外承诺"失败一律是 ApiError"，
     这里必须自己守住；单文件失败不影响批次里的其他文件（A1-7）。
-    扫描版不抛错，返回 `source_type="pdf_scan"` 的空块表 + 一条 high 级存疑说明。
+
+    扫描版不抛错，返回 `source_type="pdf_scan"`：**OCR 可用就逐页 OCR 产块**
+    （`parse_method="ocr"`），OCR 不可用则退回"0 块 + 一条 high 级中文说明" ——
+    没装 OCR 依赖不该把整份材料判失败。`on_page(当前页, 总页数)` 是给 P2 的
+    异步 job 报进度用的（扫描版逐页 OCR 时每页开始前回调一次）。
     """
     doc = _open_pdf(path)
     try:
@@ -1013,31 +1153,7 @@ def parse_pdf(path: str | Path) -> ParsedDocument:
 
         is_scan, sampled_pages, sampled_chars = _looks_like_scan(doc)
         if is_scan:
-            return ParsedDocument(
-                source_type="pdf_scan",
-                blocks=[],
-                page_count=page_count,
-                # 还没解析，所以没有 parse_method。**不要**在这里写 "ocr"：
-                # 本批次一行 OCR 都没跑，写了就是假账。
-                parse_method=None,
-                uncertain_notes=[
-                    UncertainNote(
-                        kind="missing_field",
-                        severity="high",
-                        page=sampled_pages[0] if sampled_pages else None,
-                        message=(
-                            f"抽样 {len(sampled_pages)} 页（第 "
-                            f"{'、'.join(str(p) for p in sampled_pages)} 页）"
-                            f"共只提取到 {sampled_chars} 个字符"
-                            f"（判定阈值：每页 {SCAN_MIN_CHARS_PER_PAGE} 个字符），"
-                            "且这些页面里只有图像、没有可提取的文本层，"
-                            "判断这是一份扫描版 PDF。本批次尚未接入 OCR，"
-                            "暂时无法提取文字，请上传文字版 PDF，"
-                            "或等待 OCR 通道上线后重新解析。"
-                        ),
-                    )
-                ],
-            )
+            return _scan_document(doc, page_count, sampled_pages, sampled_chars, on_page)
 
         raws, size_chars, image_count = _raw_blocks(doc)
         # 去噪必须在**分类之前**：页脚 running head（`1.2. Requirements`）与正文

@@ -39,7 +39,8 @@ def persist_blocks(session: Session, mat_id: str, doc: ParsedDocument) -> list[s
 
     · `id = block_id(mat_id, seq)`，`seq` 整份材料内**全局连续、从 0 开始**；
     · `ts_start_ms` / `ts_end_ms` 是音频字段，**本批次不写**（保留不启用，D-08）；
-    · `ocr_confidence` 同理不写 —— 本批次没有一行 OCR，写了就是假账；
+    · `ocr_confidence` 逐块照抄解析产物：走 OCR 的块带上真实置信度，
+      文本层 PDF / DOCX 的块是 `None`（没跑过 OCR，填数字就是假账）；
     · 只 `flush` 不 `commit`，事务边界交给调用方。
     """
     ids: list[str] = []
@@ -58,7 +59,7 @@ def persist_blocks(session: Session, mat_id: str, doc: ParsedDocument) -> list[s
                 content_md=block.content_md,
                 image_path=block.image_path,
                 bbox=bbox_to_json(block.bbox),
-                ocr_confidence=None,
+                ocr_confidence=block.ocr_confidence,
             )
         )
         ids.append(row_id)
