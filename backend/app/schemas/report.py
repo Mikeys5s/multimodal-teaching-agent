@@ -52,6 +52,23 @@ class QaStatsOut(BaseModel):
     refuse_count: int = Field(default=0, description="越界拒答次数 —— 拒答是能力，不是缺陷")
 
 
+class AcceptanceRowOut(BaseModel):
+    """一条验收指标的**实测结果**。
+
+    ★ 报告页的「红线映射」就是它 —— 把"我们声称达标"变成"可当场核对"。
+
+    `kind` 必须显式给出（`rate` / `count`）：
+    **不能靠"期望值 ≤ 1.0 就当比率"来猜** —— 环数期望是 0，但它是**计数**，
+    用百分比显示会变成「0.00%」，读者会以为在说比率。
+    """
+
+    label: str = Field(description="验收条目名，如「B1-2 依赖图环数」")
+    expected: float = Field(description="期望值")
+    kind: str = Field(description="`rate`（比率，按百分比展示）或 `count`（计数，按整数展示）")
+    actual: float | None = Field(default=None, description="实测值；取不到时为 null")
+    passed: bool = Field(description="是否达标。**取不到值一律算不达标**，不能当成通过")
+
+
 class QualityReportOut(BaseModel):
     """`GET /api/report/quality` 的四段式统计。"""
 
@@ -59,6 +76,13 @@ class QualityReportOut(BaseModel):
     knowledge_points: KnowledgePointStatsOut = Field(default_factory=KnowledgePointStatsOut)
     graph: GraphStatsReportOut = Field(default_factory=GraphStatsReportOut)
     qa: QaStatsOut = Field(default_factory=QaStatsOut)
+    acceptance: list[AcceptanceRowOut] = Field(
+        default_factory=list,
+        description=(
+            "★ 验收指标的逐条实测（v1.5 新增）。与四段式统计**同源** —— "
+            "都来自 `app/quality.py::compute()`，不存在'报告页一套、验收另一套'。"
+        ),
+    )
 
 
 # ---------------------------------------------------------------------------
