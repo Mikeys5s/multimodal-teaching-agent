@@ -17,12 +17,12 @@ import type {
   Outline,
   Paginated,
   PragmaOut,
-  QualityReport,
-  QaSession,
-  QaSessionDetail,
-  QaSessionReport,
+  QaSessionCreated,
   QaState,
+  QualityReport,
   Question,
+  SessionDetailOut,
+  SessionReportOut,
   UploadResult,
 } from './types'
 
@@ -126,11 +126,12 @@ export const api = {
   getQualityReport: () => request<QualityReport>('/report/quality'),
 
   /* ---------------- 5. 答疑（Stage 3） ---------------- */
+  /** 创建会话：响应**只有 `session_id`**（不是完整会话对象），详情要再发 getQaSession */
   createQaSession: (body: CreateQaSessionRequest) =>
-    request<QaSession>('/qa/sessions', { method: 'POST', body }),
-  getQaSession: (id: string) => request<QaSessionDetail>(`/qa/sessions/${id}`),
+    request<QaSessionCreated>('/qa/sessions', { method: 'POST', body }),
+  getQaSession: (id: string) => request<SessionDetailOut>(`/qa/sessions/${id}`),
   getQaState: (id: string) => request<QaState>(`/qa/sessions/${id}/state`),
-  getQaReport: (id: string) => request<QaSessionReport>(`/qa/sessions/${id}/report`),
+  getQaReport: (id: string) => request<SessionReportOut>(`/qa/sessions/${id}/report`),
   deleteQaSession: (id: string) => request<void>(`/qa/sessions/${id}`, { method: 'DELETE' }),
 
   /* ---------------- 6. 任务 ---------------- */

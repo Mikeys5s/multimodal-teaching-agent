@@ -13,7 +13,7 @@ import { ApiError } from '@/lib/api'
 import { api } from '@/lib/endpoints'
 import { streamAsk } from '@/lib/sse'
 import type { SsePartialSeq, SseProtocolWarning } from '@/lib/sse'
-import type { QaSession } from '@/lib/types'
+import type { QaSessionCreated } from '@/lib/types'
 
 /** 演示用的学生标识（后端必填字段 student_label） */
 const STUDENT_LABEL = 'demo'
@@ -30,7 +30,12 @@ export default function Tutor() {
   const navigate = useNavigate()
   const materialsReq = useRequest(() => api.listMaterials({ page_size: 100 }), [])
 
-  const [session, setSession] = useState<QaSession | null>(null)
+  /**
+   * 创建会话的响应**只有 `session_id`**（api-spec §5.1）——
+   * 所以这里只持有它，学生标识与材料范围一律用**本次请求自己的入参**展示，
+   * 不去读响应里根本不存在的字段（那样会在运行时读到 `undefined`）。
+   */
+  const [session, setSession] = useState<QaSessionCreated | null>(null)
   const [turns, setTurns] = useState<TurnView[]>([])
   const [question, setQuestion] = useState('')
   const [streamingKey, setStreamingKey] = useState<string | null>(null)
@@ -219,8 +224,7 @@ export default function Tutor() {
             <>
               <span className="font-mono text-xs text-slate-500">{session.session_id}</span>
               <span className="text-xs text-slate-400">
-                学生 {session.student_label} · 材料范围{' '}
-                {session.material_scope.length === 0 ? '全部材料' : `${session.material_scope.length} 份`}
+                学生 {STUDENT_LABEL} · 材料范围 全部材料
                 {' · '}
                 <span title="断线续推用的最后事件序号">Last-Event-ID {lastSeq ?? '—'}</span>
               </span>

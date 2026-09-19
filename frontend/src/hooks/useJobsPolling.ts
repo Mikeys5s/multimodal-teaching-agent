@@ -30,7 +30,8 @@ export interface UseJobsPollingResult {
 /** 用「状态 + 进度 + 文案」判断任务是否真的在往前走 —— 有变化说明后端在推进，可缩短间隔 */
 function progressSignature(job: Job | undefined): string {
   if (!job) return ''
-  return `${job.status}|${job.progress}|${job.stage_detail}`
+  // stage_detail 可为 null（api-spec §6），拼字符串时统一成空串，避免把字面量 "null" 当文案参与比较
+  return `${job.status}|${job.progress}|${job.stage_detail ?? ''}`
 }
 
 /**

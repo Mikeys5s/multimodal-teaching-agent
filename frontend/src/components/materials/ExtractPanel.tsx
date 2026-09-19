@@ -45,10 +45,11 @@ function isJobLike(value: unknown): value is Job {
   if (typeof value !== 'object' || value === null) return false
   const candidate = value as Record<string, unknown>
   return (
-    typeof candidate.job_id === 'string' &&
+    // ⚠️ 字段名用 JobOut 的真实名字（`id`，不是 `job_id`），否则恢复出来的终态快照会被整批丢弃
+    typeof candidate.id === 'string' &&
     typeof candidate.status === 'string' &&
     typeof candidate.progress === 'number' &&
-    typeof candidate.stage_detail === 'string'
+    (typeof candidate.stage_detail === 'string' || candidate.stage_detail === null)
   )
 }
 
@@ -89,13 +90,25 @@ function readStoredRecords(): ExtractRecord[] {
 }
 
 /**
- * `Job.result` 是 `unknown`：**先收窄再判空**，且不读任何契约里没有的字段。
- * 拿不到可靠信息时返回 null（宁可不显示，也不要猜一个数字给用户）。
+ * `Job.result_json` 是 **JSON 字符串**（不是对象，api-spec §6 v1.5 明确）：
+ * 先 `JSON.parse`、再类型收窄、再判空，且**不读任何契约里没约定的字段**。
+ * `result_json` 的内部结构后端至今没冻结（见 #15 / #9），所以这里只做"有结果"的定性说明，
+ * 不解析出数字给用户看 —— 拿不到可靠信息时返回 null（宁可不显示，也不要猜）。
  */
-function summarizeResult(result: unknown): string | null {
-  if (result === null || result === undefined) return null
-  if (Array.isArray(result)) return `后端返回了 ${result.length} 条结构化结果，详情以知识图谱页为准。`
-  if (typeof result === 'object') {
+function summarizeResult(resultJson: unknown): string | null {
+  if (typeof resultJson !== 'string' || resultJson.trim() === '') return null
+
+  let parsed: unknown
+  try {
+    parsed = JSON.parse(resultJson)
+  } catch {
+    // 契约只说"是 JSON 字符串"，没说结构；解析失败不猜、不抛，交给调用方的兜底文案
+    return null
+  }
+
+  if (parsed === null || parsed === undefined) return null
+  if (Array.isArray(parsed)) return `后端返回了 ${parsed.length} 条结构化结果，详情以知识图谱页为准。`
+  if (typeof parsed === 'object') {
     return '后端返回了结构化结果。其字段未在前端契约中约定，这里不做解析 —— 请以知识图谱 / 学习路径页为准。'
   }
   return null
@@ -124,7 +137,7 @@ export interface ExtractPanelProps {
  * 本组件的三条纪律：
  *   1. 进度文案**只**来自 `stage_detail`，原样展示（后端可能已拼好"第 7/20 页"，前端不重拼、不解析）；
  *   2. 预计耗时**只**来自 `estimated_seconds`，前端不推算剩余时间、不做进度外推；
- *   3. `result` 是 `unknown`，展示前先类型收窄 + 判空。
+ *   3. `result_json` 是 **JSON 字符串**，展示前先 parse + 类型收窄 + 判空。
  */
 export function ExtractPanel({
   materials,
@@ -171,7 +184,8 @@ export function ExtractPanel({
       // 终态快照落盘：切页/刷新回来仍能看到结果与下一步引导，且无需再拉一次接口
       setRecords((prev) =>
         prev.map((record) =>
-          record.job_id === job.job_id ? { ...record, last_job: job } : record,
+          // ⚠️ 左边是本地记录的 job_id（来自 202 响应的 `{ job_id }`），右边是 JobOut 的 `id`
+          record.job_id === job.id ? { ...record, last_job: job } : record,
         ),
       )
       onJobSettled?.(job)
@@ -306,7 +320,7 @@ export function ExtractPanel({
     }
     if (job.status !== 'done') return null
 
-    const summary = summarizeResult(job.result)
+    const summary = summarizeResult(job.result_json)
     return (
       <div className="rounded-lg border border-emerald-100 bg-emerald-50/60 px-3 py-2">
         <div className="text-xs leading-relaxed text-emerald-800">

@@ -1,5 +1,5 @@
 /**
- * 全局类型定义 —— 严格对齐 docs/api-spec.md **v1.3**（2026-09-17 冻结，共 28 个端点）。
+ * 全局类型定义 —— 严格对齐 docs/api-spec.md（端点清单冻结于 **v1.3**，字段表补齐于 **v1.5**）。
  * 任何字段改动都必须先改 api-spec，再改这里（SPEC §9.2 接口冻结纪律：
  * 允许「新增端点 / 新增可选字段」，不允许改已有字段名或类型）。
  *
@@ -12,6 +12,13 @@
  *   ④ `gap-analysis` 的 `student_evidence` 为**可重复**查询参数 → 见 `GapAnalysisQuery`
  *   ⑤ `needs_review` 查询参数统一为布尔 `true` / `false`（传 `1`/`0` → 400）
  *   ⑥ 分页补默认值与越界行为 → 见 `PageQuery`
+ *
+ * v1.5 补齐了 §5.1 / §6 的**响应字段表**（此前只有端点、没有字段，只能靠猜），
+ * 并按 pydantic 模型修正了 §5 / §6 里写错的字段名。本文件据此重写了第 6、7 节：
+ *   - `QaTurn` → `TurnOut`（`turn_id`/`question`/`answer_md` 全不存在）
+ *   - `QaSessionReport` → `SessionReportOut`（`suggested_practices` 是复数）
+ *   - `Job`（`job_id`/`result`/`error` → `id`/`result_json`/`error_message`）
+ *   口径：**冲突时以 `backend/tests/test_schemas.py` 的 `PINNED_FIELDS` 为准**。
  */
 
 /* ------------------------------------------------------------------ *
@@ -493,18 +500,31 @@ export interface QualityReport {
 }
 
 /* ------------------------------------------------------------------ *
- * 6. 答疑（Stage 3，api-spec §5）—— D8 落地，此处先冻结契约
+ * 6. 答疑（Stage 3，api-spec §5）—— D8 落地
+ *
+ * ★ **字段名以 pydantic 模型为准**（v1.5 §5.1 明文写入）：
+ *   冲突时以 `backend/tests/test_schemas.py` 的 `PINNED_FIELDS` 为最终依据 ——
+ *   那是一份**被测试守住**的名字清单，而文档是人工维护的、会漂。
+ *
+ * ⚠️ 两个已知的历史不一致（后端 D9 前不改，按模型写就不会错）：
+ *   ① `SessionDetailOut.id` 叫 `id`，而 `SessionReportOut.session_id` 叫 `session_id`
+ *      —— 同一个东西两个名字；
+ *   ② `TurnOut` 的**学生轮与导师轮正文都叫 `content_md`** —— 没有 `question` / `answer_md`。
  * ------------------------------------------------------------------ */
 
 export type SocraticState = 'S0_RETRIEVE' | 'S1_PROBE' | 'S2_HINT1' | 'S3_HINT2' | 'S4_EXPLAIN' | 'REFUSE' | 'CONFIRM'
 export type TurnType = 'probe' | 'hint1' | 'hint2' | 'explain' | 'refuse' | 'confirm'
 
-export interface QaSession {
+/**
+ * `POST /api/qa/sessions` 的响应 —— **只有 `session_id`**，不是完整的会话对象。
+ * ⚠️ 想拿 `student_label` / `material_scope` / `turns` 必须再发 `GET /api/qa/sessions/{id}`
+ * （`SessionDetailOut`）；把创建响应当详情对象用会在运行时读到 `undefined`。
+ */
+export interface QaSessionCreated {
   session_id: string
-  material_scope: string[]
-  student_label: string
-  created_at: string
 }
+
+export type TurnRole = 'student' | 'tutor'
 
 export interface DiagnosisKnowledgePoint {
   kp_id: string
@@ -524,18 +544,41 @@ export interface Diagnosis {
   next_practice: { kp_id: string; task: string }[]
 }
 
-export interface QaTurn {
-  turn_id: string
-  question: string
-  turn_type: TurnType
-  answer_md: string
-  diagnosis: Diagnosis | null
+/**
+ * `SessionDetailOut.turns` 的元素 —— 后端模型名 `TurnOut`。
+ * ⚠️ 字段名与旧的 `QaTurn`（`turn_id` / `question` / `answer_md`）**全不相同**：
+ *    那些名字在 v1.2 的示例里就已经是错的，只是当时没人消费这段类型。
+ */
+export interface TurnOut {
+  /** ⚠️ 叫 `id`，不叫 `turn_id` */
+  id: string
+  /** 会话内单调递增 —— **与 SSE 的 `id:` 用的是同一个序列** */
+  seq: number
+  role: TurnRole
+  /** ⚠️ 学生轮与导师轮**都是它**；判断是提问还是回答看 `role` */
+  content_md: string
+  /** 导师轮才有（`refuse` / `explain` / `probe`…） */
+  turn_type: TurnType | null
+  retrieved_kp_ids: string[]
+  retrieved_block_ids: string[]
+  /** 是否基于材料 —— 幻觉率的分母**只用导师轮** */
   grounded: boolean
+  diagnosis: Diagnosis | null
+  latency_ms: number | null
   created_at: string
 }
 
-export interface QaSessionDetail extends QaSession {
-  turns: QaTurn[]
+/** `GET /api/qa/sessions/{id}` —— 后端模型名 `SessionDetailOut` */
+export interface SessionDetailOut {
+  /** ⚠️ 叫 `id`，不叫 `session_id`（与 `SessionReportOut.session_id` 不一致 —— 历史遗留） */
+  id: string
+  student_label: string | null
+  /** 本次会话覆盖的素材 id；空数组 = 全部材料 */
+  material_scope: string[]
+  created_at: string
+  updated_at: string
+  /** 按 `seq` 升序 */
+  turns: TurnOut[]
 }
 
 export interface QaState {
@@ -547,10 +590,20 @@ export interface QaState {
   explain_threshold: number
 }
 
-export interface QaSessionReport {
+/** `GET /api/qa/sessions/{id}/report` —— 后端模型名 `SessionReportOut` */
+export interface SessionReportOut {
+  /**
+   * ⚠️ 这个叫 `session_id`（与 `SessionDetailOut.id` 不一致 —— 历史遗留，D9 前不改）。
+   * 同一个东西两个名字，是这份契约里最容易踩的一处。
+   */
   session_id: string
+  turn_count: number
+  /** 基于材料的比例 —— **分母不含拒答轮次**（拒答是能力，不是缺陷） */
+  grounded_rate: number
   stuck_points: { kp_id: string; name: string; occurrences: number }[]
-  suggested_practice: { kp_id: string; task: string }[]
+  /** ⚠️ 是**复数** —— 不是 `suggested_practice`；写成单数会静默拿到 `undefined` */
+  suggested_practices: { kp_id: string; task: string }[]
+  summary_md: string
 }
 
 /* ------------------------------------------------------------------ *
@@ -605,25 +658,41 @@ export interface SseDone {
 }
 
 /* ------------------------------------------------------------------ *
- * 7. 任务（api-spec §6）
+ * 7. 任务（api-spec §6）—— 后端模型名 `JobOut`
+ *
+ * ⚠️ 这段曾经照着一行内联结构写，而**那行里的 `result` / `error` 两个名字是错的**
+ *   （v1.5 §6 已修正并注明）。错法很阴：主路径只读 `status` / `progress`，
+ *   名字都对、轮询一直正常；**只有走到完成 / 失败分支才会读到 `undefined`，而且不报错** ——
+ *   界面上表现为"什么都没发生"。
  * ------------------------------------------------------------------ */
 
 export type JobStatus = 'pending' | 'running' | 'done' | 'failed' | 'partial'
 
-export interface JobError {
-  code: ApiErrorCode
-  message: string
-}
-
 export interface Job {
-  job_id: string
+  /** ⚠️ 叫 `id`，不叫 `job_id` —— 但**请求路径参数**仍叫 `{job_id}`（`/api/jobs/{job_id}`） */
+  id: string
+  /** 只用于区分语义（`parse` / `extract` / `ocr`…）；**轮询行为对各类任务完全一致** */
+  job_type: string
+  /** 该任务作用的资源 id（素材 / 知识点集…） */
+  target_id: string | null
   status: JobStatus
-  /** 0–100 */
+  /** 0–100，进度条用它 */
   progress: number
-  /** 必须是人类可读中文，前端直接展示不加工（api-spec §6） */
-  stage_detail: string
-  result: unknown | null
-  error: JobError | null
+  /**
+   * 人类可读中文，**直接展示不加工**；分页进度也拼在这里（如"正在识别第 7/20 页"），
+   * 后端**不另开结构化字段**（v1.5 §6 明确）。
+   */
+  stage_detail: string | null
+  /**
+   * ⚠️ **是 JSON 字符串，不是对象** —— 要用前必须 `JSON.parse`，且 parse 之后的内容
+   * 后端未定结构，前端不做字段假设（宁可不显示，也不要猜一个数字给用户）。
+   */
+  result_json: string | null
+  /** ⚠️ **是字符串，不是 `{ code, message }`** */
+  error_message: string | null
+  started_at: string | null
+  finished_at: string | null
+  created_at: string
 }
 
 export interface JobQuery {

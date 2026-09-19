@@ -138,12 +138,15 @@ export function JobProgressPanel({
                 </span>
               </div>
 
-              {isFailed && job?.error?.message && (
+              {/*
+                ⚠️ 失败原因是 `error_message`（**字符串**），不是 `{ code, message }` 对象。
+                照旧写法读 `job.error?.message` 会永远为 undefined ——
+                结果是「任务失败了但界面上什么都不显示」，还不报错。
+              */}
+              {isFailed && job?.error_message && (
                 <div className="flex items-start gap-1.5 rounded-lg border border-red-100 bg-red-50/70 px-2.5 py-1.5">
-                  <span className="mt-px shrink-0 text-[11px] font-medium text-red-500">
-                    {job.error.code}
-                  </span>
-                  <span className="text-xs leading-relaxed text-red-700">{job.error.message}</span>
+                  <span className="mt-px shrink-0 text-[11px] font-medium text-red-500">失败</span>
+                  <span className="text-xs leading-relaxed text-red-700">{job.error_message}</span>
                 </div>
               )}
 

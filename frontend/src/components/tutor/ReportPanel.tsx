@@ -3,7 +3,7 @@ import { RefreshCw, Repeat, Stethoscope } from 'lucide-react'
 import { Tag } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
 import { InlineError, Spinner } from '@/components/ui/Feedback'
-import type { QaSessionReport } from '@/lib/types'
+import type { SessionReportOut } from '@/lib/types'
 
 /**
  * 会话诊断报告 —— `GET /api/qa/sessions/{id}/report`。
@@ -16,7 +16,7 @@ export function ReportPanel({
   enabled,
   onRefresh,
 }: {
-  report: QaSessionReport | null
+  report: SessionReportOut | null
   loading: boolean
   error: string | null
   enabled: boolean
@@ -78,9 +78,10 @@ export function ReportPanel({
 
             <div>
               <div className="mb-1.5 text-[11px] font-medium text-slate-500">建议练习汇总</div>
-              {report.suggested_practice.length > 0 ? (
+              {/* ⚠️ 字段名是 suggested_practices（复数）—— 写成单数会静默拿到 undefined 并崩在这里 */}
+              {report.suggested_practices.length > 0 ? (
                 <ul className="space-y-1.5">
-                  {report.suggested_practice.map((item, index) => (
+                  {report.suggested_practices.map((item, index) => (
                     <li key={`${item.kp_id}-${index}`} className="space-y-1">
                       <p className="text-xs leading-relaxed text-slate-700">{item.task}</p>
                       <Tag>{item.kp_id}</Tag>
