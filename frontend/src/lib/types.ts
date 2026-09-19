@@ -435,6 +435,17 @@ export interface LearningPathStep {
   is_start_point: boolean
 }
 
+/**
+ * ⚠️ **线上实测（2026-09-19）`GET /api/learning-path` 返回的是对象**，而 api-spec §4.4
+ * 与 `LearningPathStep[]` 都承诺**顶层数组**。前端按「两种形状都读」兼容，避免 `/path` 页
+ * 在对象上做 `for...of` 直接崩（`steps is not iterable`，且三个渲染分支全部落空 → 静默空白）。
+ * 已按「以 spec 为准」在 Issue #15 请 P2 收口为数组；收口后本类型可删。
+ */
+export interface LearningPathOut {
+  target_kp_id: string
+  steps: LearningPathStep[]
+}
+
 export interface GapPrerequisite {
   kp_id: string
   name: string
