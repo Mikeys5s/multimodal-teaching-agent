@@ -31,6 +31,31 @@ if [ -z "$MSG" ]; then
     exit 2
 fi
 
+# ---- ⓪ 关键一步：**不许在 main 上提交** ---------------------------------
+#
+# 团队铁律：一律走 PR，不直接推 main（CONTRIBUTING.md）。
+#
+# 我加这道检查，是因为**自己违过一次**：原来的守卫只查"工作区完整性"，
+# 没查"当前分支"，于是在 main 上提交并推送了 —— 三个提交直接落到 main，
+# 绕过了 review。
+#
+# **守卫不检查的东西，就等于没有约束。** 这条比它看起来重要。
+BRANCH="$(git branch --show-current)"
+if [ "$BRANCH" = "main" ] || [ "$BRANCH" = "master" ]; then
+    echo "⛔ 当前在 $BRANCH 上，不许直接提交（团队铁律：一律走 PR）。"
+    echo
+    echo "   先开分支："
+    echo "       git switch -c feat/简短任务名"
+    echo "   再跑本脚本。"
+    echo
+    if [ "${2:-}" != "--allow-main" ]; then
+        echo "   （确实要在 main 上提交时用 --allow-main 显式放行 —— 但先问自己为什么。）"
+        exit 3
+    fi
+    echo "   ⚠️ --allow-main 已放行，继续。"
+    echo
+fi
+
 # ---- ① 关键一步：先看有没有被移走的文件 -------------------------------
 DELETED=$(git status --porcelain | grep -c '^ D' || true)
 if [ "${DELETED:-0}" -gt 0 ]; then
