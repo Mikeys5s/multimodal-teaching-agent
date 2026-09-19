@@ -39,7 +39,8 @@ function progressSignature(job: Job | undefined): string {
  * 三条硬约束（P3 抽取任务要跑几十分钟，这三点都不能让步）：
  * 1. **退避**：后端有进展（status/progress/stage_detail 变化）时按 `intervalMs` 密集轮询，
  *    长时间没进展（例如 OCR 正在啃一页）按 `backoffFactor` 逐级放大到 `maxIntervalMs` 封顶，
- *    避免半小时的任务打出上千次请求；
+ *    避免半小时的任务打出上千次请求；**取状态失败走同一条退避路径** ——
+ *    后端宕机属于「拿不到新进展」，绝不能因此重置回最短间隔（否则会变成资源泄漏式的密集轮询）；
  * 2. **终止**：任务进入 done/failed/partial 后立刻移出轮询集合，全部终结即彻底停表，
  *    不会留下自转的定时器；
  * 3. **不重复请求**：同一 job_id 在途请求共享同一个 Promise（`inFlightRef`），
@@ -108,7 +109,10 @@ export function useJobsPolling(
 
       const fresh: Record<string, Job> = {}
       let firstError: string | null = null
+      /** 本 tick 是否有任务真的往前走了（只有成功取回且签名变化才算） */
       let advanced = false
+      /** 本 tick 是否有任务取状态失败 */
+      let failed = false
 
       results.forEach((result, index) => {
         const jobId = active[index]
@@ -124,10 +128,12 @@ export function useJobsPolling(
             settledRef.current.add(jobId)
             onSettledRef.current?.(job)
           }
-        } else if (!firstError) {
-          // 取状态失败不算任务失败：保持原有进度继续轮询（间隔由退避处理）
-          firstError = (result.reason as Error)?.message ?? '任务状态获取失败'
-          advanced = true
+        } else {
+          // 取状态失败不算任务失败：保持原有进度继续轮询，但**不重置间隔**
+          failed = true
+          if (!firstError) {
+            firstError = (result.reason as Error)?.message ?? '任务状态获取失败'
+          }
         }
       })
 
@@ -139,7 +145,12 @@ export function useJobsPolling(
         return
       }
 
-      delay = advanced ? intervalMs : Math.min(Math.round(delay * backoffFactor), maxIntervalMs)
+      // 退避：只有「有进展且本轮没出错」才回到最短间隔；
+      // 无进展或取状态失败都逐级放大到 maxIntervalMs 封顶
+      delay =
+        advanced && !failed
+          ? intervalMs
+          : Math.min(Math.round(delay * backoffFactor), maxIntervalMs)
       timer = window.setTimeout(() => void tick(), delay)
     }
 

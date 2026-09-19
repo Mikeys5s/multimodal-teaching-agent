@@ -5,13 +5,15 @@
  *   node --experimental-strip-types scripts/check-sse-parse.mjs
  *
  * 覆盖：id 行在 event 行**之前 / 之后**两种顺序、多行 data、注释行与空块、
- *       未知字段（retry）、id 含 NUL、跨 chunk 断包续解析、readSseSeq 的取值优先级。
+ *       未知字段（retry）、id 含 NUL、跨 chunk 断包续解析、
+ *       readSseSeq 的取值优先级（id 行为权威）与 id/data.seq 不一致检测。
  */
 import {
   createSseDecoder,
   parseSseBlock,
   parseSseText,
   readSseSeq,
+  readSseSeqInfo,
 } from '../src/lib/sse.ts'
 
 let failed = 0
@@ -142,11 +144,32 @@ const partial = tailDecoder.push('id: 7\nevent: done\ndata: {"seq":7,"turn_id":"
 check('未 flush 时无事件', partial.length, 0)
 check('flush 后拿到 done', tailDecoder.flush().map((f) => f.event), ['done'])
 
-console.log('⑦ readSseSeq：data.seq 优先，缺失时回退 id')
-check('data.seq 优先于 id', readSseSeq({ id: '99', event: 'delta', data: '{}' }, { seq: 41 }), 41)
+console.log('⑦ readSseSeq：id 行为权威（Last-Event-ID 取 id 行的值），data.seq 仅兜底')
+check('id 行优先于 data.seq', readSseSeq({ id: '99', event: 'delta', data: '{}' }, { seq: 41 }), 99)
+check('两者一致时结果不变', readSseSeq({ id: '41', event: 'delta', data: '{}' }, { seq: 41 }), 41)
+check('无 id 行 → 回退 data.seq', readSseSeq({ id: null, event: 'delta', data: '{}' }, { seq: 41 }), 41)
 check('无 data.seq → 用 id', readSseSeq({ id: '42', event: 'delta', data: '{}' }, {}), 42)
 check('两者都没有 → null', readSseSeq({ id: null, event: 'delta', data: '{}' }, {}), null)
 check('非数字 id 不误取', readSseSeq({ id: 'abc', event: 'delta', data: '{}' }, null), null)
+
+console.log('⑦′ id 与 data.seq 不一致检测（api-spec §5.2 硬约定）')
+check('都不等 → mismatch=true，且仍按 id 推进', readSseSeqInfo({ id: '43', event: 'delta', data: '{}' }, { seq: 44 }), {
+  seq: 43,
+  source: 'id',
+  mismatch: true,
+  idSeq: 43,
+  dataSeq: 44,
+})
+check('一致 → mismatch=false', readSseSeqInfo({ id: '43', event: 'delta', data: '{}' }, { seq: 43 }).mismatch, false)
+check('只有 id → 不算不一致', readSseSeqInfo({ id: '43', event: 'delta', data: '{}' }, {}).mismatch, false)
+check('只有 data.seq → 不算不一致', readSseSeqInfo({ id: null, event: 'delta', data: '{}' }, { seq: 43 }).mismatch, false)
+check(
+  '契约样例报文全程无 mismatch',
+  parseSseText(SPEC_SAMPLE).some(
+    (f) => readSseSeqInfo(f, JSON.parse(f.data)).mismatch,
+  ),
+  false,
+)
 
 console.log(`\n结果：${passed} 项通过，${failed} 项失败`)
 process.exit(failed === 0 ? 0 : 1)

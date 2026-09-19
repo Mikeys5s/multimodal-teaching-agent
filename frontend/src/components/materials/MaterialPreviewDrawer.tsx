@@ -27,19 +27,14 @@ function BlockView({ block }: { block: Block }) {
   const lowConfidence =
     block.ocr_confidence !== null && block.ocr_confidence < LOW_CONFIDENCE
 
-  const body =
-    block.block_type === 'heading' && block.heading_level
-      ? block.content_md
-      : block.content_md
-
   return (
     <div className="relative">
       {block.block_type === 'heading' && block.heading_level ? (
         <div className={`mt-4 mb-1 ${HEADING_CLASS[Math.min(Math.max(block.heading_level, 1), 6)]}`}>
-          {body}
+          {block.content_md}
         </div>
       ) : (
-        <p className="mb-2 whitespace-pre-wrap text-sm leading-relaxed text-slate-700">{body}</p>
+        <p className="mb-2 whitespace-pre-wrap text-sm leading-relaxed text-slate-700">{block.content_md}</p>
       )}
 
       {lowConfidence && (

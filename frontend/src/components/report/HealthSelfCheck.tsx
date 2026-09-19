@@ -97,7 +97,18 @@ export function HealthSelfCheck() {
               <div>
                 <CheckRow label="status" value={health.status} ok={health.status === 'ok' || health.status === 'healthy'} />
                 <CheckRow label="db" value={health.db} ok={health.db === 'ok' || health.db === 'connected'} />
-                <CheckRow label="llm" value={health.llm} ok={health.llm !== 'unavailable' && health.llm !== 'down'} />
+                {/*
+                  llm 只做**原样展示**，不判定健康与否：
+                  api-spec 没有定义它的取值枚举，靠「不等于 unavailable / down 就算好」是猜测
+                  ——更何况本项目运行期零 LLM 依赖，llm 字段本来就可能是任意值（如 none / offline）。
+                  猜错的代价是自检页给出错误的绿灯，比不判定更糟。
+                */}
+                <CheckRow
+                  label="llm"
+                  value={health.llm}
+                  ok={null}
+                  hint="api-spec 未定义取值枚举，仅原样展示"
+                />
                 <CheckRow label="version" value={health.version} ok={null} />
               </div>
             ) : (

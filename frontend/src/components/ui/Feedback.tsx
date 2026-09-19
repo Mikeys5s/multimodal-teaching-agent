@@ -65,6 +65,16 @@ export function InlineError({ children }: { children: ReactNode }) {
   )
 }
 
+/** 警告态（非致命）：用于「契约漂移」这类必须让人看见、但不该阻断流程的情况 */
+export function InlineWarning({ children }: { children: ReactNode }) {
+  return (
+    <div className="flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50/80 px-3 py-2 text-xs text-amber-800">
+      <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-amber-500" aria-hidden />
+      <span>{children}</span>
+    </div>
+  )
+}
+
 export function ProgressBar({ value, className = '' }: { value: number; className?: string }) {
   const clamped = Math.max(0, Math.min(100, Math.round(value)))
   return (

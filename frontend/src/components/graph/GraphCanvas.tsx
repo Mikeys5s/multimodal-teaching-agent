@@ -47,6 +47,8 @@ export function GraphCanvas({ nodes, edges, selectedId, onSelect }: GraphCanvasP
   const containerRef = useRef<HTMLDivElement>(null)
   const [view, setView] = useState({ x: 24, y: 24, k: 1 })
   const [hoverId, setHoverId] = useState<string | null>(null)
+  /** 键盘焦点所在的节点 —— 用来画一个可见的焦点环（SVG 的 <g> 没有默认焦点样式） */
+  const [keyboardId, setKeyboardId] = useState<string | null>(null)
   const drag = useRef({ x: 0, y: 0, moved: 0, active: false })
 
   const fitView = useCallback(() => {
@@ -149,8 +151,8 @@ export function GraphCanvas({ nodes, edges, selectedId, onSelect }: GraphCanvasP
         onPointerMove={handlePointerMove}
         onPointerUp={handlePointerUp}
         onPointerCancel={handlePointerUp}
-        role="img"
-        aria-label="知识点依赖有向无环图"
+        role="group"
+        aria-label="知识点依赖有向无环图：可拖拽平移、滚轮缩放；按 Tab 遍历知识点，Enter 或空格查看前置与例题"
       >
         <defs>
           <marker id="xizhi-arrow-hard" markerUnits="userSpaceOnUse" markerWidth="9" markerHeight="9" refX="8.5" refY="4.5" orient="auto">
@@ -191,15 +193,31 @@ export function GraphCanvas({ nodes, edges, selectedId, onSelect }: GraphCanvasP
             {layout.nodes.map(({ node, x, y }) => {
               const color = DIFFICULTY_COLOR[node.difficulty] ?? '#94a3b8'
               const selected = node.id === selectedId
+              const focused = node.id === keyboardId
               const dimmed = focusId !== null && !related.has(node.id)
               return (
                 <g
                   key={node.id}
                   data-node-id={node.id}
                   transform={`translate(${x - NODE_W / 2} ${y - NODE_H / 2})`}
-                  className="cursor-pointer transition-opacity"
+                  className="cursor-pointer transition-opacity focus:outline-none"
                   opacity={dimmed ? 0.3 : 1}
+                  role="button"
+                  tabIndex={0}
+                  aria-pressed={selected}
+                  aria-label={`知识点 ${node.name}，难度 ${node.difficulty}（${
+                    DIFFICULTY_LABEL[node.difficulty]
+                  }）${node.needs_review ? '，待复核' : ''}，查看前置与例题`}
                   onClick={() => onSelect(node.id)}
+                  onKeyDown={(event) => {
+                    // Enter / 空格 —— 与原生 button 一致（否则键盘用户点不开详情）
+                    if (event.key === 'Enter' || event.key === ' ' || event.key === 'Spacebar') {
+                      event.preventDefault()
+                      onSelect(node.id)
+                    }
+                  }}
+                  onFocus={() => setKeyboardId(node.id)}
+                  onBlur={() => setKeyboardId((prev) => (prev === node.id ? null : prev))}
                   onPointerEnter={() => setHoverId(node.id)}
                   onPointerLeave={() => setHoverId((prev) => (prev === node.id ? null : prev))}
                 >
@@ -207,6 +225,19 @@ export function GraphCanvas({ nodes, edges, selectedId, onSelect }: GraphCanvasP
                     {node.name} · 难度 {node.difficulty}（{DIFFICULTY_LABEL[node.difficulty]}）
                     {node.needs_review ? ' · 待复核' : ''}（点击查看前置与例题）
                   </title>
+                  {focused && (
+                    <rect
+                      x={-6}
+                      y={-6}
+                      width={NODE_W + 12}
+                      height={NODE_H + 12}
+                      rx={18}
+                      fill="none"
+                      stroke="#0f172a"
+                      strokeWidth={2}
+                      strokeDasharray="5 3"
+                    />
+                  )}
                   {selected && (
                     <rect x={-3} y={-3} width={NODE_W + 6} height={NODE_H + 6} rx={16} fill="none" stroke={color} strokeWidth={3} opacity={0.35} />
                   )}
@@ -276,7 +307,7 @@ export function GraphCanvas({ nodes, edges, selectedId, onSelect }: GraphCanvasP
       </div>
 
       <div className="pointer-events-none absolute bottom-3 right-3 rounded-md bg-white/85 px-2 py-1 text-[11px] text-slate-400">
-        拖拽平移 · 滚轮缩放 · 点节点看详情
+        拖拽平移 · 滚轮缩放 · 点节点看详情 · Tab 遍历节点、Enter 打开
       </div>
 
       {/* 图例 */}

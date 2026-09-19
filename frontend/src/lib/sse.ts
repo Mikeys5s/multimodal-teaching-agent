@@ -6,12 +6,16 @@
  *   所以这里用 `fetch` + `ReadableStream` 手写行解析。
  *
  * ★ 与 `types.ts` §5.2 的三条硬约定一一对应：
- *   1. 每个事件都带 `id:` 行且与 `data.seq` 一致 → 解析器两者都读，**`data.seq` 优先、
- *      `id:` 兜底**；重连时用**最后收到的 seq** 作为 `Last-Event-ID`。
+ *   1. 每个事件都带 `id:` 行且与 `data.seq` 一致。**续推游标以 `id:` 为权威** ——
+ *      `Last-Event-ID` 按 SSE 规范携带的就是 `id:` 行的值，而 `id:` 由服务端自己写出、
+ *      正是它比对续推位置时使用的游标；`data.seq` 只是同值的便利副本（缺失时兜底）。
+ *      两者不一致即后端违约（见 `readSseSeqInfo().mismatch`）→ 发 `SEQ_MISMATCH` 告警，
+ *      **不静默吞掉**（`id:` 错位会让续推错位，必须让人看见）。
  *   2. `id:` 必须在 `event:` 之前 → 解析按行处理，**不依赖字段在块内的出现顺序**
  *      （两种顺序都能解析出正确结果）；但发送重连请求时一定用最后收到的 seq。
  *   3. `seq` 会话内单调递增、跨轮次不重置 → `streamAsk` 接收 `lastEventId`、
  *      返回本轮 `lastSeq`，由调用方在**会话级别**持有（只有新建会话才清零）。
+ *      ★ 这是 seq 的**唯一**推进来源：调用方不要再自己维护一份，见 `StreamAskResult`。
  *
  * ★ 事件顺序固定：`retrieved` → `state` → `delta`* → `diagnosis` → `done`。
  *   调用方拿到 `retrieved` 就应当**先渲染溯源卡片**，再渲染 `delta` 文本。
@@ -147,19 +151,76 @@ export function createSseDecoder(): SseDecoder {
   }
 }
 
-/** 取事件序号：`data.seq` 优先（契约保证与 `id:` 一致），缺失时回退到 `id:` */
-export function readSseSeq(frame: SseFrame, payload: unknown): number | null {
+/** 本项目里 `id:` 行固定是十进制序号；非数字（或缺失）一律视为「没给 id」 */
+function parseIdSeq(id: string | null): number | null {
+  return id !== null && /^\d+$/.test(id) ? Number(id) : null
+}
+
+/** 事件序号 + 它的来源 + 一致性信息（见 `readSseSeqInfo`） */
+export interface SseSeqInfo {
+  /** 用于推进 `lastSeq` / 作为 `Last-Event-ID` 的序号 */
+  seq: number | null
+  /** 序号的来源：`id:` 行为权威来源，`data.seq` 仅在缺 `id:` 时兜底 */
+  source: 'id' | 'data' | null
+  /** `id:` 与 `data.seq` **都存在且不相等** —— 后端违反 api-spec §5.2 的硬约定 */
+  mismatch: boolean
+  idSeq: number | null
+  dataSeq: number | null
+}
+
+/**
+ * 取事件序号及其一致性信息。
+ *
+ * ★ 优先级 **`id:` > `data.seq`**：`Last-Event-ID` 按 SSE 规范携带的是 `id:` 行的值，
+ *   而 `id:` 由服务端生成，是它比对续推位置时真正使用的游标；`data.seq` 只是同值副本。
+ *   契约保证两者一致，正常链路上两种取法结果相同；**一旦不一致（`mismatch`），
+ *   能让续推对上的只有 `id:`** —— 此时仍然按 `id:` 推进，并把违约报出去（不静默）。
+ */
+export function readSseSeqInfo(frame: SseFrame, payload: unknown): SseSeqInfo {
+  const idSeq = parseIdSeq(frame.id)
+
+  let dataSeq: number | null = null
   if (payload && typeof payload === 'object') {
     const seq = (payload as { seq?: unknown }).seq
-    if (typeof seq === 'number' && Number.isFinite(seq)) return seq
+    if (typeof seq === 'number' && Number.isFinite(seq)) dataSeq = seq
   }
-  if (frame.id !== null && /^\d+$/.test(frame.id)) return Number(frame.id)
-  return null
+
+  const mismatch = idSeq !== null && dataSeq !== null && idSeq !== dataSeq
+  const seq = idSeq ?? dataSeq
+
+  return {
+    seq,
+    source: idSeq !== null ? 'id' : dataSeq !== null ? 'data' : null,
+    mismatch,
+    idSeq,
+    dataSeq,
+  }
+}
+
+/** 只取序号（`readSseSeqInfo` 的便捷用法） */
+export function readSseSeq(frame: SseFrame, payload: unknown): number | null {
+  return readSseSeqInfo(frame, payload).seq
 }
 
 /* ------------------------------------------------------------------ *
  * 二、网络层：streamAsk
  * ------------------------------------------------------------------ */
+
+/** 协议层告警（目前只有「`id:` 与 `data.seq` 不一致」）—— 不阻断本轮回答，但必须可见 */
+export interface SseProtocolWarning {
+  code: 'SEQ_MISMATCH'
+  /** 可直接展示 / 上报的中文说明 */
+  message: string
+  /** 触发告警的事件名 */
+  event: SseEventName
+  idSeq: number | null
+  dataSeq: number | null
+}
+
+/** 流中断时，抛出的错误对象上会附带**已经推进到的 seq**（供调用方保留续推游标） */
+export interface SsePartialSeq {
+  lastSeq: number | null
+}
 
 export interface SseHandlers {
   onRetrieved?: (event: SseRetrieved) => void
@@ -168,10 +229,13 @@ export interface SseHandlers {
   onDiagnosis?: (event: SseDiagnosis) => void
   onDone?: (event: SseDone) => void
   /**
-   * 通用分发器：任何已识别事件都会先经过这里（用来统一推进 `lastSeq` 等横切逻辑）。
-   * `seq` 为 null 表示报文里既没有 `data.seq` 也没有数字型 `id:`。
+   * 通用分发器：任何已识别事件都会先经过这里（用来做埋点、统计等横切逻辑）。
+   * `seq` 为 null 表示报文里既没有 `id:` 也没有 `data.seq`。
+   * ⚠️ **不要在这里推进 seq** —— `streamAsk` 的返回值就是唯一来源（见 `StreamAskResult`）。
    */
   onEvent?: (name: SseEventName, payload: unknown, seq: number | null) => void
+  /** 收到协议层违约（如 `SEQ_MISMATCH`）时回调一次，便于上报或界面提示 */
+  onProtocolWarning?: (warning: SseProtocolWarning) => void
 }
 
 export interface StreamAskParams {
@@ -187,7 +251,11 @@ export interface StreamAskParams {
 }
 
 export interface StreamAskResult {
-  /** 本轮最后收到的 seq —— 调用方应保留到会话结束 */
+  /**
+   * 本轮最后收到的 seq —— 调用方应保留到会话结束，并**只用这一个来源**：
+   * 下一轮把它作为 `lastEventId` 传回（`Last-Event-ID` 断线续推）。
+   * 流中途出错时这个值在抛出的错误上（`SsePartialSeq.lastSeq`）。
+   */
   lastSeq: number | null
 }
 
@@ -285,6 +353,8 @@ export async function streamAsk(params: StreamAskParams): Promise<StreamAskResul
     typeof lastEventId === 'number' && Number.isFinite(lastEventId) ? lastEventId : null
   let sawEvent = false
   let rawPrefix = ''
+  /** 同一条告警在一次流里只报一次，避免后端系统性错位时刷屏 */
+  const warned = new Set<string>()
 
   const dispatch = (frame: SseFrame): void => {
     const name = frame.event
@@ -303,9 +373,25 @@ export async function streamAsk(params: StreamAskParams): Promise<StreamAskResul
     }
 
     const eventName = name as SseEventName
-    const seq = readSseSeq(frame, payload)
+    const seqInfo = readSseSeqInfo(frame, payload)
+    const seq = seqInfo.seq
     if (seq !== null) lastSeq = lastSeq === null ? seq : Math.max(lastSeq, seq)
     sawEvent = true
+
+    // 后端违约：id: 与 data.seq 不一致 → 显式告警（协议规定 Last-Event-ID 取 id: 行的值，
+    // 错位会让断线续推错位；不静默吞掉，否则这类 bug 只能靠人工读报文才发现）
+    if (seqInfo.mismatch && !warned.has('SEQ_MISMATCH')) {
+      warned.add('SEQ_MISMATCH')
+      const warning: SseProtocolWarning = {
+        code: 'SEQ_MISMATCH',
+        message: `SSE 报文中 id: 行（${seqInfo.idSeq}）与 data.seq（${seqInfo.dataSeq}）不一致，违反 api-spec §5.2；已按 id: 续推。`,
+        event: eventName,
+        idSeq: seqInfo.idSeq,
+        dataSeq: seqInfo.dataSeq,
+      }
+      console.warn(`[xizhi/sse] ${warning.message}`)
+      handlers.onProtocolWarning?.(warning)
+    }
 
     handlers.onEvent?.(eventName, payload, seq)
     if (eventName === 'retrieved') handlers.onRetrieved?.(payload as SseRetrieved)
@@ -326,9 +412,15 @@ export async function streamAsk(params: StreamAskParams): Promise<StreamAskResul
     }
     for (const frame of sse.flush()) dispatch(frame)
   } catch (err) {
-    if ((err as Error)?.name === 'AbortError') throw err
-    if (err instanceof ApiError) throw err
-    throw new ApiError('NETWORK_ERROR', '流式连接中断，请重试（可凭上一轮序号续推）。')
+    const passthrough = (err as Error)?.name === 'AbortError' || err instanceof ApiError
+    const out =
+      passthrough
+        ? err
+        : new ApiError('NETWORK_ERROR', '流式连接中断，请重试（可凭上一轮序号续推）。')
+    // 把**已经推进到的 seq** 挂到错误对象上：调用方据此保住续推游标，
+    // 否则中断前的这半轮白跑、重试只能从上一轮的游标重新开始
+    ;(out as Error & SsePartialSeq).lastSeq = lastSeq
+    throw out
   } finally {
     try {
       reader.releaseLock()

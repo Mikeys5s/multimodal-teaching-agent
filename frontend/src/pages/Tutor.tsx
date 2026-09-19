@@ -7,11 +7,12 @@ import { StateMachinePanel } from '@/components/tutor/StateMachinePanel'
 import { TurnCard, appendDelta, createTurn } from '@/components/tutor/TurnCard'
 import type { TurnView } from '@/components/tutor/TurnCard'
 import { Button } from '@/components/ui/Button'
-import { EmptyState, ErrorState, InlineError, LoadingState } from '@/components/ui/Feedback'
+import { EmptyState, ErrorState, InlineError, InlineWarning, LoadingState } from '@/components/ui/Feedback'
 import { useRequest } from '@/hooks/useRequest'
 import { ApiError } from '@/lib/api'
 import { api } from '@/lib/endpoints'
 import { streamAsk } from '@/lib/sse'
+import type { SsePartialSeq, SseProtocolWarning } from '@/lib/sse'
 import type { QaSession } from '@/lib/types'
 
 /** 演示用的学生标识（后端必填字段 student_label） */
@@ -35,6 +36,8 @@ export default function Tutor() {
   const [streamingKey, setStreamingKey] = useState<string | null>(null)
   /** 会话内单调递增的最后事件序号 —— 断线续推（Last-Event-ID）依赖它，跨轮次保留 */
   const [lastSeq, setLastSeq] = useState<number | null>(null)
+  /** 后端 SSE 契约漂移（如 id: 与 data.seq 不一致）：必须让人看见，但不阻断本轮回答 */
+  const [protocolWarning, setProtocolWarning] = useState<SseProtocolWarning | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
   const abortRef = useRef<AbortController | null>(null)
@@ -58,6 +61,7 @@ export default function Tutor() {
     setTurns([])
     setLastSeq(null)
     setStreamingKey(null)
+    setProtocolWarning(null)
     clearState(null)
     clearReport(null)
   }, [clearState, clearReport])
@@ -73,6 +77,7 @@ export default function Tutor() {
       setTurns([])
       setLastSeq(null)
       setStreamingKey(null)
+      setProtocolWarning(null)
       return created.session_id
     } catch (err) {
       setError(err instanceof ApiError ? err.message : '创建答疑会话失败，请稍后重试。')
@@ -88,6 +93,7 @@ export default function Tutor() {
     if (text === '' || busy || streaming) return
 
     setError(null)
+    setProtocolWarning(null)
     setQuestion('')
 
     let sid = sessionId
@@ -109,7 +115,7 @@ export default function Tutor() {
     setStreamingKey(key)
 
     try {
-      await streamAsk({
+      const result = await streamAsk({
         sessionId: sid,
         question: text,
         // ★ 跨轮次续推：带上本会话最后收到的 seq
@@ -121,15 +127,26 @@ export default function Tutor() {
           onDelta: (event) => patch((turn) => appendDelta(turn, event)),
           onDiagnosis: (event) => patch((turn) => ({ ...turn, diagnosis: event })),
           onDone: (event) => patch((turn) => ({ ...turn, done: event })),
-          onEvent: (_name, _payload, seq) => {
-            if (seq !== null) setLastSeq((prev) => (prev === null ? seq : Math.max(prev, seq)))
-          },
+          // 契约漂移（id: 与 data.seq 不一致）不阻断回答，但要显式告诉使用者
+          onProtocolWarning: (warning) => setProtocolWarning(warning),
         },
       })
+
+      // ★ seq 只有一个来源：streamAsk 的返回值（已含「收到过的最大的 seq」）。
+      //   不要再在 onEvent 里自己维护一份 —— 两套推进逻辑迟早会分叉。
+      setLastSeq(result.lastSeq)
+
+      // 流正常结束却没收到 done：显式标记，别让这一轮静默停在半途
+      patch((turn) => (turn.done ? turn : { ...turn, incomplete: true }))
     } catch (err) {
       if ((err as Error)?.name === 'AbortError') {
         patch((turn) => ({ ...turn, stopped: true }))
       } else {
+        // 中断 / 出错时也保住**已经推进到的** seq，重试才能从断点续推
+        const partial = (err as Partial<SsePartialSeq> | null)?.lastSeq
+        if (typeof partial === 'number') {
+          setLastSeq((prev) => (prev === null ? partial : Math.max(prev, partial)))
+        }
         setError(err instanceof ApiError ? err.message : '答疑请求失败，请稍后重试。')
       }
     } finally {
@@ -288,6 +305,9 @@ export default function Tutor() {
           </section>
 
           {error && <InlineError>{error}</InlineError>}
+
+          {/* 契约漂移告警：不阻断本轮回答，但会让断线续推错位，必须让人看见 */}
+          {protocolWarning && <InlineWarning>{protocolWarning.message}</InlineWarning>}
 
           {turns.length === 0 ? (
             <section className="xizhi-card p-5">
