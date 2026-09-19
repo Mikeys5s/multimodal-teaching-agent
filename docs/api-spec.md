@@ -397,6 +397,50 @@ GET /api/report/quality
 | DELETE | `/api/qa/sessions/{id}` | 删除 |
 | GET | `/api/qa/sessions/{id}/report` | 会话诊断报告（汇总全部卡点与建议练习） |
 
+#### 响应字段表（v1.5 补齐 —— 之前**只列了端点、没写字段**，导致前端只能猜）
+
+> **⚠️ 本节字段以 pydantic 模型为准。**
+> 冲突时以 `backend/tests/test_schemas.py` 的 `PINNED_FIELDS` 为最终依据 ——
+> **那是一份被测试守住的名字清单，而本表是人工维护的、会漂。**
+> 补这一节的目的：把那份清单**翻译成给人读的形式**，让下一个人不必去读代码。
+
+**`SessionDetailOut`**（`GET /api/qa/sessions/{id}`）
+
+| 字段 | 类型 | 说明 |
+|---|---|---|
+| **`id`** | `str` | ⚠️ **叫 `id`，不叫 `session_id`**（与下面的 `SessionReportOut` 不一致 —— 历史遗留，D9 前不改） |
+| `student_label` | `str \| null` | |
+| `material_scope` | `list[str]` | 本次会话覆盖的素材 id |
+| `created_at` / `updated_at` | `str` | ISO 时间 |
+| `turns` | `list[TurnOut]` | 按 `seq` 升序 |
+
+**`TurnOut`**（`SessionDetailOut.turns` 的元素）
+
+| 字段 | 类型 | 说明 |
+|---|---|---|
+| **`id`** | `str` | ⚠️ **叫 `id`，不叫 `turn_id`** |
+| `seq` | `int` | 会话内单调递增，**与 SSE 的 `id:` 是同一个序列** |
+| `role` | `str` | `student` / `tutor` |
+| **`content_md`** | `str` | ⚠️ **学生轮与导师轮都是它** —— 没有单独的 `question` / `answer_md` |
+| `turn_type` | `str \| null` | 导师轮才有（`refuse` / `explain` / `probe`…） |
+| `retrieved_kp_ids` | `list[str]` | |
+| `retrieved_block_ids` | `list[str]` | |
+| `grounded` | `bool` | 是否基于材料（**幻觉率的分母只用导师轮**） |
+| `diagnosis` | `DiagnosisOut \| null` | 每轮三件产出：`knowledge_points` / `stuck_at` / `next_practice` |
+| `latency_ms` | `int \| null` | |
+| `created_at` | `str` | |
+
+**`SessionReportOut`**（`GET /api/qa/sessions/{id}/report`）
+
+| 字段 | 类型 | 说明 |
+|---|---|---|
+| **`session_id`** | `str` | ⚠️ **这个叫 `session_id`**（与 `SessionDetailOut.id` 不一致 —— 历史遗留，D9 前不改） |
+| `turn_count` | `int` | |
+| `grounded_rate` | `float` | **分母不含拒答轮次**（拒答是能力不是缺陷） |
+| `stuck_points` | `list` | 卡点汇总 |
+| **`suggested_practices`** | `list` | ⚠️ **是复数** —— 不是 `suggested_practice` |
+| `summary_md` | `str` | |
+
 ### 5.2 提问（SSE 流式）
 
 ```
@@ -469,10 +513,41 @@ GET /api/qa/sessions/{id}/state
 
 | 方法 | 路径 | 说明 |
 |---|---|---|
-| GET | `/api/jobs/{job_id}` | `{ status, progress, stage_detail, result, error }` |
-| GET | `/api/jobs?target_id=&job_type=` | 按资源查任务 |
+| GET | `/api/jobs/{job_id}` | 单任务详情 → `JobOut`（字段见下） |
+| GET | `/api/jobs?target_id=&job_type=` | 按资源查任务 → `JobListOut` |
 
 `stage_detail` 示例：`"正在识别第 7/20 页"`、`"正在抽取 3.2 交换排序 的知识点"`。**必须是人类可读中文**，前端直接展示，不加工。
+
+#### `JobOut` 字段表（v1.5 修正 —— 之前这行写的是 `{ status, progress, stage_detail, result, error }`，**`result` / `error` 两个名字是错的**）
+
+> ⚠️ **这行曾经把前端带偏过**：`result` 与 `error` 这两个名字**不存在**，
+> 真实的字段名是 **`result_json`** 与 **`error_message`**。
+> 前端照旧那行写类型，在主路径（读 `status` / `progress`）上完全正常，
+> **只有走到完成/失败分支才会读到 `undefined` —— 而且不报错。**
+> 所以这一节改成逐字段列出，不再用一行内联结构描述。
+
+| 字段 | 类型 | 说明 |
+|---|---|---|
+| **`id`** | `str` | ⚠️ **叫 `id`，不叫 `job_id`** —— 但**请求路径参数**仍叫 `{job_id}`（`/api/jobs/{job_id}`） |
+| `job_type` | `str` | 如 `parse` / `extract` / `ocr` |
+| `target_id` | `str \| null` | 该任务作用的资源 id（素材 / 知识点集…） |
+| `status` | `str` | `pending` / `running` / `done` / `failed` / `partial` |
+| `progress` | `int` | **0–100**。前端进度条用它 |
+| `stage_detail` | `str \| null` | **人类可读中文，直接展示不加工**；分页进度也拼在这里（如"正在识别第 7/20 页"），**不另开结构化字段** |
+| **`result_json`** | `str \| null` | ⚠️ **是 JSON 字符串，不是对象** —— 前端要 `JSON.parse` |
+| **`error_message`** | `str \| null` | ⚠️ **是字符串，不是 `{code, message}`** |
+| `started_at` / `finished_at` | `str \| null` | ISO 时间 |
+| `created_at` | `str` | |
+
+**异步任务的统一用法**（`POST /api/materials`、`POST /api/extract/knowledge` 等一律如此）：
+
+```
+POST <触发端点>          → 202 { job_id, estimated_seconds }
+GET  /api/jobs/{job_id}  → JobOut（上面的表）   ← 用同一个 job_id 轮询
+```
+
+**前端直接复用同一套轮询逻辑即可**，不需要为不同任务类型写多套 ——
+`job_type` 只用来区分语义，轮询行为完全一致。
 
 ---
 
