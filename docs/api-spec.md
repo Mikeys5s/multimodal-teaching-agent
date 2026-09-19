@@ -582,6 +582,9 @@ GET  /api/jobs/{job_id}  → JobOut（上面的表）   ← 用同一个 job_id 
 | 25 | DELETE | `/api/qa/sessions/{id}` | 答疑 | Stage 3 |
 | 26 | GET | `/api/jobs/{job_id}` | 任务 | — |
 | 27 | GET | `/api/jobs` | 任务 | — |
+| 28 | POST | `/api/review/import-edges` | 复核 | Stage 2 |
+| 29 | GET | `/api/review/queue` | 复核 | Stage 2 |
+| 30 | POST | `/api/review/decide` | 复核 | Stage 2 |
 | **28** | GET | `/api/knowledge-points/{id}/gap-analysis` | **卡点根因回溯** | Stage 3 |
 
 **共 28 个端点**（v1.3 加入 `/api/health/pragma`，原为 27）。任何新增端点需走 SPEC §12 变更流程。
