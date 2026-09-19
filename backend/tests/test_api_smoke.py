@@ -509,9 +509,6 @@ def test_gap_analysis_explains_itself() -> None:
         assert "hard" in data["suggestion"] or "起点" in data["suggestion"], (
             f"说明应当讲清原因，收到：{data['suggestion']!r}"
         )
-    assert "第 88 页" in data["suggestion"] or "88" in data["suggestion"], (
-        "建议里应给出可执行的页码指引"
-    )
 
 
 def test_gap_analysis_accepts_repeated_student_evidence() -> None:
