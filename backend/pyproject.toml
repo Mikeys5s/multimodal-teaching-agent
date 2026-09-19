@@ -11,6 +11,17 @@ requires-python = ">=3.11"
 
 # ---- 运行期核心依赖（P2 / P3 需要）----
 # 只放「跑起来必需」的东西，解析类重依赖在下面的可选组里。
+#
+# ⚠️ v1.6 修订（2026-09-19）：**解析链的三个轻量依赖上移到这里**。
+#
+# 原来的划分把 `pymupdf` / `python-docx` / `python-pptx` 放在可选的 `parse` 组，
+# 理由是「P1 需要时才装」。但**这个判断漏了一件事**：
+# `app/parse/` 被 `app.pipeline` 导入，而 `app.main` 导入 `app.pipeline` ——
+# **只要进程起来就一定会 import 它们**。而 Dockerfile 只跑 `pip install -e .`，
+# 于是生产镜像构建直接失败：`ModuleNotFoundError: No module named 'docx'`。
+#
+# **判断标准**：**进程启动路径上会被 import 的，就必须在基础依赖里**；
+# 「几 GB 且只在构建期用」的（PaddleOCR）才放 extra。
 dependencies = [
     "fastapi>=0.115",
     "uvicorn[standard]>=0.32",
@@ -18,6 +29,9 @@ dependencies = [
     "alembic>=1.14",
     "pydantic-settings>=2.6",
     "python-multipart>=0.0.12",
+    "pymupdf>=1.25",      # app/parse/pdf.py —— 启动即 import
+    "python-docx>=1.1",   # app/parse/docx.py
+    "python-pptx>=1.0",   # app/parse/ 的 PPTX 分支
 ]
 
 [project.optional-dependencies]
