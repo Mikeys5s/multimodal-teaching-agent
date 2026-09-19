@@ -125,7 +125,14 @@ def test_import_edges_marks_them_as_candidates() -> None:
     row = session.get(KpPrerequisite, {"kp_id": ids[1], "prereq_kp_id": ids[0]})
     assert row is not None
     assert row.needs_review == 1, "导入的边必须标 needs_review=1 —— 它是候选，不是结论"
-    assert row.source_channel == "semantic"
+    # ⚠️ **不能写死 `== "semantic"`** —— 这条边**很可能本来就有结构线索的版本**
+    #    （抽取会把同节顺序的相邻知识点连成 soft 边）。
+    #    那样融合之后应当是 `both`，而这正是「双通道融合」的含义：
+    #    **结构线索与语义线索都支持它**。写死成 semantic 会把这个信息丢掉，
+    #    而那条信息恰恰是冲突排查时最有用的。
+    assert row.source_channel in ("semantic", "both"), (
+        f"来源通道记错了：{row.source_channel!r}（应为 semantic 或 both）"
+    )
 
 
 # ---------------------------------------------------------------------------
