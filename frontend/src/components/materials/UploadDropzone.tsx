@@ -15,13 +15,25 @@ export interface UploadDropzoneProps {
 /**
  * 素材上传区（SPEC §5.1 F1.1：拖拽/点选多文件）。
  * 支持格式与大小上限来自 GET /api/meta/capabilities —— 不在前端硬编码（api-spec §2）。
+ *
+ * ⚠️ 线上实现与 api-spec §2 的描述**不一致**（2026-09-19 对线上实例逐字段核对发现）：
+ *   文档承诺 `material_types`（每项含 `ext` / `label`）与 `unsupported_ext`，
+ *   线上实际返回的是 `supported_material_types`（扩展名字符串数组）+ `parse_methods`（扩展名 → 中文说明）。
+ *   所以这里**两种形状都读**，优先用实际返回的那种。
+ *
+ *   绝不能写成 `capabilities.material_types.flatMap(...)` —— 线上该字段是 `undefined`，
+ *   后果是**整个素材页在渲染时直接白屏**。这类错只在真数据下才暴露，类型检查与构建都拦不住。
  */
 export function UploadDropzone({ onFiles, uploading = false, capabilities, disabled = false }: UploadDropzoneProps) {
   const [dragging, setDragging] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
 
-  const accept = capabilities?.material_types.flatMap((t) => t.ext).join(',') || undefined
+  const supportedExt = capabilities?.supported_material_types ?? []
+  const legacyTypes = capabilities?.material_types ?? []
+  const accept =
+    (supportedExt.length > 0 ? supportedExt : legacyTypes.flatMap((t) => t.ext)).join(',') || undefined
   const maxMb = capabilities?.max_upload_mb ?? 50
+  const unsupportedExt = capabilities?.unsupported_ext ?? []
 
   const emit = (list: FileList | null) => {
     if (!list || list.length === 0) return
@@ -35,9 +47,12 @@ export function UploadDropzone({ onFiles, uploading = false, capabilities, disab
     emit(e.dataTransfer.files)
   }
 
-  const typeHint = capabilities
-    ? capabilities.material_types.map((t) => t.label).join(' / ')
-    : 'PDF / Word / PPT / 图片'
+  const typeHint =
+    supportedExt.length > 0
+      ? supportedExt.join(' / ')
+      : legacyTypes.length > 0
+        ? legacyTypes.map((t) => t.label).join(' / ')
+        : 'PDF / Word / PPT / 图片'
 
   return (
     <div
@@ -84,9 +99,9 @@ export function UploadDropzone({ onFiles, uploading = false, capabilities, disab
         支持 {typeHint} · 单文件 ≤ {maxMb}MB · 可多选
       </div>
 
-      {capabilities && capabilities.unsupported_ext.length > 0 && (
+      {unsupportedExt.length > 0 && (
         <div className="text-xs text-amber-600">
-          暂不支持 {capabilities.unsupported_ext.join(' / ')}（本版本聚焦图文材料解析）
+          暂不支持 {unsupportedExt.join(' / ')}（本版本聚焦图文材料解析）
         </div>
       )}
     </div>

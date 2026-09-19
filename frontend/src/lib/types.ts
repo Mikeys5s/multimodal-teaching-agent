@@ -119,7 +119,9 @@ export interface PragmaOut {
   db_file: string
 }
 
-/** 上传白名单项；前端据此渲染上传提示，不硬编码（api-spec §2） */
+/**
+ * 上传白名单项 —— **api-spec §2 文档承诺的形状**。⚠️ 线上目前**不返回**这个结构（见下）。
+ */
 export interface MaterialTypeCap {
   ext: string[]
   label: string
@@ -127,14 +129,45 @@ export interface MaterialTypeCap {
   parse_method: ParseMethod
 }
 
+/**
+ * `GET /api/meta/capabilities` —— 上传白名单与大小限制，前端据此渲染上传提示、不硬编码。
+ *
+ * ⚠️⚠️ **这个端点的线上实现与 api-spec §2 的描述不一致**（2026-09-19 对线上实例
+ * `http://120.77.177.171:8000` 逐字段核对后确认；已在 #15 报给 P2 要求把 §2 改成实现的形状）。
+ *
+ * 文档说返回 `material_types` / `max_page_count` / `llm_provider` / `llm_model` / `unsupported_ext`，
+ * 这些字段**线上全是 `undefined`**；线上实际返回：
+ *
+ * ```json
+ * {
+ *   "supported_material_types": [".pdf", ".docx", ".pptx", ".jpg", ".jpeg", ".png"],
+ *   "max_upload_mb": 50,
+ *   "parse_methods": { ".pdf": "文本层可用时走 PyMuPDF；扫描版走 PaddleOCR + 人工校对", ... },
+ *   "llm_mode": "not_in_use"
+ * }
+ * ```
+ *
+ * 取值的现实后果（不是理论风险）：前端原来写 `capabilities.material_types.flatMap(...)`，
+ * 在线上会 `undefined.flatMap` → **整个素材页渲染时白屏**。
+ * 所以这里把**实际返回的**字段声明为必填、把**文档承诺的**保留为可选 ——
+ * 既能对线上正确工作，又能在规约收口后平滑切回，不用再改调用方。
+ */
 export interface Capabilities {
-  material_types: MaterialTypeCap[]
+  /** 线上实际返回：允许的扩展名列表 */
+  supported_material_types: string[]
   max_upload_mb: number
-  max_page_count: number
-  llm_provider: string
-  llm_model: string
+  /** 线上实际返回：扩展名 → 解析方式（**中文说明**，可直接展示给用户） */
+  parse_methods: Record<string, string>
+  /** 线上实际返回：`not_in_use`（本项目运行期零 LLM 依赖） */
+  llm_mode: string
+
+  /* ---------- 以下为 api-spec §2 承诺、线上尚未返回的字段（待 #15 收口） ---------- */
+  material_types?: MaterialTypeCap[]
+  max_page_count?: number
+  llm_provider?: string
+  llm_model?: string
   /** 音频等不支持的格式必须能被前端明确拒绝（SPEC §5.1 边界与异常） */
-  unsupported_ext: string[]
+  unsupported_ext?: string[]
 }
 
 /* ------------------------------------------------------------------ *
@@ -379,6 +412,11 @@ export interface KnowledgeGraph {
   nodes: GraphNode[]
   edges: GraphEdge[]
   stats: GraphStats
+  /**
+   * 线上实际会返回这个字段（未按 `material_id` 过滤时为 `null`），
+   * 但 api-spec §4.4 没列它 —— 已在 #15 报给 P2 要求补进文档。
+   */
+  material_id: string | null
 }
 
 export interface GraphQuery {
@@ -557,8 +595,12 @@ export interface TurnOut {
   role: TurnRole
   /** ⚠️ 学生轮与导师轮**都是它**；判断是提问还是回答看 `role` */
   content_md: string
-  /** 导师轮才有（`refuse` / `explain` / `probe`…） */
-  turn_type: TurnType | null
+  /**
+   * 线上实测：**学生轮也有它**，值为 `"student_question"`（导师轮是 `probe` / `refuse` / `explain`…）。
+   * api-spec §5.1 写的是「`str | null`，导师轮才有」—— 所以这里按 `string` 声明，
+   * 不要收窄成 `TurnType` 那个封闭集合（会漏掉 `student_question`）。
+   */
+  turn_type: string | null
   retrieved_kp_ids: string[]
   retrieved_block_ids: string[]
   /** 是否基于材料 —— 幻觉率的分母**只用导师轮** */
