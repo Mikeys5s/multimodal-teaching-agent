@@ -159,10 +159,16 @@ s = p.read_text(encoding="utf-8")
 # 在 list_jobs 里直接 return 写死的数据（放在函数体第一行之后）
 s = s.replace(
     "    # 不分页（见端点说明），但**按创建时间倒序** —— 最近的任务在最前面，",
-    "    # ---- selftest 注入：写死返回，空库上也有数据 ----\n"
-    "    from app.schemas.job import JobListOut as _J\n"
+    "    # ---- selftest 注入：写死返回**一条真实记录**，空库上也有数据 ----\n"
+    "    # ⚠️ 必须返回**非空列表**：审计器数的是列表长度，\n"
+    "    #    第一版只给了 total=3 而 items=[]，被判成「真实」。\n"
     "    from app.core.response import ok as _ok\n"
-    "    return _ok(_J(items=[], total=0)) if False else _ok(_J(items=[], total=3))\n"
+    "    from app.schemas.job import JobListOut as _J, JobOut as _JO\n"
+    "    _fake = _JO(id='job_selftest', job_type='parse', target_id='mat_x',\n"
+    "                status='running', progress=1, stage_detail='注入',\n"
+    "                result_json=None, error_message=None, started_at=None,\n"
+    "                finished_at=None, created_at='2026-01-01T00:00:00+00:00')\n"
+    "    return _ok(_J(items=[_fake], total=1))\n"
     "    # ---- selftest 注入结束 ----\n"
     "    # 不分页（见端点说明），但**按创建时间倒序** —— 最近的任务在最前面，",
     1,
@@ -186,8 +192,12 @@ FIX="$COPY/samples/graph-infer-tests"
 CYCLIC=$(ls "$FIX" 2>/dev/null | grep -i "cycle" | head -1 || true)
 if [ -n "$CYCLIC" ]; then
     OUT=$(pyc "$COPY/skills/xizhi-graph-infer/scripts/graph_infer.py" verify --input "$(cd "$FIX" && pwd -W)/$CYCLIC" || true)
-    # 取值宽松一点：只要输出里出现 "cycle" 且后面的数字 > 0
-    N=$(printf '%s' "$OUT" | grep -oiE 'cycles?["\s:=]+[0-9]+' | grep -oE '[0-9]+' | head -1 || true)
+    # 取环数。
+    # ⚠️ 正则必须能吃下 `cycle_count` —— 第一版写 `cycles?["\s:=]+[0-9]+`，
+    #    **`_` 不在那个字符类里**，于是匹配不上 `"cycle_count": 1`，
+    #    结果"取不到值"被当成"闸没报"。
+    #    **是取值写错了，不是闸哑了 —— 差一点又把自己的错记到闸头上。**
+    N=$(printf '%s' "$OUT" | grep -oE '"cycle_count"[[:space:]]*:[[:space:]]*[0-9]+' | grep -oE '[0-9]+' | head -1 || true)
     judge "④ 用带环的夹具跑图校验，应当报出环" FAIL \
           "$([ "${N:-0}" -gt 0 ] && echo FAIL || echo PASS)" \
           "夹具 $CYCLIC -> cycles=${N:-?}｜原始输出：$(printf '%s' "$OUT" | head -2 | tr '\n' ' ')"
