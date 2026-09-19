@@ -20,10 +20,12 @@ import json
 
 import pytest
 from fastapi.testclient import TestClient
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.db import Base, engine
 from app.main import app
+from app.models import KnowledgePoint
 
 client = TestClient(app, raise_server_exceptions=False)
 # 造数用（与 `client` 打到的是同一个库）
@@ -51,7 +53,7 @@ def _seed_sample_material() -> None:
     内容刻意用目标学科（计算机网络）的，与演示数据一致 ——
     这样测试跑出来的输出，看的时候也认得出来是什么。
     """
-    from app.models import Material, MaterialBlock  # 局部导入，避免顶部 import 顺序问题
+    from app.models import Chapter, Material, MaterialBlock, Section  # 局部导入
 
     if session.get(Material, "mat_9f2a1c40") is not None:
         return
@@ -119,6 +121,28 @@ def _seed_sample_material() -> None:
                 ocr_confidence=None,
             )
         )
+    session.commit()
+
+    # ⚠️ **章与节也必须种** —— 抽取是"逐节遍历"的，没有节就一个候选都抽不出来。
+    #
+    # 这是真跑出来的：抽到 0 个候选时它**明确报错**而不是静默返回 0
+    # （"素材的 4 个块里没有抽出任何知识点候选"）—— 所以问题立刻暴露了。
+    # 如果当初写成"抽不到就返回空"，这里会变成"步骤5 静默通过"，那才难查。
+    session.add(
+        Chapter(id="ch_9f2a1c40_000", material_id="mat_9f2a1c40", number="5", title="传输层", seq=0)
+    )
+    session.add(
+        Section(
+            id="sec_9f2a1c40_000_000",
+            material_id="mat_9f2a1c40",
+            chapter_id="ch_9f2a1c40_000",
+            number="5.1",
+            title="传输层概述",
+            seq=0,
+            # 指向节标题块 —— 抽取靠它推"这一节覆盖哪些块"
+            source_block_id="blk_9f2a1c40_00000",
+        )
+    )
     session.commit()
 
 
@@ -469,7 +493,30 @@ def test_graph_rejects_bad_max_nodes() -> None:
 
 
 def test_learning_path_is_ordered_and_explainable() -> None:
-    data = assert_envelope_ok(client.get("/api/learning-path?kp_id=kp_9f2a1c40_000_002_003"))
+    """学习路径的排序与可解释性。
+
+    ⚠️ **必须用真实的知识点**。这里原来写死一个 mock id（`kp_9f2a1c40_000_002_003`）——
+    在 mock 模式下端点照样返回假数据，看不出问题；现在端点真算路径了，
+    那个 id 不在图里 → 正确地 404。
+
+    **这一类断言值得单独说**：它原来测的是"返回数组 order 连续、每步有 reason"，
+    而这在**假数据上必然成立**（假数据就是照着断言编的）。
+    现在它测的是**我们真算出来的路径**是否满足这两条性质 —— 这才是有效信息。
+    """
+    # 先在同一份素材上真跑一次抽取，让图里有真的节点与边
+    assert_envelope_ok(
+        client.post("/api/extract/knowledge", json={"material_ids": ["mat_9f2a1c40"]})
+    )
+    session.expire_all()
+    kp_id = session.scalar(
+        select(KnowledgePoint.id)
+        .where(KnowledgePoint.material_id == "mat_9f2a1c40")
+        .order_by(KnowledgePoint.seq)
+        .limit(1)
+    )
+    assert kp_id, "抽取之后应当有知识点 —— 否则后面测的不是路径"
+
+    data = assert_envelope_ok(client.get(f"/api/learning-path?kp_id={kp_id}"))
     steps = data["steps"]
     assert steps
     assert [s["order"] for s in steps] == list(range(1, len(steps) + 1)), "order 必须连续"

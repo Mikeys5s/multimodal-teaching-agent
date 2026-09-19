@@ -11,7 +11,7 @@
 
 from __future__ import annotations
 
-import hashlib
+import uuid
 from typing import Annotated
 
 from fastapi import APIRouter, BackgroundTasks, Depends
@@ -93,8 +93,15 @@ def extract_knowledge(
     # ⚠️ 这里曾经返回一个写死的 `job_extract_0001` —— 它不对应任何真实任务，
     #    前端拿它轮询会**一直查不到**。端到端测试的"步骤4"就是钉这一条。
     now = utc_now_iso()
-    digest = hashlib.sha1("|".join(sorted(payload.material_ids)).encode()).hexdigest()[:12]
-    job_id = f"job_extract_{digest}"
+    # ⚠️ 任务 id 必须**每次唯一**。
+    #
+    # 我第一版用素材 id 派生（`sha1(material_ids)`）—— 看着"确定、可复现"，
+    # 其实是个 bug：**同一批素材抽第二次会撞 `UNIQUE(jobs.id)` 直接 500**
+    # （`force=true` 重抽就会踩到）。这条是 `test_api_smoke` 抓出来的。
+    #
+    # 任务 id 的职责是"标识这一次执行"，不是"标识这批素材" ——
+    # 想按素材查历史任务，用 `jobs.target_id`。
+    job_id = f"job_extract_{uuid.uuid4().hex[:12]}"
     db.add(
         Job(
             id=job_id,
