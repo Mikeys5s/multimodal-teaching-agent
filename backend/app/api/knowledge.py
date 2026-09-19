@@ -20,14 +20,9 @@ from app.core.response import Envelope, ok
 from app.db import get_db
 from app.graph_view import gap_analysis as run_gap_analysis
 from app.graph_view import load_graph
+from app.kp_view import load_kp_items, to_kp_detail
 from app.models import (
-    Chapter,
     KnowledgePoint,
-    KpExample,
-    KpMisconception,
-    KpPrerequisite,
-    Material,
-    Section,
 )
 from app.schemas.graph import (
     GapAnalysisOut,
@@ -37,14 +32,8 @@ from app.schemas.graph import (
     LikelyGapOut,
 )
 from app.schemas.knowledge import (
-    ChapterRefOut,
-    ExampleOut,
     KpDetailOut,
     KpItemOut,
-    MisconceptionOut,
-    PrerequisiteOut,
-    SectionRefOut,
-    SourceRefOut,
 )
 
 router = APIRouter(tags=["knowledge"])
@@ -92,168 +81,6 @@ StrictBoolDep = Annotated[bool | None, Depends(_strict_bool)]
 # mock 数据（计算机网络 · 传输层，演示时直接可用）
 # ---------------------------------------------------------------------------
 
-
-def _load_refs(db: Session, kps: list[KnowledgePoint]) -> tuple[dict, dict, dict]:
-    """批量取章 / 节 / 材料，**避免 N+1 查询**。
-
-    列表端点一页可能有几十个知识点，逐个 `db.get(Chapter, ...)` 就是几十次往返。
-    这里一次 `IN` 全取回来 —— 数据量小、代码也更短。
-    """
-    ch_ids = {k.chapter_id for k in kps if k.chapter_id}
-    sec_ids = {k.section_id for k in kps if k.section_id}
-    mat_ids = {k.material_id for k in kps if k.material_id}
-    chapters = (
-        {c.id: c for c in db.scalars(select(Chapter).where(Chapter.id.in_(ch_ids)))} if ch_ids else {}
-    )
-    sections = (
-        {s.id: s for s in db.scalars(select(Section).where(Section.id.in_(sec_ids)))} if sec_ids else {}
-    )
-    materials = (
-        {m.id: m for m in db.scalars(select(Material).where(Material.id.in_(mat_ids)))}
-        if mat_ids
-        else {}
-    )
-    return chapters, sections, materials
-
-
-def _load_counts(db: Session, kp_ids: list[str]) -> dict[str, dict[str, int]]:
-    """批量算每个知识点的三类计数（前置 / 例题 / 误区）。同样避免 N+1。"""
-    out: dict[str, dict[str, int]] = {
-        k: {"prereq": 0, "example": 0, "misconception": 0} for k in kp_ids
-    }
-    if not kp_ids:
-        return out
-
-    for col, key in (
-        (KpPrerequisite.kp_id, "prereq"),
-        (KpExample.kp_id, "example"),
-        (KpMisconception.kp_id, "misconception"),
-    ):
-        rows = db.execute(
-            select(col, func.count()).where(col.in_(kp_ids)).group_by(col)
-        ).all()
-        for kp_id, n in rows:
-            out[kp_id][key] = n
-    return out
-
-
-def _to_kp_item(
-    kp: KnowledgePoint,
-    chapters: dict,
-    sections: dict,
-    materials: dict,
-    counts: dict[str, dict[str, int]],
-) -> KpItemOut:
-    """知识点行 → 列表项。**`source` 里必须有 quote**（A2-3 溯源覆盖率 100%）。"""
-    ch = chapters.get(kp.chapter_id)
-    sec = sections.get(kp.section_id)
-    mat = materials.get(kp.material_id)
-    c = counts.get(kp.id, {"prereq": 0, "example": 0, "misconception": 0})
-
-    return KpItemOut(
-        id=kp.id,
-        name=kp.name,
-        summary_md=kp.summary_md or "",
-        difficulty=kp.difficulty,
-        difficulty_reason=kp.difficulty_reason,
-        kp_type=kp.kp_type,
-        chapter=ChapterRefOut(
-            id=kp.chapter_id,
-            number=(ch.number if ch else None),
-            title=(ch.title if ch else ""),
-        ),
-        section=SectionRefOut(
-            id=kp.section_id,
-            number=(sec.number if sec else None),
-            title=(sec.title if sec else ""),
-        ),
-        source=SourceRefOut(
-            material_id=kp.source_material_id or kp.material_id,
-            material_name=(mat.filename if mat else ""),
-            page=kp.source_page,
-            block_id=kp.source_block_id,
-            quote=kp.source_quote or "",
-        ),
-        prerequisite_count=c["prereq"],
-        example_count=c["example"],
-        misconception_count=c["misconception"],
-        needs_review=bool(kp.needs_review),
-        confidence=float(kp.confidence) if kp.confidence is not None else None,
-    )
-
-
-def _to_kp_detail(db: Session, kp: KnowledgePoint) -> KpDetailOut:
-    """知识点行 → 详情（列表项 + 前置边 + 例题 + 误区）。"""
-    chapters, sections, materials = _load_refs(db, [kp])
-    base = _to_kp_item(kp, chapters, sections, materials, _load_counts(db, [kp.id]))
-
-    edges = db.scalars(
-        select(KpPrerequisite).where(KpPrerequisite.kp_id == kp.id)
-    ).all()
-    prereq_ids = [e.prereq_kp_id for e in edges]
-    names = (
-        dict(
-            db.execute(
-                select(KnowledgePoint.id, KnowledgePoint.name).where(
-                    KnowledgePoint.id.in_(prereq_ids)
-                )
-            ).all()
-        )
-        if prereq_ids
-        else {}
-    )
-
-    examples = db.scalars(
-        select(KpExample).where(KpExample.kp_id == kp.id).order_by(KpExample.seq)
-    ).all()
-    misconceptions = db.scalars(
-        select(KpMisconception).where(KpMisconception.kp_id == kp.id)
-    ).all()
-
-    return KpDetailOut(
-        **base.model_dump(),
-        prerequisites=[
-            PrerequisiteOut(
-                kp_id=e.prereq_kp_id,
-                name=names.get(e.prereq_kp_id, ""),
-                relation_type=e.relation_type,
-                reason=e.reason or "",
-                confidence=float(e.confidence) if e.confidence is not None else None,
-            )
-            for e in edges
-            if not e.pruned
-        ],
-        examples=[
-            ExampleOut(
-                id=x.id,
-                question_type=x.question_type,
-                stem_md=x.stem_md,
-                options_json=x.options_json,
-                answer_md=x.answer_md,
-                analysis_md=x.analysis_md,
-                difficulty=x.difficulty,
-                source_page=x.source_page,
-            )
-            for x in examples
-        ],
-        misconceptions=[
-            MisconceptionOut(
-                id=m.id,
-                description=m.description,
-                cause=m.cause,
-                remedy=m.remedy,
-                source=m.source,
-                confidence=float(m.confidence) if m.confidence is not None else None,
-            )
-            for m in misconceptions
-        ],
-    )
-
-
-
-# ---------------------------------------------------------------------------
-# 端点 14：知识点列表
-# ---------------------------------------------------------------------------
 
 
 @router.get(
@@ -328,9 +155,7 @@ def list_knowledge_points(
     total = db.scalar(select(func.count()).select_from(stmt.subquery())) or 0
     rows = db.scalars(stmt.order_by(KnowledgePoint.seq).offset(page.offset).limit(page.limit)).all()
 
-    chapters, sections, materials = _load_refs(db, list(rows))
-    counts = _load_counts(db, [k.id for k in rows])
-    items = [_to_kp_item(k, chapters, sections, materials, counts) for k in rows]
+    items = load_kp_items(db, list(rows))
     return ok(PageData.of(items=items, total=total, params=page))
 
 
@@ -351,7 +176,7 @@ def list_knowledge_points(
 )
 def get_knowledge_point(kp_id: str, db: DbSession) -> Envelope[KpDetailOut]:
     kp = _require_kp(kp_id, db)
-    return ok(_to_kp_detail(db, kp))
+    return ok(to_kp_detail(db, kp))
 
 
 # ---------------------------------------------------------------------------
