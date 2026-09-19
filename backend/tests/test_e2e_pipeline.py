@@ -185,6 +185,34 @@ def test_end_to_end_pipeline() -> None:
         assert kp.section_id and kp.chapter_id, f"知识点 {kp.id} 缺三级结构归属（A2-1）"
         assert kp.source_quote, f"知识点 {kp.id} 缺溯源原文（A2-3）"
 
+    # ---- 步骤 5b：**抽取质量的可测下界** ⚠️ --------------------------------
+    #
+    # 为什么必须有这一段：上面那句 `assert kps` **几乎必然通过** ——
+    # 抽取规则是"标题块 + 段落里的定义句式"，只要块够多就一定有候选。
+    # **一条必然通过的断言，信息量是零**：它证明了"链路通"，证明不了"抽得对"。
+    #
+    # 下面这几条是**真正会失败**的下界。
+    n_secs = len(sections)
+    assert len(kps) >= max(1, n_secs), (
+        f"抽出的知识点（{len(kps)}）比节数（{n_secs}）还少 —— "
+        "每个节至少该产出一个候选，这通常意味着某节的块区间推错了"
+    )
+    # 同一个节内不允许重名 —— 重名意味着同一段内容被抽了两遍
+    for sec in sections:
+        names = [k.name for k in kps if k.section_id == sec.id]
+        assert len(names) == len(set(names)), (
+            f"节「{sec.title}」内出现重名知识点：{[n for n in names if names.count(n) > 1]}"
+        )
+    # 结构线索的产出**必须全部**标 needs_review —— 它是候选，不是结论
+    assert all(k.needs_review == 1 for k in kps), (
+        "结构线索抽出的知识点必须全部标 needs_review=1 —— 它只是候选，判断权在人"
+    )
+    # 溯源片段要够长才有核对价值（太短等于没给来源）
+    for kp in kps:
+        assert len((kp.source_quote or "").strip()) >= 4, (
+            f"知识点 {kp.id} 的溯源片段过短（{len(kp.source_quote or '')} 字符），核对不了"
+        )
+
     # ---- 步骤 6：依赖边 -------------------------------------------------
     kp_ids = [k.id for k in kps]
     edges = session.scalars(
