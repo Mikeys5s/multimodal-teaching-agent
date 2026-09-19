@@ -312,8 +312,42 @@ def test_reparse_404_on_bad_id() -> None:
 
 
 def test_delete_material() -> None:
-    data = assert_envelope_ok(client.delete("/api/materials/mat_9f2a1c40"))
-    assert data["deleted"] == "mat_9f2a1c40"
+    """删除一份素材 —— **删自己刚传的那一份，不碰共用数据**。
+
+    ⚠️ 原来这里删的是共用的 `mat_9f2a1c40`，而它是本模块其它用例
+    （详情 / 块 / 导出 / 抽取）赖以存在的那一份。
+
+    **这个 bug 一直存在，只是以前没暴露**：抽取端点在 mock 模式下不检查素材是否存在，
+    所以"素材被前面的用例删了"不会报错。现在它真查库了 ——
+    `test_extract_accepted` 立刻报 404，把这个隐藏的**用例间依赖**翻了出来。
+
+    （这正是"端到端跑通"带来的副作用：**真实检查会把以前被 mock 掩盖的问题显影。**
+     不好受，但这是好事。）
+    """
+    import io
+
+    import pymupdf
+
+    doc = pymupdf.open()
+    page = doc.new_page()
+    page.insert_text((72, 90), "5 Transport Layer", fontsize=14)
+    buf = io.BytesIO()
+    doc.save(buf)
+    doc.close()
+
+    resp = client.post(
+        "/api/materials",
+        files={"files": ("to-be-deleted.pdf", buf.getvalue(), "application/pdf")},
+    )
+    assert_envelope_ok(resp)
+    mat_id = resp.json()["data"]["accepted"][0]["material_id"]
+    assert mat_id != "mat_9f2a1c40", "不该删共用素材"
+
+    data = assert_envelope_ok(client.delete(f"/api/materials/{mat_id}"))
+    assert data["deleted"] == mat_id
+
+    # 删完必须真的没了 —— 不能只看返回值
+    assert client.get(f"/api/materials/{mat_id}").status_code == 404
 
 
 # ---------------------------------------------------------------------------
