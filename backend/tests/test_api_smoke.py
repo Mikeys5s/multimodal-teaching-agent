@@ -20,11 +20,14 @@ import json
 
 import pytest
 from fastapi.testclient import TestClient
+from sqlalchemy.orm import Session
 
 from app.db import Base, engine
 from app.main import app
 
 client = TestClient(app, raise_server_exceptions=False)
+# 造数用（与 `client` 打到的是同一个库）
+session = Session(engine, expire_on_commit=False)
 
 
 @pytest.fixture(scope="module", autouse=True)
@@ -33,8 +36,90 @@ def _ensure_schema() -> None:
 
     所以在跑之前把表建好 —— 否则会以 500 的形式失败，
     让人误以为接口写错了。
+
+    **并且种一份真实素材**：素材相关端点已经**不再走 mock**（`MOCK_MODE` 已删除），
+    它们现在真查库。所以 `mat_9f2a1c40` 必须真的存在一条 ——
+    否则测到的是 404，而不是接口本身的行为。
     """
     Base.metadata.create_all(engine)
+    _seed_sample_material()
+
+
+def _seed_sample_material() -> None:
+    """种一份"像样"的真实素材：有块、有存疑说明、有章节标题。
+
+    内容刻意用目标学科（计算机网络）的，与演示数据一致 ——
+    这样测试跑出来的输出，看的时候也认得出来是什么。
+    """
+    from app.models import Material, MaterialBlock  # 局部导入，避免顶部 import 顺序问题
+
+    if session.get(Material, "mat_9f2a1c40") is not None:
+        return
+
+    session.add(
+        Material(
+            id="mat_9f2a1c40",
+            filename="第5章-传输层.pdf",
+            file_hash="a" * 64,
+            stored_path="mat_9f2a1c40.pdf",
+            mime_type="application/pdf",
+            size_bytes=2481920,
+            source_type="pdf_scan",
+            parse_method="multimodal_llm",
+            status="done",
+            page_count=2,
+            char_count=120,
+            quality_score=0.86,
+            # ⚠️ `uncertain_count` **不是** `materials` 的列 —— 它由 `uncertain_notes`
+            #    解析后算出来（见 app/schemas/material.py）。写成列名会 TypeError。
+            uncertain_notes=json.dumps(
+                [
+                    {
+                        "kind": "low_confidence_ocr",
+                        "page": 1,
+                        "block_id": None,
+                        "message": "第 1 页公式区域识别置信度 0.62，可能是『拥塞窗口单位是字节』",
+                        "severity": "medium",
+                    },
+                    {
+                        "kind": "missing_field",
+                        "page": 2,
+                        "block_id": None,
+                        "message": "第 2 页第 3 题只有题干与选项，未找到答案",
+                        "severity": "high",
+                    },
+                ],
+                ensure_ascii=False,
+            ),
+            created_at="2026-09-19T00:00:00+00:00",
+            updated_at="2026-09-19T00:00:00+00:00",
+        )
+    )
+    session.commit()
+
+    blocks = [
+        (0, 1, "heading", 1, "# 第 5 章 传输层"),
+        (1, 1, "paragraph", None, "传输层为应用进程提供端到端的逻辑通信。"),
+        (2, 2, "heading", 2, "## 5.3 TCP 拥塞控制"),
+        (3, 2, "paragraph", None, "拥塞窗口 cwnd 的大小由发送方根据网络拥塞程度动态调整。"),
+    ]
+    for seq, page_no, btype, level, content in blocks:
+        session.add(
+            MaterialBlock(
+                id=f"blk_9f2a1c40_{seq:05d}",
+                material_id="mat_9f2a1c40",
+                seq=seq,
+                page_no=page_no,
+                line_start=seq + 1,
+                line_end=seq + 1,
+                block_type=btype,
+                heading_level=level,
+                content_md=content,
+                image_path=None,
+                ocr_confidence=None,
+            )
+        )
+    session.commit()
 
 
 def _has_chinese(text: str) -> bool:
@@ -154,9 +239,15 @@ def test_materials_list_rejects_out_of_range_pagination(query: str) -> None:
     assert_envelope_error(client.get(f"/api/materials?{query}"), 400, "INVALID_PARAM")
 
 
-def test_material_detail_mock_roundtrip() -> None:
+def test_material_detail_roundtrip() -> None:
+    """素材详情：读到的就是库里那份（不再是 mock）。
+
+    原名 `test_material_detail_mock_roundtrip` —— 名字里的 "mock" 已经删掉了，
+    因为素材端点现在**真查库**，这条测的是真实读取路径。
+    """
     data = assert_envelope_ok(client.get("/api/materials/mat_9f2a1c40"))
     assert data["id"] == "mat_9f2a1c40"
+    assert data["filename"] == "第5章-传输层.pdf"
     assert data["uncertain_count"] == len(data["uncertain_notes"])
     # 存疑处必须能给出可读说明 —— 「显式不确定性」的对外体现
     for note in data["uncertain_notes"]:

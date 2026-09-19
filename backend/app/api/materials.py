@@ -1,19 +1,14 @@
 """素材相关路由（归属：P2）。对应 docs/api-spec.md §3，端点 4–12。
 
-## 骨架阶段的实现口径（团队约定 D-22）
+## 实现口径：**本文件已全部接真实数据**（D-22 的 mock 阶段结束）
 
-**输入校验按规格真实实现，业务数据返回 mock。**
+骨架阶段（D-22）的做法是"输入校验真实、业务数据 mock"，
+理由是**接口冻结的价值主要在错误分支上**。那个阶段已经过去了 ——
+**本文件的 9 个端点现在全部走真实库**，`MOCK_MODE` 开关与假数据函数都已删除。
 
-理由：接口冻结的价值主要在**错误分支**上 —— 正常路径 P3 一眼能看懂，
-但"参数越界返回什么""文件格式不对返回什么"才是前后端最容易对不齐的地方。
-而这些校验逻辑（格式白名单、大小上限）本来就和业务无关，现在写和以后写成本一样。
-
-所以本文件里：
-  · **真实**：扩展名白名单、文件大小上限、分页参数、job 冲突检测、404
-  · **mock**：素材内容本身（清单、解析块、大纲、题目）
-
-`MOCK_MODE` 是唯一的开关 —— D6 实现真实业务时把它置为 False 即可，
-路由签名与响应结构不用动。
+**这一条要写在这里，因为"还开着 mock"是个看不见的状态**：
+代码完整、测试全绿、界面上有数据 —— **但数据是编的**。
+删掉开关比留着它更安全：留着它，下一个人会以为某处还是假的，或者忘了他已经改了。
 """
 
 from __future__ import annotations
@@ -21,7 +16,7 @@ from __future__ import annotations
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, File, Query, UploadFile
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.config import settings
@@ -29,7 +24,7 @@ from app.core.errors import ApiError, ErrorCode
 from app.core.pagination import PageData, PageParams
 from app.core.response import Envelope, MarkdownResponse, ok, text_response
 from app.db import get_db
-from app.models import Job, Material
+from app.models import Job, Material, MaterialBlock
 from app.models.ids import block_id, hash_bytes
 from app.models.ids import material_id as make_material_id
 from app.schemas.material import (
@@ -40,7 +35,6 @@ from app.schemas.material import (
     OutlineSectionOut,
     QuestionOut,
     ReparseAcceptedOut,
-    UncertainNoteOut,
     UploadAcceptedOut,
     UploadRejectedOut,
     UploadResultOut,
@@ -50,9 +44,6 @@ router = APIRouter(tags=["materials"])
 
 DbSession = Annotated[Session, Depends(get_db)]
 PageDep = Annotated[PageParams, Depends(PageParams.as_dependency)]
-
-# ★ 骨架阶段开关：True = 业务数据返回 mock；D6 实现真实业务时置 False
-MOCK_MODE = True
 
 SUPPORTED_EXTENSIONS = (".pdf", ".docx", ".pptx", ".jpg", ".jpeg", ".png")
 MATERIAL_STATUSES = ("pending", "parsing", "done", "failed", "partial")
@@ -86,8 +77,11 @@ def _require_material(material_id: str, db: Session) -> Material | None:
     """
     if not material_id.startswith("mat_"):
         raise ApiError(ErrorCode.NOT_FOUND, f"素材 {material_id} 不存在（id 应以 mat_ 开头）")
-    if MOCK_MODE:
-        return None
+    # 一律真查库。
+    #
+    # 之前 mock 模式下这里直接 return None（"格式合法即视为存在"），
+    # 那会让**不存在的素材**返回 200 + 空列表，而不是 404 —— 前端会以为"这份素材是空的"，
+    # 而不是"这份素材不存在"。两者对用户是**完全不同**的事。
     mat = db.get(Material, material_id)
     if mat is None:
         raise ApiError(ErrorCode.NOT_FOUND, f"素材 {material_id} 不存在")
@@ -104,67 +98,6 @@ def _parse_block_type(block_type: str | None) -> str | None:
             {"allowed": list(BLOCK_TYPES)},
         )
     return block_type
-
-
-def _mock_material(material_id: str = "mat_9f2a1c40") -> MaterialItemOut:
-    """一份像样的样例素材 —— 用目标学科（计算机网络）的内容，演示时也直接用得上。"""
-    return MaterialItemOut(
-        id=material_id,
-        filename="第5章-传输层.pdf",
-        mime_type="application/pdf",
-        size_bytes=2481920,
-        source_type="pdf_scan",
-        parse_method="multimodal_llm",
-        status="partial",
-        page_count=20,
-        duration_sec=None,
-        char_count=18422,
-        quality_score=0.86,
-        uncertain_count=2,
-        uncertain_notes=[
-            UncertainNoteOut(
-                kind="low_confidence_ocr",
-                page=7,
-                block_id=block_id(material_id, 42),
-                message="第 7 页手写批注识别置信度 0.62，可能是『窗口单位是字节』",
-                severity="medium",
-            ),
-            UncertainNoteOut(
-                kind="missing_field",
-                page=12,
-                block_id=None,
-                message="第 12 页第 3 题只有题干与选项，未找到答案",
-                severity="high",
-            ),
-        ],
-        created_at="2026-09-17T13:02:11+00:00",
-    )
-
-
-def _mock_blocks(material_id: str) -> list[BlockOut]:
-    samples = [
-        ("heading", 1, "5.3 TCP 拥塞控制"),
-        ("paragraph", None, "拥塞窗口 cwnd 的大小由发送方根据网络拥塞程度动态调整。"),
-        ("formula", None, "$$cwnd = cwnd + MSS \\times \\frac{MSS}{cwnd}$$"),
-        ("table", None, "| 阶段 | 行为 |\n|---|---|\n| 慢启动 | cwnd 指数增长 |"),
-    ]
-    out: list[BlockOut] = []
-    for seq, (btype, level, content) in enumerate(samples):
-        out.append(
-            BlockOut(
-                id=block_id(material_id, seq),
-                seq=seq,
-                page_no=88 + seq // 2,
-                line_start=seq * 3 + 1,
-                line_end=seq * 3 + 3,
-                block_type=btype,
-                heading_level=level,
-                content_md=content,
-                image_path=None,
-                ocr_confidence=0.94 if btype == "paragraph" else None,
-            )
-        )
-    return out
 
 
 def _mock_outline(material_id: str) -> OutlineOut:
@@ -346,14 +279,16 @@ def list_materials(
             {"allowed": list(MATERIAL_STATUSES)},
         )
 
-    if MOCK_MODE:
-        items = [_mock_material()]
-        return ok(PageData.of(items=items, total=1, params=page))
-
     stmt = select(Material).order_by(Material.created_at.desc())
+    count_stmt = select(func.count()).select_from(Material)
     if status is not None:
         stmt = stmt.where(Material.status == status)
-    total = len(db.execute(stmt).scalars().all())
+        count_stmt = count_stmt.where(Material.status == status)
+
+    # ⚠️ 计数**不要**写成 `len(db.execute(stmt).scalars().all())` ——
+    #    那是把整表拉回 Python 只为数个数。素材上千份时白拉上千行（含所有列）。
+    #    用 `func.count()` 让数据库数，只回一个整数。
+    total = db.scalar(count_stmt) or 0
     rows = db.execute(stmt.offset(page.offset).limit(page.limit)).scalars().all()
     items = [
         MaterialItemOut(
@@ -387,9 +322,9 @@ def list_materials(
     description="结构同清单项（api-spec §3.3 注明「同 3.2 结构」）。",
 )
 def get_material(material_id: str, db: DbSession) -> Envelope[MaterialItemOut]:
+    # `_require_material` 现在一律真查库、查不到就抛 404，
+    # 所以这里不再需要 "mat is None 走 mock" 那条死分支。
     mat = _require_material(material_id, db)
-    if mat is None:
-        return ok(_mock_material(material_id))
     return ok(
         MaterialItemOut(
             id=mat.id,
@@ -428,16 +363,39 @@ def list_blocks(
     _require_material(material_id, db)
     wanted = _parse_block_type(block_type)
 
-    if MOCK_MODE:
-        blocks = _mock_blocks(material_id)
-    else:
-        blocks = []  # D6：从 material_blocks 真实查询
-
+    # 过滤**下推到 SQL**，不在 Python 里筛。
+    #
+    # 之前（mock 阶段）是"先取全部再在内存过滤" —— 那在 4 条假数据上没问题，
+    # 但真实教材一份就有上万块，一次全取回来再筛掉九成是白白的内存与 IO。
+    # 而 `page_no` 与 `block_type` 都是列，过滤没有理由留在内存里。
+    stmt = (
+        select(MaterialBlock)
+        .where(MaterialBlock.material_id == material_id)
+        .order_by(MaterialBlock.seq)
+    )
     if page_no is not None:
-        blocks = [b for b in blocks if b.page_no == page_no]
+        stmt = stmt.where(MaterialBlock.page_no == page_no)
     if wanted is not None:
-        blocks = [b for b in blocks if b.block_type == wanted]
-    return ok(blocks)
+        stmt = stmt.where(MaterialBlock.block_type == wanted)
+
+    rows = db.execute(stmt).scalars().all()
+    return ok(
+        [
+            BlockOut(
+                id=r.id,
+                seq=r.seq,
+                page_no=r.page_no,
+                line_start=r.line_start,
+                line_end=r.line_end,
+                block_type=r.block_type,
+                heading_level=r.heading_level,
+                content_md=r.content_md,
+                image_path=r.image_path,
+                ocr_confidence=r.ocr_confidence,
+            )
+            for r in rows
+        ]
+    )
 
 
 # ---------------------------------------------------------------------------
