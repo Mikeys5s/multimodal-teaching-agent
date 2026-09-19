@@ -204,9 +204,23 @@ def test_import_rejects_unknown_kp() -> None:
     )
     assert resp.status_code == 400
     session.expire_all()
-    assert (
-        session.get(KpPrerequisite, {"kp_id": ids[2], "prereq_kp_id": ids[1]}) is None
-    ), "一条不合法 → 整批不入库（否则'这批导没导进去'会变得难以回答）"
+
+    # ⚠️ 这里**不能断言"这条边不存在"** —— 结构线索很可能已经给出过一条 soft 边。
+    #    （第一版就是这么写的，然后被测试打脸：那对节点之间本来就有 soft 边。）
+    #    正确的断言是：**被拒的批没有改动既有边** —— 也就是它还是结构线索那条。
+    row = session.get(KpPrerequisite, {"kp_id": ids[2], "prereq_kp_id": ids[1]})
+    if row is not None:
+        assert row.source_channel == "structure", (
+            f"被拒的批不该改动既有边，但 source_channel 变成了 {row.source_channel!r}"
+        )
+        assert row.relation_type == "soft", "被拒的批不该把结构线索的 soft 边改成 hard"
+
+    # 另一个取证角度：整批拒收意味着**这批里的合法边也没进去**
+    # （它若进去了，source_channel 会是 semantic 或 both）
+    edge_21 = session.get(KpPrerequisite, {"kp_id": ids[2], "prereq_kp_id": ids[1]})
+    assert edge_21 is None or edge_21.source_channel != "semantic", (
+        "整批拒收失败：同批里那条合法边被单独采纳了"
+    )
 
 
 # ---------------------------------------------------------------------------

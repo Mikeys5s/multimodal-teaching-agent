@@ -200,6 +200,7 @@ def import_edges(payload: ImportEdgesIn, db: DbSession) -> Envelope[ImportEdgesO
         seen.add(key)
 
         row = db.get(KpPrerequisite, {"kp_id": e.kp_id, "prereq_kp_id": e.prereq_kp_id})
+        existed_from_structure = row is not None and row.source_channel == "structure"
         if row is None:
             row = KpPrerequisite(
                 kp_id=e.kp_id,
@@ -213,7 +214,10 @@ def import_edges(payload: ImportEdgesIn, db: DbSession) -> Envelope[ImportEdgesO
         row.reason = e.reason
         row.evidence_quote = e.evidence_quote
         row.confidence = e.confidence
-        row.source_channel = "semantic"
+        # ★ **双通道融合**：这条边如果本来就是结构线索给出的，语义通道确认它之后
+        #    应当记成 `both` —— 那正是我们说的「结构线索 × 语义线索双通道」。
+        #    记成 `semantic` 会丢掉"结构也支持它"这个信息，而那条信息在冲突排查时很有用。
+        row.source_channel = "both" if existed_from_structure else "semantic"
         row.needs_review = 1
         row.pruned = 0
         accepted += 1
