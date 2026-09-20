@@ -116,9 +116,9 @@ def reap_stale_jobs(session: Session, timeout_sec: int = STALE_JOB_TIMEOUT_SEC) 
     在**任务列表查询前**调用即可（不需要后台定时器 —— 本项目不允许引入 Celery，
     而"每次读任务列表时顺手回收"已经足够：卡住的任务本来就要有人去看才会发现）。
     """
-    from datetime import datetime, timedelta, timezone
+    from datetime import UTC, datetime, timedelta
 
-    cutoff = (datetime.now(timezone.utc) - timedelta(seconds=timeout_sec)).isoformat()
+    cutoff = (datetime.now(UTC) - timedelta(seconds=timeout_sec)).isoformat()
     stale = session.scalars(
         select(Job).where(Job.status == "running", Job.started_at < cutoff)
     ).all()

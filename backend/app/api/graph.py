@@ -22,7 +22,6 @@ from app.schemas.graph import (
     GraphNodeOut,
     GraphOut,
     GraphStatsOut,
-    LearningPathOut,
     LearningPathStepOut,
 )
 
