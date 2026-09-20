@@ -5,8 +5,9 @@
 本批次的范围
 ------------
 已实现：文本层 PDF（PyMuPDF 文本 API）、DOCX（python-docx）、PPTX（python-pptx）、
-扫描版 PDF **识别**、块落库、带页锚点的 Markdown、章/节骨架推断。
-未实现：OCR（扫描版只识别不解析）、图片、音频（D-08 保留不启用）。
+**图片材料与扫描版 PDF 的 OCR（`[ocr]` 可选依赖）**、块落库、带页锚点的 Markdown、
+章/节骨架推断。
+未实现：音频（D-08 保留不启用）。
 
 产物：带块锚点的 Markdown + `material_blocks` 行。**不写** chapters / sections
 表 —— 那是 P2 的 outline 领域，本批次只产出骨架结构供其落库（见 `sections.py`）。
@@ -22,21 +23,27 @@
 | 文件 | 职责 |
 |---|---|
 | `blocks.py` | 与存储无关的数据结构 + 章节号识别（共用词汇表） |
-| `pdf.py` | 文本层 PDF 逐页抽块、扫描版判定 |
+| `pdf.py` | 文本层 PDF 逐页抽块、扫描版判定与（OCR 可用时的）扫描版解析 |
+| `ocr.py` | OCR 引擎封装与惰性导入：扫描版 PDF 逐页 OCR、图片材料解析 |
 | `docx.py` | DOCX 段落/表格抽块 |
 | `pptx.py` | PPTX 逐张幻灯片抽块（含表格与演讲者备注） |
 | `markdown.py` | 块 → 带页锚点/块锚点的 Markdown |
 | `sections.py` | 章/节骨架推断、节级片段切分 |
 | `persist.py` | 落 `material_blocks` |
 
-⚠️ 依赖装在可选组，**分成轻重两组**：
-  · `pip install -e ".[parse]"`  —— 轻量解析依赖（pymupdf / python-docx /
-    python-pptx，几十 MB）。**要复现本模块的用例只装这一组就够**。
-  · `pip install -e ".[ocr]"`    —— paddleocr + paddlepaddle，**几个 GB**。
-    本批次不需要它们：A1-2 的口径就是"文本层 PDF 不走 OCR"，扫描版只识别不解析。
-    （下限锁在 paddleocr 3.x / paddlepaddle 3.x：PyPI 上 `paddlepaddle` 只有
-    3.0.0 起才有 win + cp313 wheel，2.x 在 Python 3.13 上装不上；而
-    `paddleocr 2.9.1` 又依赖 numpy<2.0，与本环境的 numpy 2.x 冲突。）
+依赖分两组，**不要混装**
+------------------------
+· `pip install -e ".[parse]"` → pymupdf / python-docx / python-pptx（轻量，日常开发；
+  **要复现本模块的用例只装这一组就够**）
+· `pip install -e ".[ocr]"`   → paddleocr + paddlepaddle（**几个 GB**，只有真要跑 OCR 才需要）
+
+`ocr.py` 对 paddleocr 是**惰性导入**：没装 `[ocr]` 的机器上，文本层 PDF / DOCX
+照常解析，只有"图片材料"会得到一句可操作的中文报错、扫描版 PDF 退回
+"0 块 + 中文说明"的降级路径（**不会**把整份材料判失败）。
+
+（`[ocr]` 下限锁在 paddleocr 3.x / paddlepaddle 3.x：PyPI 上 `paddlepaddle` 只有
+3.0.0 起才有 win + cp313 wheel，2.x 在 Python 3.13 上装不上；而 `paddleocr 2.9.1`
+又依赖 `numpy<2.0`，与本环境的 numpy 2.x 冲突。）
 """
 
 from __future__ import annotations
@@ -54,6 +61,7 @@ from app.parse.blocks import (
 )
 from app.parse.docx import parse_docx
 from app.parse.markdown import block_anchor, page_anchor, render_block, to_markdown
+from app.parse.ocr import IMAGE_SUFFIXES, OcrLine, PageCallback, parse_image, release_engine
 from app.parse.pdf import MAX_PAGES, parse_pdf
 from app.parse.persist import persist_blocks
 from app.parse.pptx import parse_pptx
@@ -69,6 +77,8 @@ __all__ = [
     "MAX_PAGES",
     "BBox",
     "HeadingNumber",
+    "IMAGE_SUFFIXES",
+    "OcrLine",
     "ParsedBlock",
     "ParsedChapter",
     "ParsedDocument",
@@ -77,10 +87,12 @@ __all__ = [
     "block_anchor",
     "page_anchor",
     "parse_docx",
+    "parse_image",
     "parse_material",
     "parse_pdf",
     "parse_pptx",
     "persist_blocks",
+    "release_engine",
     "render_block",
     "section_markdown",
     "split_heading_number",
@@ -102,10 +114,6 @@ _PARSERS = {
 _PENDING_SUFFIXES = {
     ".ppt": "PPT",
     ".doc": "旧版 .doc",
-    ".png": "图片",
-    ".jpg": "图片",
-    ".jpeg": "图片",
-    ".webp": "图片",
     ".mp3": "音频",
     ".wav": "音频",
     ".m4a": "音频",
@@ -122,23 +130,38 @@ _PENDING_MESSAGES = {
 }
 
 
-def parse_material(path: str | Path) -> ParsedDocument:
+def parse_material(
+    path: str | Path,
+    on_page: PageCallback | None = None,
+) -> ParsedDocument:
     """按扩展名分派到对应解析器 —— 解析链路的稳定入口。
 
     失败一律是带中文文案的 `ApiError`，**单文件失败不会影响其他文件**
     （A1-7 失败隔离：调用方逐个文件调用本函数，捕获 `ApiError` 记到
     `materials.error_message` 即可，批次继续跑）。
 
-    · `.pdf` → `parse_pdf`（含扫描版判定、加密/损坏/超页数报错）
+    · `.pdf` → `parse_pdf`（含扫描版判定、加密/损坏/超页数报错；
+      扫描版在 OCR 可用时逐页 OCR）
     · `.docx` → `parse_docx`
+    · `.png` / `.jpg` / `.jpeg` / `.webp` / `.tif` / `.tiff` → `parse_image`（OCR，
+      需要 `[ocr]` 可选依赖）
     · `.pptx` → `parse_pptx`（一张幻灯片一页；旧版 `.ppt` 仍不支持，提示另存为）
     · 其余 → `UNSUPPORTED_FORMAT`，消息里点出具体扩展名与替代做法
+
+    `on_page(当前页序号, 总页数)` 是 P2 的异步 job 用来报进度的钩子，只有真正
+    按页解析的路径（扫描版 PDF / 图片）会回调；默认 `None`，对现有调用零影响。
     """
     p = Path(path)
     if not p.is_file():
         raise ApiError(ErrorCode.NOT_FOUND, "找不到这个文件，请重新上传后再试")
 
     suffix = p.suffix.lower()
+    if suffix in IMAGE_SUFFIXES:
+        return parse_image(p, on_page=on_page)
+    if suffix == ".pdf":
+        # PDF 单独一条：只有它需要 `on_page`（扫描版逐页 OCR 时要报进度）
+        return parse_pdf(p, on_page=on_page)
+
     parser = _PARSERS.get(suffix)
     if parser is not None:
         return parser(p)
@@ -156,5 +179,5 @@ def parse_material(path: str | Path) -> ParsedDocument:
     shown = suffix or "无扩展名"
     raise ApiError(
         ErrorCode.UNSUPPORTED_FORMAT,
-        f"暂不支持 {shown} 格式，请转为 PDF 或 DOCX 后再上传",
+        f"暂不支持 {shown} 格式，请转为 PDF、DOCX 或图片后再上传",
     )

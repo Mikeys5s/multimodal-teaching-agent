@@ -74,6 +74,43 @@ def session(engine: Engine) -> Iterator[Session]:
         yield s
 
 
+# ---------------------------------------------------------------------------
+# OCR 开关（D3 之后：扫描版 PDF / 图片材料默认会**真起 paddle 引擎**）
+# ---------------------------------------------------------------------------
+
+
+@pytest.fixture
+def ocr_unavailable(monkeypatch: pytest.MonkeyPatch) -> None:
+    """把 OCR 固定成「不可用」，让用例走**降级路径**（不 import paddleocr、不起引擎）。
+
+    `app/parse/ocr.py` 的可用性结论缓存在模块级 `_AVAILABLE`（探测一次就不再探），
+    所以把它按成 `False` 之后，`pdf.py` 的扫描版分支与 `parse_image()` 的
+    `ensure_available()` 就都走「本机未安装 OCR 依赖」那条路 —— 与真没装
+    `pip install -e ".[ocr]"` 是**同一条代码路径**，但不花一页 140 s 的识别时间。
+
+    主题**不是** OCR 的用例（整页图无文本层的边界判定 / 降级 / 坏输入）都该挂这个
+    fixture：它们守的是「扫描版不给假内容」，不是「OCR 认得多准」。
+    """
+    from app.parse import ocr
+
+    monkeypatch.setattr(ocr, "_AVAILABLE", False)
+    monkeypatch.setattr(ocr, "_ENGINE", None)
+
+
+@pytest.fixture
+def ocr_available_stub(monkeypatch: pytest.MonkeyPatch) -> None:
+    """把 OCR 固定成「可用」但**不构造引擎**：只跳过可用性探测（省一次 ~3 s 的 import）。
+
+    给「坏图 / 坏输入」这类用例用：它们要验的是图片读不出来时给的是
+    `UNSUPPORTED_FORMAT`，而不是「没装 OCR 依赖」，所以 `ensure_available()` 必须放行；
+    而调用会走到 `_read_image_file()` 就报错，永远不会碰引擎。
+    """
+    from app.parse import ocr
+
+    monkeypatch.setattr(ocr, "_AVAILABLE", True)
+    monkeypatch.setattr(ocr, "_ENGINE", None)
+
+
 @pytest.fixture
 def migrated_db(tmp_path: Path) -> Iterator[Engine]:
     """用 Alembic 迁移建出来的库，用于验证「迁移 == 模型」。"""

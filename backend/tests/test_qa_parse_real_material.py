@@ -157,6 +157,20 @@ def _nows(text: str) -> str:
     return "".join(text.split())
 
 
+def _break_ocr_import(monkeypatch: pytest.MonkeyPatch) -> None:
+    """把 OCR 固定成"不可用"：模拟"这台机器没装 `[ocr]`"。
+
+    D3 之后扫描版 PDF 的默认路径是"OCR 可用就真起 paddle 引擎逐页产块"
+    （本机实测真实扫描件 140.4 s/页，3 页 ≈7 min），要守"不可用时降级"这条分支就得
+    把 OCR 弄成不可用 —— 直接按 `ocr._AVAILABLE`（可用性结论的缓存）即可，
+    与真没装 `[ocr]` 走的是**同一条代码路径**，但不起引擎、秒级完成。
+    """
+    from app.parse import ocr
+
+    monkeypatch.setattr(ocr, "_AVAILABLE", False)
+    monkeypatch.setattr(ocr, "_ENGINE", None)
+
+
 @pytest.fixture(scope="module")
 def subset_pdf(tmp_path_factory: pytest.TempPathFactory) -> Path:
     """从 489 页原文里抽出前 `SUBSET_PAGES` 页，存到系统临时目录（不落进仓库）。"""
@@ -557,12 +571,19 @@ def test_real_subset_parse_is_byte_reproducible(subset_pdf: Path, subset_parsed:
 # ---------------------------------------------------------------------------
 
 
-def test_real_scan_sample_is_classified_as_scan_with_chinese_note() -> None:
+def test_real_scan_sample_is_classified_as_scan_with_chinese_note(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     """★ F1.2：真实扫描件样本（无文本层、含整页图）→ `pdf_scan` + 中文存疑说明。
 
-    本批次不做 OCR，所以 `blocks` 必须为空（不能编内容），且 `parse_method`
-    必须是 `None`（一行 OCR 都没跑，写 `"ocr"` 就是假账）。
+    **口径已随 D3（OCR 通道）更新**：OCR 可用时这份样本会真的逐页 OCR 产块
+    （由 `test_parse_ocr.py` 守）。本用例守的是**另一条分支**：OCR 不可用
+    （没装 `[ocr]` 可选依赖）时**不许编内容** —— `blocks` 必须为空、`parse_method`
+    必须是 `None`（一行 OCR 都没跑，写 `"ocr"` 就是假账），并且要给出中文说明。
     """
+    # 让 `import paddleocr` 抛 ImportError：模拟"这台机器没装 OCR 依赖"
+    _break_ocr_import(monkeypatch)
+
     doc = parse_material(SCAN_SAMPLE_PDF)
     notes = doc.uncertain_notes
 

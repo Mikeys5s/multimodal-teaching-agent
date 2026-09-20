@@ -11,8 +11,13 @@
     pymupdf 的 `FileDataError` —— 后者会绕过全局异常处理器变成 500 + 英文堆栈；
   · `message` 必须含中文，且**不许**出现 `Traceback` / `Error` / `Exception` /
     `Errno` / 底层英文原话（"cannot open"、"broken document" 等）；
-  · 不支持格式的 `message` 必须**点名具体格式**（"图片"、"音频"、"旧版 .doc"），
+  · 不支持格式的 `message` 必须**点名具体格式**（"`.ppt`"、"旧版 .doc"、"音频"），
     并给出替代做法（转 PDF / DOCX）。
+
+⚠️ **图片不再属于"未接格式"**（D3 之后）：`.png` / `.jpg` / `.jpeg` / `.webp` /
+`.tif` / `.tiff` 走 `app/parse/ocr.py` 的 OCR 通道（需要 `[ocr]` 可选依赖，见
+`test_parse_ocr.py`）。所以本文件把它们从"未接格式"名单里摘掉了 —— 它们现在
+只在**文件本身坏了**时才报错，那条中文文案由 `test_parse_ocr.py` 守。
 
 夹具全部程序化生成，不依赖仓库外的素材文件。
 """
@@ -264,17 +269,13 @@ def test_no_english_stacktrace_leaks_for_any_broken_input(tmp_path: Path) -> Non
         # 旧版 .ppt 仍拒绝，且要求它明确指路"另存为 .pptx"。
         ("讲义.ppt", "PPT"),
         ("讲义.doc", "旧版 .doc"),
-        ("扫描件.png", "图片"),
-        ("照片.jpg", "图片"),
-        ("照片.jpeg", "图片"),
-        ("照片.webp", "图片"),
         ("录音.mp3", "音频"),
         ("录音.wav", "音频"),
         ("录音.m4a", "音频"),
     ],
 )
 def test_pending_format_names_the_concrete_format(tmp_path: Path, filename: str, keyword: str) -> None:
-    """★ 场景 4：未接的格式（`.ppt` / 图片 / 音频 / 旧版 .doc）→ `UNSUPPORTED_FORMAT` 且点名格式。
+    """★ 场景 4：未接的格式（`.ppt` / 音频 / 旧版 .doc）→ `UNSUPPORTED_FORMAT` 且点名格式。
 
     笼统的"不支持"会让用户反复重试；点名具体格式并给出替代做法才有用。
     """
@@ -336,11 +337,18 @@ def test_unsupported_format_is_decided_by_extension_not_by_content(tmp_path: Pat
 # ---------------------------------------------------------------------------
 
 
-def test_failures_do_not_pollute_following_parses(tmp_path: Path) -> None:
+def test_failures_do_not_pollute_following_parses(
+    ocr_available_stub: None, tmp_path: Path
+) -> None:
     """★ 场景 5：先制造一串失败，再解析正常文件必须仍然成功。
 
     解析链路的调用方是"逐个文件调用、捕获 ApiError 记到 materials.error_message"，
     所以单文件失败**绝对不能**污染全局状态（模块级缓存、pymupdf 全局文档等）。
+
+    `photo.png` 是坏图（`b"\\x89PNG"`）→ 期望 `UNSUPPORTED_FORMAT`，所以这里挂
+    `ocr_available_stub`：把 OCR 固定成"可用"才不会在 `ensure_available()` 就被拦成
+    "没装 OCR 依赖"，同时不触发一次真的 paddleocr import（省 ~3 s，也不起引擎）。
+    断言一条都没放松 —— 坏图必须在**读图**阶段报"格式不支持"。
     """
     good_pdf = make_ok_pdf(tmp_path / "good.pdf")
     good_docx = make_ok_docx(tmp_path / "good.docx")
