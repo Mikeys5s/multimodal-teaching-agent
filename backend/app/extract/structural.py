@@ -1,0 +1,295 @@
+"""结构线索抽取（归属：P2）—— 从"已解析的块与章节"里提出知识点与依赖边。
+
+## 为什么是"结构线索"而不是"语义线索"
+
+SPEC §1.5 的双通道设计里，依赖关系有两个来源：
+**结构线索**（章节层级、出现顺序、显式引用）与**语义线索**（需要模型判断语义依赖）。
+
+本模块只做**结构线索**，理由是：
+
+1. **它是确定性的。** 同一份材料跑两次得到完全相同的结果 —— 可复现、可回归、可解释。
+   这也正是我们的答辩话术：**「关键路径放在确定性算法上，LLM 只做增强」**。
+2. **它不依赖任何模型。** 赛事不允许运行期调外部大模型，而结构线索只需要块与章节 ——
+   那些已经在库里了。
+3. **它的产出物是"候选"。** 结构线索抽出来的东西**一律 `needs_review=1`** ——
+   它负责"把料备齐"，判断留给人工校验工作台。
+   **「AI 干粗活 + 人做裁决」**，这里干的就是粗活。
+
+**所以本模块的目标不是"抽得准"，是"抽得全、且每个都说得出来源与理由"。**
+抽错是允许的（有 `needs_review` 兜着），**抽不出任何东西才是问题** ——
+那意味着整条链路虽然通了，却没有内容可展示。
+
+## 三条硬约束（都对应验收指标）
+
+- **`source_quote` 必须有**（A2-3 溯源覆盖率 100%）→ 每个知识点都带原文片段
+- **`reason` 必须有**（B1-5 边理由完备率 100%）→ 每条边都能说出"为什么"
+- **写完必须过 DAG 环校验**（B1-2 环数 0）→ 有环就剪最弱的边并留痕
+
+## 已知不足（诚实记账）
+
+- **抽出来的 `name` 会偏长、偏口语** —— 结构线索没有能力把"这个知识点叫什么"提炼好。
+  这是语义线索该干的活，本模块只保证"有候选、有来源"。
+- **边只用了"同节顺序"与"跨节衔接"两种模式**，没有做显式引用识别（"见 x.y"）。
+  那块需要更强的模式库，留到有真实教材之后再补。
+"""
+
+from __future__ import annotations
+
+import re
+from typing import Any
+
+from sqlalchemy import delete, select
+from sqlalchemy.orm import Session
+
+from app.models import KnowledgePoint, KpPrerequisite, MaterialBlock, Section, utc_now_iso
+from app.models.ids import knowledge_point_id
+
+#: 定义句式的模式。命中后**主语**作为知识点候选。
+#:
+#: 中英文都收 —— 目标学科是计算机网络，教材英文、讲义中文，两种都会遇到。
+_DEFINITION_PATTERNS = (
+    re.compile(r"^\s*(?:\d+(?:\.\d+)*\s*)?([^\s，。；]{2,24}?)\s*(?:是指|指的是|称为|叫做|定义为|是一种)\s*(.{4,})"),
+    re.compile(r"^\s*(?:\d+(?:\.\d+)*\s*)?([A-Za-z][A-Za-z0-9 \-]{2,40}?)\s+(?:is|are|refers to)\s+(?:a|an|the)?\s*(.{4,})"),
+)
+
+#: 知识点名的最长长度（超出就截断）。太长会影响界面与检索。
+_MAX_NAME = 30
+
+#: 结构线索抽出来的知识点一律标 needs_review —— 见模块 docstring。
+_NEEDS_REVIEW = 1
+
+#: 难点启发式用到的词。命中这些词的内容，难度给高一些。
+_HARD_HINTS = ("证明", "推导", "算法", "复杂度", "拥塞", "握手", "窗口", "收敛", "compute", "prove")
+
+
+def _clean(text: str) -> str:
+    """去 markdown 标记与多余空白，用于做知识点名。"""
+    t = re.sub(r"[`*_#>\[\]()]", "", text or "")
+    return re.sub(r"\s+", " ", t).strip()
+
+
+def _name_from_block(content: str) -> str | None:
+    """从一段文本里推出"这个知识点叫什么"。抽不出来返回 None。"""
+    first_line = (content or "").strip().splitlines()[0] if content else ""
+    if not first_line:
+        return None
+
+    for pat in _DEFINITION_PATTERNS:
+        m = pat.match(first_line)
+        if m:
+            name = _clean(m.group(1))
+            if 2 <= len(name) <= _MAX_NAME * 2:
+                return name[:_MAX_NAME]
+
+    # 没有定义句式就退回"第一句话的前若干字" —— **宁可给个粗糙的名字，也不丢一个候选**。
+    # （抽得不准由 needs_review 兜着；抽不出来才是真问题。）
+    head = _clean(first_line)
+    head = re.split(r"[。；;.!?]", head)[0]
+    if len(head) < 4:
+        return None
+    return head[:_MAX_NAME]
+
+
+def _difficulty_of(content: str) -> int:
+    """结构线索能给出的难度只是一个**启发式**（1–5）。
+
+    真难度要人判 —— 所以这里只做"长/含难词就给高一点"，
+    并且**在 `difficulty_reason` 里写明这是启发式**，不假装精确。
+    """
+    n = len(content or "")
+    base = 2 if n < 60 else 3 if n < 200 else 4
+    if any(h in (content or "") for h in _HARD_HINTS):
+        base = min(5, base + 1)
+    return base
+
+
+def _kp_type_of(content: str) -> str:
+    """按内容里的关键词猜一个类型。猜错没关系（要人工校验）。"""
+    c = content or ""
+    if any(w in c for w in ("算法", "方法", "步骤", "algorithm", "procedure")):
+        return "method"
+    if any(w in c for w in ("定理", "定律", "theorem", "law")):
+        return "theorem"
+    if any(w in c for w in ("协议", "机制", "机制")):
+        return "concept"
+    return "concept"
+
+
+def _section_ranges(
+    sections: list[Section], blocks: list[MaterialBlock]
+) -> list[tuple[Section, int, int]]:
+    """算出每个节覆盖的块区间 `[start_seq, end_seq]`（**闭区间**）。
+
+    ⚠️ 区间是**推导出来的**，不是存下来的 —— `sections` 表里只有 `source_block_id`
+    （那个节的标题块），没有 start/end。所以按"本节的标题块 seq → 下一节的标题块 seq - 1"推。
+
+    **为什么值得写在这里**：这个推导一旦差了"一个块"，知识点就会挂到相邻的节上，
+    而**它不会报错** —— 只会让"三级结构完整率 100%"这个指标虽然通过、内容却是错的。
+    （这正是 `ParsedSection.__post_init__` 要用构造期不变量挡住的那类问题；
+    可惜那个不变量没有跟着落库，所以在读侧还得再推一次。）
+    """
+    heading_seq: dict[str, int] = {
+        b.id: b.seq for b in blocks
+    }
+    ordered = sorted(sections, key=lambda s: s.seq)
+
+    out: list[tuple[Section, int, int]] = []
+    max_seq = max((b.seq for b in blocks), default=-1)
+    for i, sec in enumerate(ordered):
+        start = heading_seq.get(sec.source_block_id or "", 0)
+        if i + 1 < len(ordered):
+            nxt = heading_seq.get(ordered[i + 1].source_block_id or "", max_seq + 1)
+            end = max(start, nxt - 1)
+        else:
+            end = max_seq
+        out.append((sec, start, end))
+    return out
+
+
+def extract_material(session: Session, mat_id: str) -> dict[str, Any]:
+    """从一份**已解析**的素材里抽取知识点与依赖边。**事务边界由调用方管。**
+
+    只读块与章节、只写 `knowledge_points` 与 `kp_prerequisites`；
+    不碰 `material_blocks` / `sections`（那些是解析阶段的产物）。
+    """
+    blocks = (
+        session.scalars(
+            select(MaterialBlock)
+            .where(MaterialBlock.material_id == mat_id)
+            .order_by(MaterialBlock.seq)
+        )
+        .all()
+    )
+    if not blocks:
+        raise ValueError(f"素材 {mat_id} 还没有解析块 —— 先跑解析（POST /materials 会自动触发）")
+
+    sections = (
+        session.scalars(select(Section).where(Section.material_id == mat_id).order_by(Section.seq))
+        .all()
+    )
+
+    by_seq = {b.seq: b for b in blocks}
+
+    # 重抽之前先清掉旧的（**调用方负责事务**，同 parse 的契约）
+    session.execute(delete(KpPrerequisite).where(KpPrerequisite.kp_id.in_(
+        select(KnowledgePoint.id).where(KnowledgePoint.material_id == mat_id)
+    )))
+    session.execute(delete(KnowledgePoint).where(KnowledgePoint.material_id == mat_id))
+
+    now = utc_now_iso()
+    created: list[KnowledgePoint] = []
+
+    def _add_kp(block: MaterialBlock, sec: Section, seq_in_unit: int) -> None:
+        name = _name_from_block(block.content_md)
+        if not name:
+            return
+        quote = _clean(block.content_md)[:300]
+        kp = KnowledgePoint(
+            id=knowledge_point_id(mat_id, sec.seq, sec.seq, len(created)),
+            section_id=sec.id,
+            chapter_id=sec.chapter_id,
+            material_id=mat_id,
+            name=name,
+            summary_md=block.content_md.strip()[:500] or name,
+            difficulty=_difficulty_of(block.content_md),
+            difficulty_reason=(
+                f"结构线索启发式（按长度 {len(block.content_md)} 字符"
+                f"{'、含难点词' if any(h in block.content_md for h in _HARD_HINTS) else ''}"
+                "估为 %d 级）—— **需人工复核**"
+            )
+            % _difficulty_of(block.content_md),
+            kp_type=_kp_type_of(block.content_md),
+            source_material_id=mat_id,
+            source_page=block.page_no,
+            source_block_id=block.id,
+            source_quote=quote,
+            confidence=0.5,  # 结构线索的置信度：不足以直接采信，但足以作为候选
+            needs_review=_NEEDS_REVIEW,
+            seq=len(created),
+            created_at=now,
+        )
+        session.add(kp)
+        created.append(kp)
+
+    # ---- 逐节抽候选 ------------------------------------------------------
+    for sec, start, end in _section_ranges(sections, blocks):
+        for s in range(start, end + 1):
+            b = by_seq.get(s)
+            if b is None or b.block_type not in ("heading", "paragraph"):
+                continue
+            # 标题（二级及以下）本身就是知识的名字，直接作候选；
+            # 段落走定义句式或首句截断。
+            _add_kp(b, sec, s)
+
+    if not created:
+        # **抽不出东西要显式报错**，不能静默返回 0 ——
+        # 那会让上游以为"抽完了，只是没有知识点"，而真实原因是规则没命中。
+        raise ValueError(
+            f"素材 {mat_id} 的 {len(blocks)} 个块里没有抽出任何知识点候选 —— "
+            "这通常意味着解析产物不含可识别的标题或定义句"
+        )
+
+    session.flush()
+
+    # ---- 建边：结构线索只有两种模式 --------------------------------------
+    edges: list[KpPrerequisite] = []
+    by_section: dict[str, list[KnowledgePoint]] = {}
+    for kp in created:
+        by_section.setdefault(kp.section_id, []).append(kp)
+
+    ordered_secs = [sec for sec, _, _ in _section_ranges(sections, blocks)]
+    prev_tail: KnowledgePoint | None = None
+    for sec in ordered_secs:
+        kps = by_section.get(sec.id, [])
+        if not kps:
+            continue
+        # ① 节内顺序：先出现的概念是理解后者的基础（soft）
+        for a, b in zip(kps, kps[1:], strict=False):
+            if a.id == b.id:
+                continue
+            edges.append(
+                KpPrerequisite(
+                    kp_id=b.id,
+                    prereq_kp_id=a.id,
+                    relation_type="soft",
+                    reason=f"同属「{sec.title}」，且原文中「{a.name}」先于「{b.name}」出现",
+                    evidence_quote=(a.source_quote or "")[:200],
+                    source_channel="structure",
+                    confidence=0.4,
+                    needs_review=1,
+                    pruned=0,
+                    created_at=now,
+                )
+            )
+        # ② 跨节衔接：上一节的最后一个 → 本节的第一个
+        if prev_tail is not None and prev_tail.id != kps[0].id:
+            edges.append(
+                KpPrerequisite(
+                    kp_id=kps[0].id,
+                    prereq_kp_id=prev_tail.id,
+                    relation_type="soft",
+                    reason=(
+                        f"章节顺序：「{prev_tail.name}」所在的节先于「{kps[0].name}」所在的"
+                        f"「{sec.title}」—— 先学前面的内容是后者的前提"
+                    ),
+                    evidence_quote=(prev_tail.source_quote or "")[:200],
+                    source_channel="structure",
+                    confidence=0.35,
+                    needs_review=1,
+                    pruned=0,
+                    created_at=now,
+                )
+            )
+        prev_tail = kps[-1]
+
+    for e in edges:
+        session.add(e)
+    session.flush()
+
+    return {
+        "material_id": mat_id,
+        "knowledge_points": len(created),
+        "edges": len(edges),
+        "sections": len(sections),
+        "needs_review": sum(1 for k in created if k.needs_review),
+    }

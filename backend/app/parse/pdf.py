@@ -26,42 +26,57 @@ F1.2 要求把扫描版判出来（`source_type = pdf_scan`）。本批次只做
 宁可漏判扫描件，绝不误判。判据取"没文本层 **且** 有图"的合取，
 方向是"**有文本层就不是扫描版**"，与 A1-2「文本层 PDF 绝不走 OCR」同向。
 
-⚠️ 已知限制：页眉 / 页脚 / 页码 / 图注**均未被识别**（本节为真实教材实测，非推测）
---------------------------------------------------------------------------------
-**实测样本**：真实教材 `Computer Networks: A Systems Approach, Release Version 6.1`
-（489 页 LaTeX 版，取前 30 页为样本）：
-  · **页眉**（每页重复的书名短行，跨页完全一致）：**24 块（占 7.8%）**，判为 `paragraph`；
-  · **纯数字块（页码）**：**32 块，全部被判成 `heading` 且 `heading_level = 1`**；
-  · **页脚 running head**（如 `Chapter 1. Foundation`、`1.2. Requirements`）：
-    **52 块（占 16.9%）**，其中 **6 块**（如 `1.2. Requirements`）被判成
-    `heading level 2` —— 与**正文真实节标题同名同层级**；
-  · **图注**（以 `Figure x.y` 开头）：13 块**全部判为 `paragraph`**，
-    `image_caption` **零产出**；其中一页的图注与紧随其后的正文段**粘连**成
-    **628 字符**的单块；
-  · **目录页**：p3 / p6 / p7 / p8 分别产出 27 / 25 / 19 / 3 块（碎块）。
+页眉 / 页脚 / 页码去噪、heading 否决、图注识别（第二批已落地）
+-----------------------------------------------------------
+**实测样本**（真实教材 `Computer Networks: A Systems Approach, Release Version 6.1`，
+489 页 LaTeX 版，取前 30 页为样本）**改前 → 改后**：
 
-成因（页码为何变成一级标题）：`app/parse/blocks.py` 的编号识别正则把**纯数字**
-（如 `37`）识别成 **depth=1 的编号**，该行再通过本模块的字号闸，就被判成一级标题 ——
-即"编号"这一信号对页码行是**假阳性**。
+| 指标 | 第一批（改前） | 本批（改后） |
+|---|---|---|
+| 页眉块 / 页码块 / 页脚带块 | 24 / 32 / 52（分类计数和 108，去重后 82） | 0 / 0 / 0 |
+| 正文覆盖率（正文区口径） | 102.93% | 99.99%（≈1.000） |
+| 章数 / 节数 | 34 / 63 | 2 / 21 |
+| `image_caption` 块 | 0（13 块全判 `paragraph`） | 12（剩下 1 块是正文，见下） |
+| 总块数 | 307 | 225 |
 
-⚠️ **最要命的后果**：对上述真实教材的这 30 页跑 `split_outline`，产出
-**34 章 / 63 节** —— **节骨架基本报废**。而 P1→P2 的接口 **I-1 恰好承诺
-"含 section 归属"**，P2 会把这些页眉/页码/页脚冒充出来的"节"当作真实结构消费。
+改后的 2 章 / 21 节里，**11 节是 Chapter 1 的真实结构**
+（1.1 导语 + 1.1.1 + 1.2 导语 + 1.2.1–1.2.5 + 1.3 导语 + 1.3.1–1.3.2），
+其余来自封面书名行与 PREFACE 等前置标题 —— 这些都是**真实的标题行**，
+不是页码冒充出来的假章（第一批那 34 章才是）。封面书名行仍会被字号法判成
+一级标题、因而多出一个"章"，属于字号法标题检测的已知代价，**不在本批范围**。
 
-下游影响：噪声块会同时污染两件事 ——
-  （a）**`source_quote` 溯源**：引文可能指到页码行或页眉行，而非正文；
-  （b）**节归属**：页脚 running head 冒充节标题（与真节同名同级），正文被归错节。
+**四条去噪信号是"合取"，缺一不可**（单看任何一条都必然误删正文）：
 
-本批次刻意**不顺手做一个半成品过滤**：页眉/页脚识别要同时看"跨页重复"
-"页边距区域""纯数字"等多个信号，草率过滤会把正文短行（章节扉页的标题、
-表格里的小标题）一起误删，那是不可逆的内容丢失。
+  1. **页边距带**：块顶边落在页高外侧 9%（页眉带）/ 内侧 91%（页脚带）之外。
+     这是一道**便宜的预筛**，用来给下一步的"版心"计算取种子；
+  2. **版心外**：块在**本文档自己**的正文纵向范围之外 —— 正文范围由第 1 步的
+     非候选块现算（`body_lo` / `body_hi`），不写死任何页尺寸常量。
+     有了它，"页首/页脚长什么样"由**文档自身**决定，换一种版式也成立；
+  3. **跨页重复**：同一垂直位置（±`RUNNING_BAND_TOLERANCE` pt）在
+     **≥ 50% 的页面**上都出现同类短行 —— 页眉页脚是"每页都来一遍"的东西，
+     而表格跨页的续表表头只在表格跨了几页就出现几页；
+  4. **与相邻内容隔离**：它与同页最近的字块之间的空隙 ≥ 1.4 个行高。
+     表格续表表头下面**紧接着**就是表格行（正常行距），因此被这条挡在门外。
 
-**下一批计划（页眉 / 页脚 / 页码识别与去噪）**：
-  1. 跨页重复短行 + 页边距带 + 纯数字行三类信号**联合判定并去噪**；
-  2. 新增**否决规则**：**整行只有编号、无标题文字的单级编号不作 `heading`**
-     （如孤立的 `37` 不得成为一级标题）—— 直接堵住上面"页码被判 heading"的成因。
+另外单列一条**页码**规则（`page_number` / `toc_number`）：单行的纯数字/罗马数字
+短块，且**通过了上面 1+2+4 三条**，或位于本页是**目录页**（含 ≥4 条前导点行）。
+把"整行只有数字"当页码**必须**配位置信号 —— 正文里也有孤立成行的数字
+（如"共 3 个节点"被排版成单独一行），只认内容一定误删，见 `tests/test_parse_denoise.py`。
 
-> **红线：在去噪落地之前，PDF 的 section 骨架（章/节）不可信，P2 不得据此定型章节结构。**
+**heading 否决规则**：`_classify` 里，**整行只有编号、没有标题文字的单级编号**
+不作 `heading`（孤立的 `37` 不得成为一级标题）。这直接堵住了第一批
+"页码被判 `heading_level = 1`"的成因 —— 它让 30 页里的 34 章塌回 3 章。
+
+**图注识别**：`Figure 1.1.: xxx` / `Table 2.1: xxx` 这类**带编号分隔符**的块判
+`image_caption`。分隔符（`:` / `：`，允许 `.:`）是**必需**信号，不能只看
+"以 Figure 开头"：真实教材 p14 有一段**正文**开头就是
+`Figure 1.3 shows a pair of shows a set of nodes, ...`（628 字符），
+它不是图注；只看前缀会把它错判成图注并**切碎正文**。长度上限
+（`CAPTION_MAX_CHARS`）是第二道同样的护栏。
+
+> 去噪**不静默丢内容**：去掉了几个块、分别属于哪一类，会写进
+> `uncertain_notes`（`kind="other"` / `severity="low"`），可核对、可追责。
+> 方向取舍与 F1.2 扫描判定一致：**宁可漏删，不可误删**。
 
 headings 的来源：只有两个信号
 -----------------------------
@@ -88,6 +103,7 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass, replace
+from math import ceil
 from pathlib import Path
 from typing import Any
 
@@ -139,6 +155,66 @@ HEADING_SIZE_DELTA = 1.5
 HEADING_MAX_CHARS = 100
 #: 字号法判定标题时，最多允许几行。标题一般不跨很多行。
 HEADING_MAX_LINES = 3
+
+# ---- 页眉 / 页脚 / 页码去噪（第二批）----
+#
+# 四条信号是**合取**：任何一条单独用都会误删正文（见模块 docstring）。下面每个
+# 常量都为"宁可漏删不可误删"服务 —— 判不出来就不删，代价只是多几个噪声块。
+
+#: 页边距带：块顶边在页高外侧这个比例内的，才有资格被当成页眉 / 页脚。
+#:
+#: 实测（真实教材 612×792）：页眉顶边 36.23（4.6%）、页脚顶边 741.50–743.09
+#: （93.6–93.8%）、正文纵向范围 75.36–724.13（9.5–91.4%）。
+#: 取 9% / 91% 让三类都留有余量：正文最低的那一行（75.36 = 9.5%）仍在带外，
+#: 而页脚最高的一行（741.50 = 93.6%）仍在带内。
+#:
+#: 这本教材的页眉页脚离版心只有 18–29pt，所以这个比例不能取大；但它只是
+#: **预筛**，真正的判定交给下面"版心外 + 跨页重复 + 与相邻内容隔离"三条。
+EDGE_ZONE_TOP_RATIO = 0.09
+EDGE_ZONE_BOTTOM_RATIO = 0.91
+#: 页眉 / 页脚行的长度上限（字符）。页眉页脚都是**短行**（书名、章节名、页码），
+#: 而正文段落即使首行落在页边距带里也远比这长 —— 这条把长段落挡在外面。
+EDGE_LINE_MAX_CHARS = 120
+#: 判定"同一条带"时，两个块顶边的最大间距（pt）。实测页脚在 741.50 与 743.09
+#: 两处（相差 1.59pt），取 4pt 能收进同一条带又不会把相邻的正文行拉进来。
+RUNNING_BAND_TOLERANCE = 4.0
+#: 形成"跨页重复带"所需覆盖的页面比例。页眉页脚是**每页都来一遍**的东西：
+#: 实测页眉 24/30 = 80%、页脚带 30/30 = 100%。而表格跨页的**续表表头**只在
+#: 表格跨的那几页出现（远低于一半），因此被这一条挡在门外 —— 这是本批最关键的
+#: 一条防误删信号，取 0.5 是有意的"宁严勿松"：比例越大越难被判成页眉页脚。
+RUNNING_BAND_MIN_PAGE_RATIO = 0.5
+#: 跨页重复带的**绝对**页数下限。少于这个页数的重复不足以证明是"每页都有"，
+#: 小文档（3 页）靠它避免把"碰巧重了两页"的正文短行当成页眉。
+RUNNING_BAND_MIN_PAGES = 3
+#: 与相邻内容的隔离：候选块与同页最近字块的空隙 ≥ 这个倍数的行高。
+#: 实测页眉 29.1pt / 行高 10.9 ≈ 2.67 倍、页脚 19.0 / 10.9 ≈ 1.74 倍，
+#: 而正文的**段间距**只有 0.86 倍 —— 1.4 卡在两者之间。
+#: 表格续表表头下面紧跟着表格行（正常行距 ≈ 0.9–1.0 倍），因此不会被误判。
+EDGE_ISOLATION_RATIO = 1.4
+#: 纯数字 / 罗马数字页码的长度上限（字符）。`26`、`iv`、`xii` 都在范围内。
+PAGE_NUMBER_MAX_CHARS = 8
+#: 页码形态：1–4 个数字，或 1–4 个罗马数字字母（`i` / `ii` / `xiv`）。
+_PAGE_NUMBER_RE = re.compile(r"^(?:\d{1,4}|[ivxlcdmIVXLCDM]{1,4})$")
+#: 目录页判定：一页里含这么多个"前导点"行（`. . . . .`）就当目录页。
+#: 取 4 是因为正文里不会连续出现 4 行前导点；少于它的排版（如只有 2 条目录行）
+#: 会漏判 —— 漏判只是目录页码多留几个块，方向仍是"宁漏勿误"。
+TOC_LEADER_MIN_LINES = 4
+#: 前导点行：5 个及以上的点（允许点之间夹空格），用于识别目录行。
+_TOC_LEADER_RE = re.compile(r"\.(?:\s*\.){4,}")
+
+# ---- 图注识别（第二批）----
+#
+# ⚠️ 只认"带编号分隔符"的图注（`Figure 1.1.: xxx` / `Table 2.1: xxx`），
+# **不能**只看"以 Figure/Table 开头"：真实教材 p14 有一段正文正好以
+# `Figure 1.3 shows a pair of ...` 开头（628 字符），它**不是**图注。
+# 只看前缀会把它错判成 image_caption 并把一段正文切碎 —— 不可逆的内容破坏。
+CAPTION_LABEL_RE = re.compile(
+    r"^\s*(?:Figure|Fig\.|Table)\s+\d+(?:[.\-]\d+)*\s*\.?\s*[:：]\s*(?=\S)"
+)
+#: 图注长度上限（字符）。超过它就不再是图注，而是"图注与正文粘连"或纯正文。
+CAPTION_MAX_CHARS = 300
+#: 图注最多允许几行。图注一般一到两行。
+CAPTION_MAX_LINES = 3
 
 #: 同段折行合并：下一块首行与本块末行的"行距"上限，以本块行高为单位。
 #: 单倍行距的折行约为行高的 1.0–1.35 倍（行高 ≈ 字号 × 1.2，行距 ≈ 字号 × 1.2–1.5），
@@ -318,6 +394,26 @@ def _line_raws(
     return raws, size_chars
 
 
+def _split_caption_glue(lines: list[_RawBlock]) -> list[list[_RawBlock]]:
+    """把"图注 + 紧随正文"粘连的一段行拆成两组，供 `_group_lines` 分别成段。
+
+    为什么需要：图注以句末标点收尾时，`_is_continuation` 的第 4 条判据本来就会
+    止住合并；但图注**不以标点收尾**时（`... (b) multiple-access` 这类），
+    段判据只看版式、看不出"图注到此为止"，图注就会被并进后面那段正文，
+    于是图注整块消失、变成正文的第一句。
+
+    切点取**第一行之后**：本教材（以及绝大多数 LaTeX / Word 排版）的图注都是
+    **单行**，粘连时第一行就是图注。切点是整行边界，不按字符切 —— 按字符切会让
+    上下两块的 `line_start` / `line_end` 指向同一行，溯源直接错位。
+
+    多行图注的粘连会切不干净（图注的续行留在正文里）：那只是"图注少了一行"，
+    **正文一个字都不丢**。方向仍是"宁可漏切，不可错切"（错切是把一句话劈开）。
+    """
+    if len(lines) < 2 or not CAPTION_LABEL_RE.match(lines[0].text):
+        return [lines]
+    return [lines[:1], lines[1:]]
+
+
 def _group_lines(lines: list[_RawBlock]) -> list[_RawBlock]:
     """把一个 text block 内的逐行块按 `_is_continuation` 组成段。
 
@@ -380,7 +476,13 @@ def _raw_blocks(doc: pymupdf.Document) -> tuple[list[_RawBlock], dict[float, int
                 # 宁可少切一段，也不要因为没有几何信息就把一段话拆散。
                 merged_blocks = [_merge_line_group(line_raws)]
             else:
-                merged_blocks = _group_lines(line_raws)
+                # 图注写完了就先切开，再让两半各自走同一套段落判据 —— 否则
+                # "图注不以句末标点收尾"时它会被并进后面的正文段，整块消失。
+                merged_blocks = [
+                    group
+                    for part in _split_caption_glue(line_raws)
+                    for group in _group_lines(part)
+                ]
 
             for group in merged_blocks:
                 raws.append(
@@ -412,6 +514,248 @@ def _body_size(size_chars: dict[float, int]) -> float:
     if not size_chars:
         return 0.0
     return max(size_chars.items(), key=lambda kv: (kv[1], -kv[0]))[0]
+
+
+# ---------------------------------------------------------------------------
+# 页眉 / 页脚 / 页码去噪（第二批）
+# ---------------------------------------------------------------------------
+#
+# 判定是**四条信号的合取**（模块 docstring 有完整推理）：
+#   ① 页边距带（便宜预筛）→ ② 版心外（由本文档现算）→ ③ 跨页重复 → ④ 与相邻内容隔离
+# 少任何一条都会误删正文：只看 ① 会把"正文首行恰好排在版心上方"删掉；
+# 只看 ③ 会把表格跨页的**续表表头**删掉（那是正文的一部分）。
+# 方向与 F1.2 扫描判定一致：**宁可漏删，不可误删**。
+
+
+@dataclass(frozen=True)
+class _DenoiseReport:
+    """去噪去掉了什么 —— 让"删了东西"这件事可解释、可核对，不静默丢内容。
+
+    四个字段是**互不相交的划分**（合计 = 被删块数）。注意任务书里的
+    "页眉 24 + 页码 32 + 页脚 52 = 108"是**分类计数之和**，其中页码有 26 块
+    本来就在页脚带里，所以 108 > 实际块数 82 —— 本报告不重复计数。
+    """
+
+    header: int = 0
+    footer: int = 0
+    page_number: int = 0
+    toc_number: int = 0
+
+    @property
+    def total(self) -> int:
+        return self.header + self.footer + self.page_number + self.toc_number
+
+    def describe(self) -> str:
+        return (
+            f"页眉 {self.header} 块、页脚 running head {self.footer} 块、"
+            f"页边距带页码 {self.page_number} 块、目录页页码 {self.toc_number} 块"
+        )
+
+
+@dataclass(frozen=True)
+class _EdgeBands:
+    """本文档**自己**的页眉 / 页脚位置与版心范围（由版式现算，不写死页尺寸）。"""
+
+    positions: tuple[float, ...]
+    body_lo: float
+    body_hi: float
+
+    def covers(self, top: float) -> bool:
+        """`top` 是否落在某条已检出的页眉 / 页脚带上。"""
+        return any(abs(top - position) <= RUNNING_BAND_TOLERANCE for position in self.positions)
+
+
+def _toc_pages(doc: pymupdf.Document) -> frozenset[int]:
+    """目录页（1-based）：含 ≥ `TOC_LEADER_MIN_LINES` 条"前导点行"的页。
+
+    目录行的版式特征是 `1.5 Performance . . . . . . 37` —— 点之间带空格。
+    前导点是**结构信号**，正文里不会连续出现 4 行以上；用它认目录页，
+    比"行尾跟页码"可靠（本教材的目录页码在**行首**，用行尾判会数出 0 行）。
+    """
+    pages: set[int] = set()
+    for index in range(doc.page_count):
+        leaders = sum(
+            1
+            for line in doc[index].get_text("text").splitlines()
+            if _TOC_LEADER_RE.search(line)
+        )
+        if leaders >= TOC_LEADER_MIN_LINES:
+            pages.add(index + 1)
+    return frozenset(pages)
+
+
+def _median_line_height(raws: list[_RawBlock]) -> float:
+    """行高的中位数 —— "与相邻内容隔离"这条信号的尺子，用中位数不用均值，
+    免得少数大字号标题把尺子拉长。"""
+    heights = sorted(h for h in (raw.line_height for raw in raws) if h and h > 0)
+    if not heights:
+        return 0.0
+    return heights[len(heights) // 2]
+
+
+def _same_line(a: _RawBlock, b: _RawBlock) -> bool:
+    """两个块是不是排在同一行上（纵向区间显著重叠）。
+
+    这一条是为页脚准备的：PyMuPDF 把页脚切成 `6` 与 `Chapter 1. Foundation`
+    两个块，它们**同顶边**、横向并排。算"隔离距离"时必须把它们视作同一行，
+    否则两者之间的空隙是 0，页脚会被自己的另一半判成"不隔离"。
+    """
+    if a.bbox is None or b.bbox is None:
+        return False
+    overlap = min(a.bbox[3], b.bbox[3]) - max(a.bbox[1], b.bbox[1])
+    shorter = min(a.bbox[3] - a.bbox[1], b.bbox[3] - b.bbox[1])
+    return shorter > 0 and overlap / shorter >= 0.5
+
+
+def _isolation_gap(raw: _RawBlock, page_blocks: list[_RawBlock]) -> float:
+    """`raw` 与同页最近字块之间的垂直空隙（pt）；没有邻居时返回正无穷。
+
+    "页眉 / 页脚"与"表格跨页的续表表头"在文本与位置上可能一模一样，区别在
+    **隔离度**：页眉页脚与版心之间有一道明显的空白，表格表头下面紧跟着表格行
+    （正常行距）。这是防"把续表表头删掉"的那条信号。
+    """
+    gap = float("inf")
+    for other in page_blocks:
+        if other is raw or _same_line(raw, other) or other.bbox is None or raw.bbox is None:
+            continue
+        if other.bbox[3] <= raw.bbox[1]:  # 在 raw 上方
+            gap = min(gap, raw.bbox[1] - other.bbox[3])
+        elif other.bbox[1] >= raw.bbox[3]:  # 在 raw 下方
+            gap = min(gap, other.bbox[1] - raw.bbox[3])
+    return gap
+
+
+def _is_edge_candidate(raw: _RawBlock, top_limit: float, bottom_limit: float) -> bool:
+    """信号①：落在页边距带里的**单行短块**（页眉 / 页脚 / 页码的形态）。
+
+    "单行 + 短"这一条不能省：正文段落的首行也可能排在版心上方，
+    但它不会是"一行、120 字符以内"。
+    """
+    if raw.first_top is None or raw.line_count != 1:
+        return False
+    if not raw.text.strip() or len(raw.text) > EDGE_LINE_MAX_CHARS:
+        return False
+    return raw.first_top < top_limit or raw.first_top > bottom_limit
+
+
+def _detect_edge_bands(
+    raws: list[_RawBlock], page_height: float, page_count: int
+) -> _EdgeBands | None:
+    """找出本文档的页眉 / 页脚带（信号 ①②③ 的落点）。判不出返回 None。
+
+    步骤：
+      1. 用**页边距带**（信号①）挑出候选短行 —— 这是一道便宜的预筛；
+      2. 用**非候选块**的纵向范围现算版心 `[body_lo, body_hi]` —— 这样"页眉页脚
+         长什么样"由文档自身决定，换版式（A4 / 教材 / 讲义）都成立；
+      3. 候选块里，落在版心外的，按顶边聚类（±`RUNNING_BAND_TOLERANCE`）；
+      4. 覆盖 **≥ `RUNNING_BAND_MIN_PAGE_RATIO` 的页面**（且不少于
+         `RUNNING_BAND_MIN_PAGES` 页）的簇才成"带"—— 页眉页脚每页都来一遍，
+         表格的续表表头只跟表格跨的那几页，靠这条区分开。
+    """
+    if page_height <= 0 or page_count <= 0:
+        return None
+
+    top_limit = EDGE_ZONE_TOP_RATIO * page_height
+    bottom_limit = EDGE_ZONE_BOTTOM_RATIO * page_height
+    indices = {
+        index
+        for index, raw in enumerate(raws)
+        if _is_edge_candidate(raw, top_limit, bottom_limit)
+    }
+    if not indices:
+        return None
+
+    body_tops = [
+        raw.first_top
+        for index, raw in enumerate(raws)
+        if index not in indices and raw.first_top is not None
+    ]
+    if not body_tops:
+        return None
+    body_lo, body_hi = min(body_tops), max(body_tops)
+
+    outside = [
+        (raws[index].first_top, raws[index].page_no)
+        for index in indices
+        if raws[index].first_top < body_lo or raws[index].first_top > body_hi
+    ]
+    if not outside:
+        return None
+
+    clusters: list[list[tuple[float, int]]] = []
+    for top, page_no in sorted(outside):
+        # ⚠️ 与簇的**首个**顶边比，不跟"上一个成员"比 —— 后者会像链条一样一路
+        # 漂移过去（743 → 747 → 751 → …），把整页的行都串进同一条"带"里。
+        if clusters and top - clusters[-1][0][0] <= RUNNING_BAND_TOLERANCE:
+            clusters[-1].append((top, page_no))
+        else:
+            clusters.append([(top, page_no)])
+
+    needed = max(RUNNING_BAND_MIN_PAGES, ceil(RUNNING_BAND_MIN_PAGE_RATIO * page_count))
+    positions = tuple(
+        sum(top for top, _ in cluster) / len(cluster)
+        for cluster in clusters
+        if len({page_no for _, page_no in cluster}) >= needed
+    )
+    if not positions:
+        return None
+    return _EdgeBands(positions=positions, body_lo=body_lo, body_hi=body_hi)
+
+
+def _denoise(
+    raws: list[_RawBlock], doc: pymupdf.Document
+) -> tuple[list[_RawBlock], _DenoiseReport]:
+    """去掉页眉 / 页脚 / 页码，返回 `(保留的块, 去噪报告)`。
+
+    规则有两条，都要求**多信号同时成立**：
+
+      A. **页眉 / 页脚 / 页脚页码**：单行短块 ∧ 在页边距带 ∧ 在版心外
+         ∧ 落在跨页重复带上 ∧ 与相邻内容隔离 ≥ `EDGE_ISOLATION_RATIO` 个行高；
+      B. **目录页页码**：所在页是目录页（≥ `TOC_LEADER_MIN_LINES` 条前导点行）
+         ∧ 单行 ∧ 内容是纯数字/罗马数字。
+
+    规则 B 不要求位置信号（目录页码就排在版心里、紧贴着自己的目录行），
+    因此**必须**用"目录页"这个结构信号兜住，否则会把正文里孤立成行的数字一起删掉。
+    """
+    page_count = doc.page_count
+    page_height = max((doc[index].rect.height for index in range(page_count)), default=0.0)
+    toc_pages = _toc_pages(doc)
+    bands = _detect_edge_bands(raws, page_height, page_count)
+    line_height = _median_line_height(raws)
+    isolation_limit = EDGE_ISOLATION_RATIO * line_height
+
+    by_page: dict[int, list[_RawBlock]] = {}
+    for raw in raws:
+        by_page.setdefault(raw.page_no, []).append(raw)
+
+    kept: list[_RawBlock] = []
+    counts = {"header": 0, "footer": 0, "page_number": 0, "toc_number": 0}
+    for raw in raws:
+        stripped = raw.text.strip()
+        is_number = bool(_PAGE_NUMBER_RE.match(stripped))
+        short_single = (
+            raw.first_top is not None
+            and raw.line_count == 1
+            and 0 < len(raw.text) <= EDGE_LINE_MAX_CHARS
+        )
+
+        if bands is not None and short_single and bands.covers(raw.first_top):
+            outside_body = raw.first_top < bands.body_lo or raw.first_top > bands.body_hi
+            isolated = _isolation_gap(raw, by_page.get(raw.page_no, [])) >= isolation_limit
+            if outside_body and isolated:
+                if raw.first_top < bands.body_lo:
+                    counts["header"] += 1
+                else:
+                    counts["page_number" if is_number else "footer"] += 1
+                continue
+
+        if short_single and is_number and raw.page_no in toc_pages:
+            counts["toc_number"] += 1
+            continue
+
+        kept.append(raw)
+
+    return kept, _DenoiseReport(**counts)
 
 
 def _sample_page_indices(page_count: int, limit: int) -> list[int]:
@@ -497,14 +841,32 @@ def _classify(
     body_size: float,
     size_levels: dict[float, int],
 ) -> tuple[str, int | None]:
-    """判断一个块是 heading 还是 paragraph，并给出 heading_level。"""
+    """判断一个块是 heading / paragraph / image_caption，并给出 heading_level。"""
+    # ---- 图注：先于标题判，图注永远不该变成 heading ----
+    # 只看"以 Figure/Table 开头"是不够的：真实教材有一段**正文**正好以
+    # `Figure 1.3 shows a pair of ...` 开头。所以要求编号后面必须跟分隔符
+    # （`:` / `：`，允许 LaTeX 的 `.:`），再加一道长度上限。
+    if (
+        raw.line_count <= CAPTION_MAX_LINES
+        and len(raw.text) <= CAPTION_MAX_CHARS
+        and CAPTION_LABEL_RE.match(raw.text)
+    ):
+        return "image_caption", None
+
     number: HeadingNumber | None = None
     if len(raw.text) <= HEADING_MAX_CHARS and raw.line_count == 1:
         number = split_heading_number(raw.text)
         if number is not None:
-            # 单级编号（`1 引言`）在 PDF 里也可能是编号列表项，加一道字号闸：
-            # 标题的字号不会比正文小。多级编号（`3.1`）本身就是强信号，直接放行。
-            if number.depth >= 2 or raw.max_size >= body_size:
+            # ★ 否决规则（第二批）：**整行只有编号、没有标题文字的单级编号**
+            # 不作 heading。孤立的 `37` 就是页码，不是"第 37 章" —— 第一批正是
+            # 被它把节骨架打成了 34 章（真实结构只有 3 章）。
+            # 只否决 depth==1：多级编号（`3.1`）本身就是强信号，且页码不会长成
+            # 那个样子，误否决真标题的代价（骨架少一节）比放过一个噪声大。
+            if number.depth == 1 and not number.title:
+                number = None
+            elif number.depth >= 2 or raw.max_size >= body_size:
+                # 单级编号（`1 引言`）在 PDF 里也可能是编号列表项，加一道字号闸：
+                # 标题的字号不会比正文小。多级编号（`3.1`）本身就是强信号，直接放行。
                 return "heading", min(number.depth, 6)
 
     is_large = raw.max_size >= body_size + HEADING_SIZE_DELTA
@@ -608,8 +970,9 @@ def _merge_continuation_lines(
 ) -> list[tuple[_RawBlock, str, int | None]]:
     """把相邻的续行合成一块。
 
-    **heading 不参与合并**，有两个理由：
-      · 标题与正文是两个语义单位，合起来等于把"节标题"抹掉，骨架直接塌；
+    **heading 与 image_caption 都不参与合并**，理由：
+      · 标题 / 图注与正文是三个语义单位，合起来等于把"节标题""图注"一起抹掉 ——
+        图注被并进下一段正文后，`image_caption` 就永远不会产出；
       · 标题与正文的字号/行距本来就不同，合出来的块字号信息是脏的
         （`_classify` 依赖 `max_size`，脏了会连带影响后续判断）。
     只把 `paragraph` 接在 `paragraph` 后面。
@@ -677,6 +1040,9 @@ def parse_pdf(path: str | Path) -> ParsedDocument:
             )
 
         raws, size_chars, image_count = _raw_blocks(doc)
+        # 去噪必须在**分类之前**：页脚 running head（`1.2. Requirements`）与正文
+        # 真节标题同名同层级，先分类再删等于让噪声先决定骨架。
+        raws, denoise = _denoise(raws, doc)
     except ApiError:
         # 自己抛的业务异常原样往外传（文案已经是中文、错误码已经合理）
         raise
@@ -722,6 +1088,22 @@ def parse_pdf(path: str | Path) -> ParsedDocument:
         )
 
     notes: list[UncertainNote] = []
+    if denoise.total:
+        # 去噪**不静默丢内容**：删了几个块、分别属于哪一类，如实登记。
+        # 方向仍是"宁可漏删不可误删"（模块 docstring），所以只报数、不辩解。
+        notes.append(
+            UncertainNote(
+                kind="other",
+                severity="low",
+                message=(
+                    f"已识别并去除 {denoise.total} 个页眉 / 页脚 / 页码噪声块"
+                    f"（{denoise.describe()}）。这些块是书名、running head 与页码，"
+                    "不属于正文，因此没有写入块表与 Markdown；判定只依据版式"
+                    "（页边距带 / 版心外 / 跨页重复 / 与相邻内容隔离），"
+                    "不依据文本内容，如需核对可按页码人工复核。"
+                ),
+            )
+        )
     if image_count:
         # 图片块不产出内容（本批次没有图注识别能力，编一个标题就是造假）。
         # 但不能不吭声：材料里有多少图，评审和用户都该看得见。

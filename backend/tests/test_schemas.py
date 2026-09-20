@@ -231,7 +231,11 @@ PINNED_FIELDS: dict[str, set[str]] = {
         "prerequisite_sampling_pass_rate",
     },
     "QaStatsOut": {"session_count", "turn_count", "grounded_rate", "refuse_count"},
-    "QualityReportOut": {"materials", "knowledge_points", "graph", "qa"},
+    # v1.5 新增：验收指标的逐条实测。前端报告页的"红线映射"直接渲染它，
+    # 所以字段名必须钉住 —— 其中 `kind`（rate/count）决定显示格式，
+    # 少了它环数会被显示成「0.00%」。
+    "AcceptanceRowOut": {"label", "expected", "kind", "actual", "passed"},
+    "QualityReportOut": {"materials", "knowledge_points", "graph", "qa", "acceptance"},
     "ExportKpOut": {
         "id",
         "name",

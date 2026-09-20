@@ -79,6 +79,25 @@ WORKDIR /app/backend
 COPY backend/ /app/backend/
 COPY --from=frontend /src/frontend/dist /app/frontend/dist
 
+# ---- skills/：依赖图算法要跟着进镜像 ----
+#
+# ⚠️ 这一行不是可有可无的。
+#
+# `backend/app/quality.py` 要 import `graph_infer`（环校验 / 理由完备率 / 稀疏性），
+# 而那个算法文件住在 `skills/xizhi-graph-infer/scripts/graph_infer.py`。
+#
+# **为什么算法留在 `skills/` 而不是复制进 `backend/`**：
+# 它同时是两个交付物 —— ① 产品能力（端点要用）② 一个可独立复用的 skill
+# （赛事鼓励的"复用产物"，必须自包含、脱离本仓库也能跑）。
+# 复制成两份会有**漂移**风险：改了一边忘了另一边，两处结论不一致**且不报错**。
+#
+# 所以保持单一份源码，代价就是这里必须把它拷进镜像 ——
+# `quality.py` 里按 `parents[2] / "skills" / ...` 找它，在容器里正好落在 /app/skills。
+#
+# **漏了这一行的症状**：容器里 `ModuleNotFoundError: graph_infer`，
+# 而本地（仓库完整时）一切正常 —— 只在部署后才暴露。
+COPY skills/ /app/skills/
+
 # ---- pip 源：默认走阿里云镜像 ----
 #
 # ⚠️ 这一条不是"可选优化"，实测差了几个数量级：

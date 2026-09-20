@@ -78,8 +78,8 @@ def _app_endpoints(application: FastAPI) -> set[tuple[str, str]]:
 def test_api_spec_table_is_parseable() -> None:
     """速查表格式若被改坏，下面的比对会静默变成"两边都是空集"而通过 —— 先堵住这个洞。"""
     spec_eps = _spec_endpoints()
-    assert len(spec_eps) == 28, (
-        f"从 api-spec §7 解析到 {len(spec_eps)} 个端点，应为 28。是表格格式变了，还是端点数量改了？"
+    assert len(spec_eps) == 31, (
+        f"从 api-spec §7 解析到 {len(spec_eps)} 个端点，应为 31。是表格格式变了，还是端点数量改了？"
     )
 
 
@@ -106,7 +106,7 @@ def test_app_endpoints_match_spec_exactly() -> None:
     )
 
 
-@pytest.mark.parametrize("expected_count", [28])
+@pytest.mark.parametrize("expected_count", [31])
 def test_endpoint_count(expected_count: int) -> None:
     assert len(_app_endpoints(app)) == expected_count
 
