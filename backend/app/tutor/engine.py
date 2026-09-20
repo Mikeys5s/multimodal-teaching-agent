@@ -36,7 +36,7 @@ from typing import Any
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.models import QaSession, QaTurn, utc_now_iso
+from app.models import KnowledgePoint, QaSession, QaTurn, utc_now_iso
 from app.tutor import retrieve as R
 from app.tutor import templates as T
 from app.tutor.state import (
@@ -117,6 +117,55 @@ def _is_first_turn(session: Session, session_id: str) -> bool:
     return not any(t.role == "tutor" for t in _history(session, session_id))
 
 
+def _carried_kp(session: Session, session_id: str) -> str | None:
+    """这一轮该**延续**哪个知识点？返回 None 表示"这是全新提问"。
+
+    ## 为什么需要它
+
+    学生在被反问之后回一句「不知道」—— 这句**本身不含任何知识点线索**。
+    如果拿它去检索，必然什么都搜不到，然后 R4 短路成 REFUSE，
+    于是 **R3（连续 2 次答不上就强制讲解）永远触发不了**。
+
+    **"不知道"是学生对上一个问题的回应，不是一个新的提问。**
+    所以这一轮该讲的知识点 = **上一轮导师轮讲的那个**。
+
+    ## 判据：**只有"提示类"轮次之后才延续**
+
+    | 上一轮导师轮 | 这一轮的性质 | 延续？ |
+    |---|---|---|
+    | `probe` / `hint1` / `hint2` | **学生在回应那个反问** | ✅ 延续 |
+    | `confirm` / `explain` | 那一轮已经**讲完了**；学生再说是新问题 | ❌ 不延续 |
+    | `refuse` | 上一轮就没讲东西，无从延续 | ❌ 不延续 |
+
+    ## ⚠️ 我第一版写的是"只要有导师轮就延续"，并且把它写成"已知取舍"
+
+    那段 docstring 里我写：「真换了话题，学生会说出新的关键词 —— 但那时我们仍用
+    旧知识点作答，**这是一个已知的取舍**」。
+
+    **端到端实测证明那个取舍是错的**：讲完 `explain` 之后学生问
+    「请证明黎曼猜想」—— 系统**拿上一轮的计算机网络知识点答了**，
+    **R4（检索不到必须 REFUSE）直接失效**。
+
+    **教训**：「已知取舍」这四个字不能代替验证。
+    我在写的时候就能想到"换个话题会怎样"这个反例，**但我把它写进注释就安心了**。
+    **注释不是测试。**
+    """
+    last: QaTurn | None = None
+    for t in _history(session, session_id):
+        if t.role == "tutor":
+            last = t
+    if last is None or not last.retrieved_kp_ids:
+        return None
+    # ★ 只有"学生还没答上来"的那两个状态才延续
+    if last.turn_type not in ("probe", "hint1", "hint2"):
+        return None
+    try:
+        ids = json.loads(last.retrieved_kp_ids)
+    except (ValueError, TypeError):
+        return None
+    return ids[0] if isinstance(ids, list) and ids else None
+
+
 def _diagnosis(
     decision: Decision,
     hits: list[R.Hit],
@@ -190,7 +239,33 @@ def run_turn(
     scope = sess.material_scope
 
     # ---- ① 检索（R1：永远先检索）--------------------------------------------
-    hits = R.search_kps(session, student_text, material_scope=scope)
+    #
+    # ⚠️ **"延续轮"不能用学生的话去检索。**（2026-09-20 端到端实测发现的缺陷）
+    #
+    # 学生在第 2 轮说「不知道」时，如果拿这三个字去检索 —— **它当然什么都搜不到**
+    # → `has_hit=False` → **R4 短路直接 REFUSE**。
+    # 于是「连续 2 次答不上 → 强制讲解」这条硬规则**永远触发不了**：
+    # **学生越诚实地说"不知道"，系统越只会回"材料里没有"。**
+    #
+    # 判据：这一轮是不是"对上一条反问的回应"。
+    # 是 → **沿用上一轮导师轮问的那个知识点**（那才是这一轮该讲的东西）；
+    # 不是（全新提问）→ 用学生的话检索。
+    carried = _carried_kp(session, session_id)
+    if carried is not None:
+        kp = session.get(KnowledgePoint, carried)
+        hits = (
+            [R.Hit(
+                kp_id=kp.id, name=kp.name, summary_md=kp.summary_md or "",
+                source_quote=kp.source_quote or "", difficulty=kp.difficulty or 3,
+                section_id=kp.section_id,
+                score=1.0,   # 我们本来就在讲它 —— 分数不该再来干扰
+            )]
+            if kp is not None
+            else []
+        )
+    else:
+        hits = R.search_kps(session, student_text, material_scope=scope)
+
     out_of_scope = R.is_out_of_scope(hits)
 
     # ---- ② 状态机 -------------------------------------------------------------
