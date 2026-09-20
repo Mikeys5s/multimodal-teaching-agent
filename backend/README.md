@@ -7,11 +7,10 @@ FastAPI + SQLAlchemy 2.0 + SQLite。归属见 [`../SPEC.md`](../SPEC.md) §9.1�
 ## 快速开始
 
 ```bash
-cd backend
+# 1. 建虚拟环境 —— **在仓库根目录**跑这一条（**不要**手动 python -m venv .venv，原因见下）
+bash scripts/setup-venv.sh
 
-# 1. 建虚拟环境（用 Python 3.13，已验证所有依赖有 cp313 wheel）
-python -m venv .venv
-.venv/Scripts/python.exe -m ensurepip          # 见下方「已知坑」
+cd backend
 
 # 2. 装依赖
 .venv/Scripts/python.exe -m pip install -e ".[dev]"     # P2 / P3 日常开发
@@ -21,6 +20,23 @@ python -m venv .venv
 # 3. 起服务
 .venv/Scripts/python.exe -m uvicorn app.main:app --reload --port 8000
 ```
+
+> ### ⚠️ 不要手动 `python -m venv .venv`
+>
+> 手动建会把 venv 放进**项目目录内**，而本机有清理程序会**成批删除项目里的文件** ——
+> `.venv/Lib/site-packages/` 被清空过多次，依赖会凭空消失（加杀毒信任区也没挡住）。
+>
+> `bash scripts/setup-venv.sh` 做的是：
+> - venv 建在**项目外**：`%USERPROFILE%\.venvs\xizhi-backend`
+> - 项目内的 `backend/.venv` 只是一个 **junction（目录联接）**，指向上面那个目录
+> - 于是清理程序按项目路径扫不到 venv 的文件，而**路径一个字都没变** ——
+>   后面所有命令照旧用 `backend/.venv/Scripts/python.exe`
+>
+> | 场景 | 命令 |
+> |---|---|
+> | 首次搭建 | `bash scripts/setup-venv.sh` |
+> | 自检（**只读**，不改任何东西） | `bash scripts/setup-venv.sh --check` |
+> | 坏了重建（venv 文件被清空时） | `bash scripts/setup-venv.sh --rebuild` |
 
 打开 `http://127.0.0.1:8000/docs` 看接口文档。
 
