@@ -11,12 +11,19 @@ from __future__ import annotations
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, Query
+from sqlalchemy import func, or_, select
 from sqlalchemy.orm import Session
 
 from app.core.errors import ApiError, ErrorCode
 from app.core.pagination import PageData, PageParams
 from app.core.response import Envelope, ok
 from app.db import get_db
+from app.graph_view import gap_analysis as run_gap_analysis
+from app.graph_view import load_graph
+from app.kp_view import load_kp_items, to_kp_detail
+from app.models import (
+    KnowledgePoint,
+)
 from app.schemas.graph import (
     GapAnalysisOut,
     GapSourceOut,
@@ -25,14 +32,8 @@ from app.schemas.graph import (
     LikelyGapOut,
 )
 from app.schemas.knowledge import (
-    ChapterRefOut,
-    ExampleOut,
     KpDetailOut,
     KpItemOut,
-    MisconceptionOut,
-    PrerequisiteOut,
-    SectionRefOut,
-    SourceRefOut,
 )
 
 router = APIRouter(tags=["knowledge"])
@@ -81,80 +82,6 @@ StrictBoolDep = Annotated[bool | None, Depends(_strict_bool)]
 # ---------------------------------------------------------------------------
 
 
-def _mock_kp(kp_id: str = KP_ID) -> KpItemOut:
-    return KpItemOut(
-        id=kp_id,
-        name="TCP 拥塞控制",
-        summary_md="发送方通过动态调整拥塞窗口 cwnd，适应网络拥塞程度，避免压垮网络。",
-        difficulty=4,
-        difficulty_reason="需要同时理解滑动窗口、RTT 估计与四种拥塞控制阶段的相互作用",
-        kp_type="concept",
-        chapter=ChapterRefOut(id="ch_9f2a1c40_000", number="5", title="传输层"),
-        section=SectionRefOut(id="sec_9f2a1c40_000_002", number="5.3", title="TCP 拥塞控制"),
-        source=SourceRefOut(
-            material_id="mat_9f2a1c40",
-            material_name="第5章-传输层.pdf",
-            page=88,
-            block_id="blk_9f2a1c40_00003",
-            quote="拥塞窗口 cwnd 的大小由发送方根据网络拥塞程度动态调整。",
-        ),
-        prerequisite_count=2,
-        example_count=3,
-        misconception_count=1,
-        needs_review=False,
-        confidence=0.93,
-    )
-
-
-def _mock_detail(kp_id: str) -> KpDetailOut:
-    base = _mock_kp(kp_id)
-    return KpDetailOut(
-        **base.model_dump(),
-        prerequisites=[
-            PrerequisiteOut(
-                kp_id="kp_9f2a1c40_000_001_002",
-                name="滑动窗口机制",
-                relation_type="hard",
-                reason="不理解发送窗口如何随 ACK 滑动，就无法理解 cwnd 调节的对象是什么",
-                confidence=0.9,
-            ),
-            PrerequisiteOut(
-                kp_id="kp_9f2a1c40_000_001_005",
-                name="RTT 与超时重传",
-                relation_type="hard",
-                reason="RTT 估计决定了超时阈值，而超时是拥塞判断的触发条件",
-                confidence=0.86,
-            ),
-        ],
-        examples=[
-            ExampleOut(
-                id="ex_9f2a1c40_001",
-                question_type="single_choice",
-                stem_md="慢启动阶段 cwnd 的增长方式是：",
-                options_json='[{"key":"A","content":"线性增长"},{"key":"B","content":"指数增长"}]',
-                answer_md="B",
-                analysis_md="每收到一个 ACK，cwnd 增加一个 MSS，因此每经过一个 RTT 翻倍。",
-                difficulty=3,
-                source_page=89,
-            )
-        ],
-        misconceptions=[
-            MisconceptionOut(
-                id="mis_9f2a1c40_001",
-                description="把拥塞窗口 cwnd 与接收窗口 rwnd 混为一谈",
-                cause="两者都叫「窗口」且都限制发送量，容易合并成一个概念",
-                remedy="强调 cwnd 反映网络容量、rwnd 反映接收方缓冲；实际发送窗口取两者较小值",
-                source="human",
-                confidence=0.92,
-            )
-        ],
-    )
-
-
-# ---------------------------------------------------------------------------
-# 端点 14：知识点列表
-# ---------------------------------------------------------------------------
-
 
 @router.get(
     "/knowledge-points",
@@ -199,13 +126,37 @@ def list_knowledge_points(
         if value is not None and not value:
             raise ApiError(ErrorCode.INVALID_PARAM, f"{name} 不能为空字符串")
 
-    # 过滤逻辑（真实）已写完；数据源在 mock 模式下为样例
-    items = [_mock_kp()] if MOCK_MODE else []
-    if needs_review is not None:
-        items = [i for i in items if i.needs_review == needs_review]
+    # ⚠️ 这里原来只实现了 `needs_review` 与 `kp_type` 两个过滤，
+    #    **`material_id` / `chapter_id` / `section_id` / 难度区间 / 关键词全被静默忽略** ——
+    #    也就是说传了 `?material_id=mat_x` 依然会返回别的材料的知识点，
+    #    而**调用方以为筛过了**。这是最典型的一类"不报错的错"，现在全部落实。
+    stmt = select(KnowledgePoint)
+    if material_id is not None:
+        stmt = stmt.where(KnowledgePoint.material_id == material_id)
+    if chapter_id is not None:
+        stmt = stmt.where(KnowledgePoint.chapter_id == chapter_id)
+    if section_id is not None:
+        stmt = stmt.where(KnowledgePoint.section_id == section_id)
+    if difficulty_min is not None:
+        stmt = stmt.where(KnowledgePoint.difficulty >= difficulty_min)
+    if difficulty_max is not None:
+        stmt = stmt.where(KnowledgePoint.difficulty <= difficulty_max)
     if kp_type is not None:
-        items = [i for i in items if i.kp_type == kp_type]
-    return ok(PageData.of(items=items, total=len(items), params=page))
+        stmt = stmt.where(KnowledgePoint.kp_type == kp_type)
+    if needs_review is not None:
+        stmt = stmt.where(KnowledgePoint.needs_review == (1 if needs_review else 0))
+    if q:
+        like = f"%{q}%"
+        stmt = stmt.where(
+            or_(KnowledgePoint.name.like(like), KnowledgePoint.summary_md.like(like))
+        )
+
+    # 计数用独立的 count 查询（**不要把整表拉回来数**，那在千级知识点上是白拉）
+    total = db.scalar(select(func.count()).select_from(stmt.subquery())) or 0
+    rows = db.scalars(stmt.order_by(KnowledgePoint.seq).offset(page.offset).limit(page.limit)).all()
+
+    items = load_kp_items(db, list(rows))
+    return ok(PageData.of(items=items, total=total, params=page))
 
 
 # ---------------------------------------------------------------------------
@@ -224,8 +175,8 @@ def list_knowledge_points(
     ),
 )
 def get_knowledge_point(kp_id: str, db: DbSession) -> Envelope[KpDetailOut]:
-    _require_kp(kp_id)
-    return ok(_mock_detail(kp_id))
+    kp = _require_kp(kp_id, db)
+    return ok(to_kp_detail(db, kp))
 
 
 # ---------------------------------------------------------------------------
@@ -250,56 +201,72 @@ def gap_analysis(
         list[str] | None, Query(description="本轮暴露的误区 id，可重复传入")
     ] = None,
 ) -> Envelope[GapAnalysisOut]:
-    _require_kp(kp_id)
+    kp = _require_kp(kp_id, db)
     evidence = student_evidence or []
 
-    gap = LikelyGapOut(
-        kp_id="kp_9f2a1c40_000_001_002",
-        name="滑动窗口机制",
-        evidence=(
-            "本轮命中误区『把拥塞窗口与接收窗口混为一谈』"
-            if evidence
-            else "该前置被 3 个后续知识点共同依赖，是这条链上最可能的断层"
-        ),
-        source=GapSourceOut(material_id="mat_9f2a1c40", page=88),
-    )
+    # ★ 真算：沿 hard 边反向可达 + 按「命中误区 / 距目标层数 / 被依赖数」排序
+    #    （算法在 graph_infer，不重写 —— 那是已实测通过的实现）
+    graph, kp_rows, _, _ = load_graph(db)
+    by_id = {k.id: k for k in kp_rows}
+
+    result = run_gap_analysis(graph, kp_id, misconception_hits=evidence)
+
+    # ⚠️ 目标没有 hard 前置是**正常情况**，不是错误：它本身就是起点知识点，
+    #    卡点就在它自身。所以如实返回空前置 + 那句建议，而不是报错或编一个断层。
+    candidates = result.get("candidates") or []
+    top = result.get("likely_gap")
+
+    def _name(kid: str) -> str:
+        row = by_id.get(kid)
+        return row.name if row else ""
+
+    likely = None
+    if top is not None:
+        gap_kp_id = top["knowledge_point"]
+        gap_kp = by_id.get(gap_kp_id)
+        likely = LikelyGapOut(
+            kp_id=gap_kp_id,
+            name=_name(gap_kp_id),
+            # evidence 用算法给出的「为什么是它」逐条拼起来 ——
+            # 这样「最可能断层」是可解释的，不是一句模棱两可的结论。
+            evidence="；".join(result.get("why") or []) or "该前置是目标最近的硬前置",
+            source=GapSourceOut(
+                material_id=(gap_kp.material_id if gap_kp else kp.material_id),
+                page=(gap_kp.source_page if gap_kp else None),
+            ),
+        )
+
     return ok(
         GapAnalysisOut(
-            target_kp=KpBriefOut(kp_id=kp_id, name="TCP 拥塞控制"),
+            target_kp=KpBriefOut(kp_id=kp.id, name=kp.name),
             hard_prerequisites=[
                 HardPrereqOut(
-                    kp_id="kp_9f2a1c40_000_001_002",
-                    name="滑动窗口机制",
-                    depth=1,
-                    reason="不理解窗口就无法理解 cwnd 的调节对象",
-                ),
-                HardPrereqOut(
-                    kp_id="kp_9f2a1c40_000_001_005",
-                    name="RTT 与超时重传",
-                    depth=1,
-                    reason="RTT 估计决定超时阈值，超时是拥塞判断的触发条件",
-                ),
-                HardPrereqOut(
-                    kp_id="kp_9f2a1c40_000_000_001",
-                    name="可靠数据传输的基本原理",
-                    depth=2,
-                    reason="滑动窗口与超时重传都建立在可靠传输的基本假设上",
-                ),
+                    kp_id=c["knowledge_point"],
+                    name=_name(c["knowledge_point"]),
+                    depth=c.get("breadth_from_target") or 1,
+                    reason=(
+                        "本轮回答命中了它的常见误区"
+                        if c.get("misconception_hit")
+                        else f"它是目标的硬前置，且被 {c.get('depended_by_count', 0)} 个知识点依赖"
+                    ),
+                )
+                for c in candidates
             ],
-            likely_gap=gap,
-            suggestion=(
-                "你这一题卡在「TCP 拥塞控制」，但根因更可能是「滑动窗口机制」没吃透 —— "
-                "建议先回第 88 页复习窗口如何随 ACK 滑动，再回来学拥塞控制。"
-            ),
+            likely_gap=likely,
+            suggestion=result.get("message") or "未发现明显断层，建议回到目标知识点本身复习。",
         )
     )
 
+def _require_kp(kp_id: str, db: Session) -> KnowledgePoint:
+    """知识点存在性校验。**一律真查库** —— 查不到就 404。
 
-def _require_kp(kp_id: str) -> None:
-    """知识点 id 格式校验。
-
-    mock 模式下按格式判断（不查库），让 P3 立刻能看到完整响应体；
-    D6 之后改为真实查库。
+    原来 mock 模式下只做格式校验（`startswith("kp_")`）就返回，
+    于是**任何 kp_ 开头的胡乱 id 都会返回一份"完整"的知识点**。
+    那种假成功比 404 难查得多：界面有内容、调用方以为对了。
     """
     if not kp_id.startswith("kp_"):
         raise ApiError(ErrorCode.NOT_FOUND, f"知识点 {kp_id} 不存在（id 应以 kp_ 开头）")
+    kp = db.get(KnowledgePoint, kp_id)
+    if kp is None:
+        raise ApiError(ErrorCode.NOT_FOUND, f"知识点 {kp_id} 不存在")
+    return kp

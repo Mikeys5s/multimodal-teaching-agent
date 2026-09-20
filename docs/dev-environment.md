@@ -22,6 +22,20 @@
 
 > 所以**不能假定是杀毒软件**。火绒的「隔离区」和「日志」里如果没有对应记录，就可以排除它。
 
+### ⛔ 结论：**不是杀毒软件**（但根因仍未完全定责）
+
+**判定依据**（P1、P2 两台机器实测一致）：
+
+1. 把仓库目录加进火绒**信任区**之后**仍然被删** —— 信任区只管它自己的扫描链路
+2. 火绒的**「隔离区」与「日志」里没有任何对应时间的记录**
+3. P1 做过对照实验：**`git rebase` 可稳定复现**（先备份 `.git` 再复现，**2/2 命中**），
+   被删的是 **`.git/refs/`** —— 这不是杀毒软件的行为模式（见坑 11）
+
+> ⚠️ **但不要过早收口**：`.venv/Lib/site-packages/` 被清空那几次**与 git 操作无关**
+> （`.venv` 是 gitignored，git 不会碰它）。目前有两种可能，**尚未定论**：
+> ① 触发条件比「git 操作」更宽；② **本来就是两件不同的事**。
+> 正在按 Issue #20 用 `scripts/watch-files.py` 做多台机器的对照实验。
+
 ### ✅ 有效的办法：把 venv 放到项目外
 
 **做法**：venv 建在项目外，用 **junction（目录联接）** 把 `backend/.venv` 指过去。
@@ -76,10 +90,15 @@ cd backend
 |---|---|---|
 | 默认 | 所有人 | fastapi / uvicorn / sqlalchemy / alembic / pydantic-settings |
 | `[dev]` | P2、P3 | pytest / pytest-cov / httpx / ruff |
-| `[parse]` | **只有 P1** | pymupdf / python-docx / python-pptx / paddleocr / paddlepaddle |
+| `[parse]` | P1 · **以及任何要复现解析用例的人**（评委 / reviewer） | pymupdf / python-docx / python-pptx —— 几十 MB |
+| `[ocr]` | **只有 OCR 链路**（默认不要装） | paddleocr / paddlepaddle —— **几个 GB** |
 
-`[parse]` 里的 paddleocr + paddlepaddle 有**几个 GB**，跟后端日常开发无关。
+> **`[parse]` 与 `[ocr]` 已拆开**：想跑解析用例（含真实教材那 14 个默认 skip 的用例）**只需要 `[parse]`**，
+> 不需要装几个 GB 的 OCR 全家桶。真实教材用 `bash scripts/fetch-materials.sh` 一条命令准备好。
+
+`[ocr]` 里的 paddleocr + paddlepaddle 有**几个 GB**，跟后端日常开发无关。
 装了会拖慢每一次 `pip install`，还容易和 ABI 版本打架。
+版本下限锁在 `paddleocr>=3.7,<4` / `paddlepaddle>=3.3,<4`（实测：`paddlepaddle` 只有 3.0.0 起才提供 win+cp313 wheel，Python 3.13 上装不了 2.x）。
 
 ---
 
@@ -95,6 +114,8 @@ cd backend
 | 用 `rm` 删项目里的文件 | 本机删除机制走回收站，沙箱内走不通 | 报 `SAFE_DELETE_FAIL_CLOSED`。**改用重命名移走**（见坑 4） |
 | 手工给 `created_at` 传任意时间字符串 | 时间列是 TEXT，排序靠字典序 | 混进带本地偏移的时间会让排序**静默出错**。现在有 CHECK 兜底，会直接报错 |
 | **直接用 `git branch -f main origin/main` 更新本地 main** | `origin/main` 是**本地缓存**，`git fetch` 失败过一次它就可能停在旧位置 | 本地 main 被设到旧提交 → 下一个 `git switch main` 会**删掉新文件**（见坑 6） |
+| **在本仓库 `git rebase`** | 实测**稳定触发** `.git/refs/` 被删（2/2），git 随即报 `not a git repository` | **仓库整体不可用**。替代：`git switch -c <分支> origin/main`（新克隆更稳）；需要同步 main 时**用 `merge`，不要 rebase**（见坑 11） |
+| **给 bash 脚本的输出接管道**（`bash x.sh \| tail -30`） | 本机的命令过滤器会把管道场景一起打挂 | **输出全空 + 退出码 1**，看起来像脚本没跑。直接 `bash x.sh` 就正常（见坑 8） |
 
 ---
 
@@ -272,6 +293,109 @@ python -c "import os; os.rename(r'<repo>\.git\index.lock', r'<别处>\index.lock
 
 ---
 
+### 坑 8 · Bash 命令过滤器会**误报引号错误**（命令其实没执行）
+
+**现象**：报错像语法错误，但**命令里根本没有未闭合的引号**，而且**命令没有被执行**：
+
+```
+/usr/bin/bash: -c: line 1: unexpected EOF while looking for matching `''
+```
+
+**已知触发形态**（都是实测遇到的，非穷举）：
+
+| 触发形态 | 例子 |
+|---|---|
+| 含 Windows 盘符路径 | `python -m venv D:/repo/backend/.venv` |
+| 引号包裹的含空格 / 中文路径 | `rm "D:/新建文件夹 (2)/.../check.txt"` |
+| 特定 URL 字符串 | `git clone https://github.com/owner/repo.git` |
+| 用 `;` 串联多条命令 | `node --version; npm --version` |
+| **给 bash 脚本的输出接管道**（P2 补充） | `bash x.sh \| tail -30` → 输出全空 + 退出码 1，**不报引号错但同样没跑成** |
+| **随机的普通命令** | 同一条命令重试 1–2 次往往就能成功 |
+
+**规避**：
+1. **把操作写成 Python 脚本**（`subprocess` + `shell=False`）执行，结果写文件再读
+2. 用**相对路径**而不是盘符路径
+3. **别给 bash 脚本接管道**，直接 `bash x.sh`
+4. 启动失败就**原样重试 1–2 次**
+
+> **为什么值得单独记一条**：报错信息把人往"语法错误"上引，实际是过滤器拦截 —— 很容易浪费十几分钟去找不存在的引号问题。
+
+---
+
+### 坑 9 · PowerShell 工具的输出不可见
+
+**现象**：命令退出码正常，但 **stdout / stderr 全是空的** —— 连 `Write-Output "hello"` 都没有输出。
+
+**规避**：把结果**写入文件**，再用读文件的工具读回来。
+
+---
+
+### 坑 10 · git 的网络命令失败：**schannel TLS 后端**（不是网络问题）
+
+**现象**：任何走网络的 git 命令（`push` / `fetch` / `ls-remote` / `clone`）**每次都卡约 91 秒**才失败：
+
+```
+fatal: unable to access 'https://github.com/<owner>/<repo>.git/':
+schannel: server closed abruptly (missing close_notify)
+```
+
+**关键判断 —— 这不是网络问题**（别去折腾代理 / DNS / hosts / hosts 文件）：
+
+| 探测 | 结果 |
+|---|---|
+| Python `urllib` 直连 `github.com` / `api.github.com` / `codeload.github.com` | 全部 **HTTP 200** |
+| `gh api rate_limit` | **成功**（gh 走 Go 自己的 TLS 栈） |
+| `git ls-remote`（默认 schannel） | **失败**，91 秒超时 |
+| `git -c http.sslBackend=openssl ls-remote` | ✅ **4–6 秒成功** |
+
+**根因**：Windows 上 git 默认用 **schannel**（系统 TLS）。本机 schannel 握手被中断（安全软件 / 中间盒做 TLS 检查时常见）；而 git 自带的 **openssl** 后端 + PortableGit 的 CA 包是好的。
+
+**解法**（写一次永久有效；仓内配置，不进版本库）：
+
+```bash
+git config http.sslBackend openssl          # 推荐
+git -c http.sslBackend=openssl push         # 或每条命令临时带上
+```
+
+**排查顺序**：git 网络操作失败 → **先用 openssl 后端试一次（6 秒出结果）**，再怀疑网络。
+
+---
+
+### 坑 11 · `.git/refs` 可能损坏（**`rebase` 能稳定触发，但不止 rebase**）
+
+**现象**：所有 git 命令报 `fatal: not a git repository`；或 `cannot lock ref` / `unable to resolve reference`；
+更隐蔽的情况是 `git diff` 给出**假结果**（例如显示远端"少了几千行"）。
+
+**已知事实**：
+
+- P1 实测：**`git rebase` 稳定触发** —— `.git/refs/` 整个目录消失（**2/2 命中**，用「先备份 `.git` → 再复现」的对照实验确认）；
+  严重时 `.git/objects` 也会少文件（`bad object HEAD`、`missing blob`）
+- P2 实测：**没跑过 rebase 也遇到过** refs 损坏 —— 所以**触发条件比 rebase 更宽**，按「**本地 refs 可能损坏**」这个现象来记，不要只归因于 rebase
+
+**两种修法**
+
+**① 轻量（引用记录坏了，但对象库完好）**：
+
+```bash
+git update-ref -d refs/remotes/origin/main     # 删掉坏引用
+git remote prune origin                        # 清理失效的远端跟踪引用
+git fetch origin                               # 重新取
+```
+
+**② 重量（`.git/refs/` 目录整个没了 → git 直接不认仓库）**：
+
+1. 重建目录结构（缺它 git 就报 `not a git repository`）：
+   `refs`、`refs/heads`、`refs/tags`、`refs/remotes/origin`
+2. 用**远端 sha** 写回本地分支引用（最可靠）：
+   `git rev-parse origin/<branch>` 取 sha → 写进 `.git/refs/heads/<branch>`
+3. 对齐索引与工作区：`git read-tree HEAD` → `git reset --mixed HEAD`
+4. `git fetch origin` → `git fsck --connectivity-only`（期望 exit 0）
+5. 若 `objects` 也缺 → 用**提前备份的 `.git`** 覆盖式回灌（`shutil.copytree(backup, git_dir, dirs_exist_ok=True)`，只覆盖不删除）
+
+**预防（成本极低，`.git` 只有几百 KB）**：**动 `.git` 之前先备份**（见 §5）。
+
+---
+
 ## 4. Alembic 的两个必知事项
 
 ### 4.1 `autogenerate` 会静默漏东西 —— 必须逐个核对
@@ -310,6 +434,21 @@ git diff --staged             # 改动内容对不对
 git diff --staged --name-only | grep -E "\.env|\.key|\.pem|\.db$"   # 应无输出
 python -m pytest -q           # 测试是不是绿的
 python -m ruff check .        # 静态检查
+```
+
+**每天开工第一件事（成本近零）**：
+
+```bash
+git restore .                 # 万一昨晚有文件被删，先恢复再看
+```
+
+> 文件都在 git 里，恢复是秒级的。**真正的风险是"在没恢复的状态下改了代码，然后 commit"** —— 那会把删除**固化**进历史。
+
+**动 `.git` 之前先备份**（成本极低 —— `.git` 只有几百 KB）：
+
+```python
+import shutil
+shutil.copytree(r'<repo>\.git', r'<项目外>\git_backup')
 ```
 
 **任何一条不过，就不要提交。**
