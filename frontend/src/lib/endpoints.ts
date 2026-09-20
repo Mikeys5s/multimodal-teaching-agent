@@ -11,6 +11,7 @@ import type {
   KnowledgePoint,
   KnowledgePointDetail,
   KnowledgePointQuery,
+  LearningPathOut,
   LearningPathStep,
   Material,
   MaterialQuery,
@@ -98,8 +99,26 @@ export const api = {
     request<KnowledgeGraph>('/knowledge-graph', {
       query: { material_id: q.material_id, chapter_id: q.chapter_id, max_nodes: q.max_nodes },
     }),
-  getLearningPath: (kpId: string) =>
-    request<LearningPathStep[]>('/learning-path', { query: { kp_id: kpId } }),
+  /**
+   * 学习路径（api-spec §4.4）。
+   *
+   * ⚠️ **线上实测（2026-09-19）后端返回的是对象 `{ target_kp_id, steps }`**，而 §4.4 承诺的是
+   * **顶层数组** `LearningPathStep[]`。这里做「两种形状都读」的兼容：数组直接用、对象取 `steps`、
+   * 都没有则退化为空数组。
+   *
+   * 不做兼容的后果是**页面崩溃**：`PathTimeline` 会 `for (const step of steps)`，对普通对象抛
+   * `steps is not iterable`；且 `steps.length` 为 `undefined`，连「加载中 / 空状态 / 时间线」
+   * 三个分支全部落空 —— 白屏且无提示。
+   *
+   * 已按「以 spec 为准」在 Issue #15 请 P2 收口为数组；收口后本兼容层保留亦无害。
+   */
+  getLearningPath: async (kpId: string): Promise<LearningPathStep[]> => {
+    const data = await request<LearningPathStep[] | LearningPathOut | null>('/learning-path', {
+      query: { kp_id: kpId },
+    })
+    if (Array.isArray(data)) return data
+    return data?.steps ?? []
+  },
   /**
    * 卡点根因回溯（api-spec §4.4）。
    * `studentEvidence` 是 `kp_misconceptions.id` 列表 —— v1.3 明确为**可重复查询参数**，
