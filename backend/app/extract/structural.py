@@ -130,30 +130,64 @@ def _clean(text: str) -> str:
     return re.sub(r"\s+", " ", t).strip()
 
 
-def _name_from_block(content: str) -> str | None:
-    """从一段文本里推出"这个知识点叫什么"。抽不出来返回 None。"""
+def _name_from_block(content: str, is_heading: bool = False) -> str | None:
+    """从一段文本里推出"这个知识点叫什么"。抽不出来返回 None。
+
+    ## 两类来源，可信度不同（2026-09-20 方案 B 后明确）
+
+    **① `heading` —— 标题就是名字。**
+    章/节标题本来就是知识点名（`3.5 Congestion Control`、`CONGESTION CONTROL`）。
+    ⚠️ 但仍要过 `_is_junk_name`：**引语署名经常被解析器识别成 heading**
+    （`—William Shakespeare` 就是这么进来的）。
+
+    **② `paragraph` —— 只认定义句式。**
+    一段话如果不是标题、又没有「X is a ...」/「X 是指 ...」，那它
+    **不是知识点**，只是解释知识点的一段正文 —— 那段正文会通过
+    `summary_md` / `evidence_quote` 挂在**真正的**知识点下面。
+
+    ⚠️ **主语直接采信，不过 `_is_junk_name`。**
+    一个短语能站在「X is a ...」的主语位置，它**已经是定义句的主语了**，
+    比任何启发式都可信。上一版我在这里过滤，把 `TCP` 杀掉了
+    （`len(n) < 4`）—— 而 `TCP` 恰恰是这份教材里最该留下的名字之一。
+    """
     first_line = (content or "").strip().splitlines()[0] if content else ""
     if not first_line:
+        return None
+
+    if is_heading:
+        head = _clean(first_line)
+        if 4 <= len(head) <= _MAX_NAME * 2 and not _is_junk_name(head):
+            return head[:_MAX_NAME]
         return None
 
     for pat in _DEFINITION_PATTERNS:
         m = pat.match(first_line)
         if m:
+            # ★ 不过滤 —— 见上面 docstring 的理由
             name = _clean(m.group(1))
-            if 2 <= len(name) <= _MAX_NAME * 2 and not _is_junk_name(name):
+            if 2 <= len(name) <= _MAX_NAME * 2:
                 return name[:_MAX_NAME]
 
-    # 没有定义句式就退回"第一句话的前若干字" —— **宁可给个粗糙的名字，也不丢一个候选**。
-    # （抽得不准由 needs_review 兜着；抽不出来才是真问题。）
-    head = _clean(first_line)
-    head = re.split(r"[。；;.!?]", head)[0]
-    if len(head) < 4:
-        return None
-    # ★ 清洗：垃圾名宁可**丢弃这个候选**，也不要写进库 ——
-    #   它会被 /graph /path /tutor 三页显示出来，比"少一个知识点"难看得多。
-    if _is_junk_name(head):
-        return None
-    return head[:_MAX_NAME]
+    # ★ **不再退回"第一句话的前若干字"。**（2026-09-20 改，方案 B）
+    #
+    # 原注释写的是「**宁可给个粗糙的名字，也不丢一个候选**」——
+    # 那个取舍在**手上没有真实教材**时是对的：那时最怕"抽不出东西"。
+    #
+    # **但在有真实教材之后反了。** 实测：一份教材 1000 个段落 →
+    # **1000 个"知识点"**，而段落首句本来就不是知识点名：
+    #
+    #     The hand that hath made you fa      ← 引语
+    #     By now we have seen enough lay      ← 句子片段
+    #     • Guarantees message delivery       ← 列表项
+    #
+    # **它把"段落"变成了"知识点"，噪声淹没信号。**
+    # 而且名字清洗只能治标：拦掉 `CHAPTER`，还会有下一批。
+    #
+    # 现在的口径：**heading（章/节标题）+ 定义句** 才算知识点候选。
+    # 一段话如果既不是标题、又没有定义句式，它**不是知识点**，
+    # 只是解释知识点的一段正文 —— 那段正文会通过 `summary_md` /
+    # `evidence_quote` 挂在真正的知识点下面。
+    return None
 
 
 def _difficulty_of(content: str) -> int:
@@ -259,7 +293,8 @@ def extract_material(session: Session, mat_id: str) -> dict[str, Any]:
     _seen_in_section: dict[str, set[str]] = {}
 
     def _add_kp(block: MaterialBlock, sec: Section, seq_in_unit: int) -> None:
-        name = _name_from_block(block.content_md)
+        # ★ heading 与 paragraph 走不同的口径（见 _name_from_block 的 docstring）
+        name = _name_from_block(block.content_md, is_heading=(block.block_type == "heading"))
         if not name:
             return
         bucket = _seen_in_section.setdefault(sec.id, set())

@@ -28,6 +28,10 @@ ROOT_DIR="$(pwd)"   # 打包时要 cd 进临时目录，所以先把仓库根记
 #    `pwd -W` 给出 `D:/muti_tagent` 这种形式。
 #    （这条在 docs/dev-playbook.md 里记过 —— 我还是先踩了才想起来去翻。）
 ROOT_WIN="$(pwd -W 2>/dev/null || echo "$ROOT_DIR")"
+
+#: 用本机 venv 的 python 跑自检脚本（它要算哈希、发 HTTP 请求）
+PY="$ROOT_DIR/backend/.venv/Scripts/python.exe"
+[ -x "$PY" ] || PY="python"
 if [ "${ROOT_WIN#/}" = "$ROOT_WIN" ]; then
     : # 已经是 Windows 形式
 else
@@ -135,16 +139,28 @@ echo "==> ④ 构建并启动（这一步最慢，前端要 npm ci + vite build�
 ssh $SSHOPTS "$HOST" "cd $REMOTE_DIR && docker compose up -d --build" 2>&1 | tail -25
 
 # ---- ⑤ 验证 -------------------------------------------------------------
-echo "==> ⑤ 验证"
-# shellcheck disable=SC2086
-ssh $SSHOPTS "$HOST" 'bash -s' <<'REMOTE_VERIFY'
-echo "    容器：$(docker ps --filter name=xizhi --format '{{.Status}}')"
-echo -n "    首页："
-curl -s -o /dev/null -w "HTTP %{http_code}\n" http://127.0.0.1:8000/ || echo "连不上"
-echo -n "    健康接口："
-curl -s http://127.0.0.1:8000/api/health | head -c 160
-echo
-REMOTE_VERIFY
+#
+# ⚠️ **这一段原先不断言任何东西。**
+#
+# 原版只做三件事：打印容器状态、`curl /` 看状态码、`curl /api/health` 看内容。
+# 三个都不判定 → 脚本**永远**打印「✅ 部署流程结束」。
+#
+# 后果（2026-09-20 真事）：
+#   · 第一次：`nohup` 在这台机器上不存在，**部署根本没启动**，脚本照样说"结束"
+#   · 第二次：跑了 15 分钟，但 **docker 镜像的构建时间还是上一次的** ——
+#     没有任何东西产出新镜像，**脚本还是说"结束"**
+#
+# 所以"部署完成"当时是一句**口号**，不是事实。现在把它变成**被检查过的结论**：
+#   跑自检 → 失败就让整个部署失败（非零退出）。
+echo "==> ⑤ 部署后自检"
+if ! "$PY" scripts/check-deploy.py; then
+    echo
+    echo "❌ **部署后自检未通过 —— 这次部署算失败。**"
+    echo "   外网地址虽然还在响应，但跑的可能不是最新代码。"
+    echo "   排查清单见上面自检输出的末尾三行。"
+    exit 1
+fi
 
 echo
-echo "✅ 部署流程结束。外网地址：http://120.77.177.171:8000"
+echo "✅ 部署流程结束，且**自检通过**（容器里跑的就是当前代码）。"
+echo "   外网地址：http://120.77.177.171:8000"
