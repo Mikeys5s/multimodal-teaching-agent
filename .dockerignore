@@ -1,0 +1,56 @@
+# 构建上下文排除清单。
+#
+# 不排的话，`COPY . .` 会把 `.venv`（4700+ 文件）、`.git`、`node_modules`
+# 全塞进构建上下文 —— 镜像构建会慢到无法忍受。
+#
+# ⚠️ 这份清单要**故意宽松一点**（宁可多排）：前端构建只需要 `frontend/` 下的
+#    `package.json` / `package-lock.json` / `src` / `public` / 配置文件，
+#    后端只需要 `backend/` 下的源码。
+
+# ---- 版本控制与本地状态 ----
+.git
+.gitignore
+.learnbuddy
+*.md
+
+# ---- Python ----
+**/.venv
+**/venv
+**/__pycache__
+**/*.py[cod]
+**/*.egg-info
+**/.pytest_cache
+**/.ruff_cache
+**/.mypy_cache
+**/.coverage
+**/htmlcov
+**/*.db
+**/*.db-wal
+**/*.db-shm
+**/uploads/
+
+# ---- Node / 前端 ----
+**/node_modules
+**/dist
+**/.vite
+**/.turbo
+
+# ---- 与运行无关的大块内容 ----
+samples/
+docs/
+backend/tests/
+Dockerfile
+docker-compose.yml
+.dockerignore
+
+# `skills/` 里只有图推理器是运行期要用的（`/api/knowledge-graph` 与
+# `/api/report/quality` 复用它的 `verify()`），其余 200+ 个文件都是开发期资产。
+# 所以整目录排除、再把它单独捞回来。
+skills/
+!skills/xizhi-graph-infer/
+
+# ---- 编辑器 / 系统 ----
+.vscode
+.idea
+.DS_Store
+Thumbs.db
