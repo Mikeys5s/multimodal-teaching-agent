@@ -16,6 +16,7 @@ from sqlalchemy.orm import Session
 from app.core.errors import ApiError, ErrorCode
 from app.core.response import Envelope, ok
 from app.db import get_db
+from app.graph_view import learning_path, load_graph
 from app.schemas.graph import (
     GraphEdgeOut,
     GraphNodeOut,
@@ -29,7 +30,6 @@ router = APIRouter(tags=["graph"])
 
 DbSession = Annotated[Session, Depends(get_db)]
 
-MOCK_MODE = True
 
 
 @router.get(
@@ -49,45 +49,39 @@ def get_graph(
     chapter_id: Annotated[str | None, Query()] = None,
     max_nodes: Annotated[int, Query(ge=1, le=1000, description="节点数上限")] = 200,
 ) -> Envelope[GraphOut]:
+    # ★ 真读库 + 真做环校验。
+    #
+    # 这里最容易写错的一处：`stats.cycle_count` **不是常量 0**，它来自
+    # `graph_infer.verify()` 的实算结果。区别很重要 ——
+    # **「检查过的 0」和「恰好没出错的 0」不是一回事**，
+    # 而前者才配写进答辩材料（对应 B1-2 的验收口径）。
+    graph, kps, edge_rows, result = load_graph(db, material_id=material_id, chapter_id=chapter_id)
+
+    # 截断到 max_nodes（按 seq 取前 N 个），边只保留两端都还在的 ——
+    # 否则前端会画出指向不存在节点的悬空边。
+    kept = list(kps[:max_nodes])
+    kept_ids = {k.id for k in kept}
+
     nodes = [
         GraphNodeOut(
-            id="kp_9f2a1c40_000_001_002",
-            name="滑动窗口机制",
-            difficulty=3,
-            chapter_id="ch_9f2a1c40_000",
-            section_id="sec_9f2a1c40_000_001",
-            needs_review=False,
-        ),
-        GraphNodeOut(
-            id="kp_9f2a1c40_000_002_003",
-            name="TCP 拥塞控制",
-            difficulty=4,
-            chapter_id="ch_9f2a1c40_000",
-            section_id="sec_9f2a1c40_000_002",
-            needs_review=False,
-        ),
-        GraphNodeOut(
-            id="kp_9f2a1c40_000_002_007",
-            name="拥塞窗口与接收窗口的区别",
-            difficulty=4,
-            chapter_id="ch_9f2a1c40_000",
-            section_id="sec_9f2a1c40_000_002",
-            needs_review=True,  # 结构-语义冲突边牵涉的节点
-        ),
+            id=k.id,
+            name=k.name,
+            difficulty=k.difficulty,
+            chapter_id=k.chapter_id,
+            section_id=k.section_id,
+            needs_review=bool(k.needs_review),
+        )
+        for k in kept
     ]
     edges = [
         GraphEdgeOut(
-            source="kp_9f2a1c40_000_001_002", target="kp_9f2a1c40_000_002_003", relation_type="hard"
-        ),
-        GraphEdgeOut(
-            source="kp_9f2a1c40_000_002_003", target="kp_9f2a1c40_000_002_007", relation_type="soft"
-        ),
+            source=e.prereq_kp_id,  # ★ 前置 = source（硬约定，见 docs/api-spec.md §4.4）
+            target=e.kp_id,
+            relation_type=e.relation_type,
+        )
+        for e in edge_rows
+        if not e.pruned and e.kp_id in kept_ids and e.prereq_kp_id in kept_ids
     ]
-
-    if max_nodes < len(nodes):
-        keep = {n.id for n in nodes[:max_nodes]}
-        nodes = [n for n in nodes if n.id in keep]
-        edges = [e for e in edges if e.source in keep and e.target in keep]
 
     return ok(
         GraphOut(
@@ -97,9 +91,9 @@ def get_graph(
             stats=GraphStatsOut(
                 node_count=len(nodes),
                 edge_count=len(edges),
-                cycle_count=0,  # ★ 工程不变量
-                pruned_count=2,  # 「检出并剪除了 2 条成环边」—— 比只报 0 更有说服力
-                conflict_count=1,  # 结构-语义冲突，已标 needs_review
+                cycle_count=result["cycle_count"],  # ★ 实算，不是常量
+                pruned_count=result["pruned_edge_count"],
+                conflict_count=sum(1 for e in edge_rows if e.needs_review == 1),
                 hard_edge_count=sum(1 for e in edges if e.relation_type == "hard"),
                 soft_edge_count=sum(1 for e in edges if e.relation_type == "soft"),
             ),
@@ -124,38 +118,34 @@ def get_learning_path(
     if not kp_id.startswith("kp_"):
         raise ApiError(ErrorCode.NOT_FOUND, f"知识点 {kp_id} 不存在（id 应以 kp_ 开头）")
 
+    # ★ 真算路径：沿 hard 边反向可达 + 拓扑排序（算法在 graph_infer，不重写）
+    graph, kp_rows, _, _ = load_graph(db)
+    by_id = {k.id: k for k in kp_rows}
+
+    result = learning_path(graph, kp_id)
+    if not result.get("ok"):
+        # 目标不在图里 —— 可能是 id 不存在，也可能是它还没有任何依赖边。
+        # **两者都该报 404**：对调用方来说"查不到这个知识点的路径"是同一件事。
+        raise ApiError(
+            ErrorCode.NOT_FOUND,
+            f"知识点 {kp_id} 不在依赖图里（可能不存在，或它还没有任何前置依赖边）",
+        )
+
     steps = [
         LearningPathStepOut(
-            order=1,
-            kp_id="kp_9f2a1c40_000_000_001",
-            name="可靠数据传输的基本原理",
-            difficulty=2,
-            reason=None,
-            is_start_point=True,
-        ),
-        LearningPathStepOut(
-            order=2,
-            kp_id="kp_9f2a1c40_000_001_002",
-            name="滑动窗口机制",
-            difficulty=3,
-            reason="不理解窗口如何随 ACK 滑动，就无法理解 cwnd 的调节对象",
-            is_start_point=False,
-        ),
-        LearningPathStepOut(
-            order=3,
-            kp_id="kp_9f2a1c40_000_001_005",
-            name="RTT 与超时重传",
-            difficulty=3,
-            reason="RTT 估计决定超时阈值，而超时是拥塞判断的触发条件",
-            is_start_point=False,
-        ),
-        LearningPathStepOut(
-            order=4,
-            kp_id=kp_id,
-            name="TCP 拥塞控制",
-            difficulty=4,
-            reason="四个阶段（慢启动/拥塞避免/快重传/快恢复）都以窗口与超时为基础",
-            is_start_point=False,
-        ),
+            order=i + 1,
+            kp_id=s["knowledge_point"],
+            name=(by_id[s["knowledge_point"]].name if s["knowledge_point"] in by_id else ""),
+            difficulty=(
+                by_id[s["knowledge_point"]].difficulty
+                if s["knowledge_point"] in by_id
+                else 3
+            ),
+            # ★ reason 直接来自边上的 reason（api-spec 的约定）——
+            #   这样"为什么这个要排在前面"是可解释的，不是黑箱拓扑排序的结果。
+            reason=(s.get("reason") or None),
+            is_start_point=bool(s.get("is_start_point")),
+        )
+        for i, s in enumerate(result["steps"])
     ]
     return ok(LearningPathOut(target_kp_id=kp_id, steps=steps))

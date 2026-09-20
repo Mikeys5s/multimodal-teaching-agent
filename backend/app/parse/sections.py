@@ -13,6 +13,10 @@
 `sections.source_block_id` 反向指），所以这里只给出 `[start_seq, end_seq]`
 这个块区间 —— 下游按区间切 Markdown 就是"节级输入片段"。
 
+⚠️ **区间边界语义的权威口径在 `ParsedSection` 的 docstring**（左闭右闭、
+标题块归不归本节、相邻节是否重叠、空节怎么表示）—— 那几条是确定性契约，
+落库与投喂一律照它实现，不要凭直觉补一个块。
+
 "节"的粒度：不照搬标题层级
 --------------------------
 docs/extraction-channel.md 的硬规则是「**一节要能抽出 3–12 个知识点**」，
@@ -93,7 +97,47 @@ _TITLE_PAGE_SPAN = 1
 
 @dataclass(frozen=True)
 class ParsedSection:
-    """一节 —— 下游**按节投喂**的那个中间单位（抽取阶段的最小输入单元）。"""
+    """一节 —— 下游**按节投喂**的那个中间单位（抽取阶段的最小输入单元）。
+
+    区间边界语义（确定性契约 —— 落库 / 投喂一律照此实现，勿凭直觉补一个块）
+    ----------------------------------------------------------------------
+    1. **左闭右闭**。本节的内容块就是 `blocks[start_seq : end_seq + 1]`。
+       恒有 `start_seq <= end_seq`（区间**非空**），实现里**不存在**
+       `end_seq < start_seq` 这种"空区间"写法 —— 所以切片结果**永远不会是
+       `[]`**。`block_count = end_seq - start_seq + 1`，恒 >= 1。
+    2. **标题块归属**：
+       · **叶子标题**（自己下面没有子标题）→ 标题块**属于本节**，
+         `start_seq == heading_seq`，切片的第一块就是那行标题本身；
+       · **容器标题**（下面还有子标题）→ 它的"导语节"**不含容器标题块**，
+         `start_seq == heading_seq + 1`；容器标题块**不属于任何节**
+         （它是骨架节点，不是节内容）。容器的编号与标题由它的导语节继承
+         （见本节的 `number` / `title`），所以信息没丢。
+       · 两条合起来是一条不变量：**`heading_seq - start_seq ∈ {-1, 0}`**。
+       · 占位节（`前言` / `全文`，整份材料推不出骨架时）**没有真实标题块**，
+         `heading_seq` 一律为 0，而 `blocks[0]` **不保证是 heading 块**。
+    3. **相邻节不重叠**。按文档顺序，恒有 `前一节.end_seq < 后一节.start_seq`；
+       多数相邻节还满足 `后一节.start_seq == 前一节.end_seq + 1`（无缝相接）。
+       唯一的**空洞是容器标题块**（见第 2 条）：骨架里它是容器节点，
+       不进任何节的块区间。**空洞不等于丢块** —— 容器标题块在骨架里有唯一
+       归属（容器 + 它的导语节/子节），只是不落在"节级输入片段"里。
+    4. **"空节"怎么表示**：标题后紧跟同级标题（这个标题下一个字正文都没有）时，
+       `start_seq == end_seq == heading_seq`、`block_count == 1` ——
+       切片拿到的就是**那一行标题**，不是 `[]`。下游要判"这节没有正文"，
+       判据是 `end_seq == heading_seq`（而不是 `block_count == 0`，它不会为 0）。
+    5. **节内 `page_no` 单调不减**。区间是文档顺序上的连续切片，所以节内
+       （非 None 的）`page_no` 必然单调不减 —— 一节不会来回跳页，
+       节的页锚点才能被下游当成"这一节覆盖了第几页到第几页"。
+
+    一行例子（`blocks` 按文档顺序排列）
+    ---------------------------------
+        idx:       0           1         2          3
+        content:  "1 网络层"   "导语"    "1.1 路由"  "正文"
+        → ch0 sec0 = 容器 1 的**导语节**：heading_seq=0，[start,end] = [1, 1]
+        → ch0 sec1 = 叶子 1.1 的节：     heading_seq=2，[start,end] = [2, 3]
+        · idx 0 是容器标题块 → 不属于任何节（空洞）
+        · `blocks[1:2]` = ["导语"]，`blocks[2:4]` = ["1.1 路由", "正文"]
+        若把 idx 1 的"导语"删掉，容器就不出节，只剩 sec0 = 叶子的 [2, 3]。
+    """
 
     chapter_seq: int
     chapter_number: str | None
@@ -103,12 +147,36 @@ class ParsedSection:
     number: str | None
     title: str
     heading_seq: int
-    start_seq: int
-    end_seq: int  # 闭区间；切片用 blocks[start_seq : end_seq + 1]（空节天然得到 []）
+    start_seq: int  # 闭区间左端（含）
+    end_seq: int  # 闭区间右端（含）；恒 >= start_seq。切片用 blocks[start_seq : end_seq + 1]
+
+    def __post_init__(self) -> None:
+        """把上面的区间语义钉成**构造期不变量**（编程错误 → ValueError，不做兜底）。
+
+        区间差一个块不会让任何下游报错，只会让知识点悄悄挂到相邻的节上 ——
+        那正是最难查、且直接砸硬验收指标的一类 bug。所以在构造处就拦住。
+        """
+        if self.start_seq < 0 or self.end_seq < 0 or self.heading_seq < 0:
+            raise ValueError(
+                f"seq 必须非负，收到 start={self.start_seq} end={self.end_seq} "
+                f"heading={self.heading_seq}"
+            )
+        if self.end_seq < self.start_seq:
+            raise ValueError(
+                f"区间必须非空（左闭右闭）：start_seq={self.start_seq} > "
+                f"end_seq={self.end_seq}。空节用 start_seq == end_seq == heading_seq 表示，"
+                "不存在 end_seq < start_seq 的写法。"
+            )
+        if self.heading_seq not in (self.start_seq, self.start_seq - 1):
+            raise ValueError(
+                f"heading_seq 与 start_seq 的关系不合法：heading_seq={self.heading_seq}，"
+                f"start_seq={self.start_seq}（必须是 start_seq 本身 = 叶子，"
+                "或 start_seq - 1 = 容器导语节）"
+            )
 
     @property
     def block_count(self) -> int:
-        return max(0, self.end_seq - self.start_seq + 1)
+        return self.end_seq - self.start_seq + 1
 
 
 @dataclass(frozen=True)
@@ -220,8 +288,9 @@ def _flatten_sections(nodes: list[_Node]) -> list[tuple[int, str | None, str, in
     for node in nodes:
         number, title = _number_and_title(node.block)
         if not node.children:
-            # 叶子标题自成一节。end_seq == seq 时是空节（标题后紧跟同级标题），
-            # 仍然产出：章节号连续比"少一节"更重要，下游也看得见"这节没内容"。
+            # 叶子标题自成一节。end_seq == seq 时**只有标题、没有正文**
+            # （标题后紧跟同级标题）：区间仍含标题自身，故 block_count == 1、
+            # 切片得到那一行标题 —— 不是空列表，判据见 ParsedSection docstring 第 4 条。
             out.append((node.seq, number, title, node.seq, node.end_seq))
             continue
 
@@ -435,7 +504,55 @@ def _build_numbered_chapters(
     return chapters
 
 
-def _build(blocks: list[ParsedBlock]) -> list[ParsedChapter]:
+
+def _assert_range_contract(blocks: list[ParsedBlock], sections: list[ParsedSection]) -> None:
+    """校验 `ParsedSection` docstring 里写死的**跨节区间不变量**。
+
+    `ParsedSection.__post_init__` 只能看到一节自己，管不了节与节之间的关系，
+    所以"相邻节不重叠 / 按文档顺序 / 节内页码单调不减"这三条在这里post-check。
+
+    这些性质都由 `_build_tree` 的单调栈 + `_flatten_sections` 的递归方式保证，
+    **正常输入下永远不会触发** —— 放在这里是为了以后有人动了压栈/递归逻辑时
+    **立刻炸掉**。理由：区间差一个块不会让任何下游报错，只会让知识点挂到相邻的
+    节上，而那是不报错的硬验收翻车（悬挂错误）。按本包约定，契约被违反
+    （编程错误）→ `ValueError`，不做兜底。
+
+    检查的条目：
+      · 区间落在 `blocks` 范围内，且 `start_seq <= end_seq`；
+      · 按文档顺序严格递增，且 `前一节.end_seq < 后一节.start_seq`（不重叠）；
+      · 节内非 None 的 `page_no` 单调不减。
+    """
+    prev: ParsedSection | None = None
+    for section in sections:
+        if section.end_seq >= len(blocks):
+            raise ValueError(
+                f"节区间越界：[{section.start_seq}, {section.end_seq}] 超出块数 {len(blocks)}"
+            )
+        if prev is not None:
+            if section.start_seq <= prev.start_seq:
+                raise ValueError(
+                    f"节没有按文档顺序排列：上一节 start_seq={prev.start_seq}，"
+                    f"本节 start_seq={section.start_seq}"
+                )
+            if section.start_seq <= prev.end_seq:
+                raise ValueError(
+                    f"相邻节区间重叠：上一节 [{prev.start_seq}, {prev.end_seq}] 与"
+                    f"本节 [{section.start_seq}, {section.end_seq}] 有交集"
+                    "（同一个块会被投喂给两个节，知识点会挂错节）"
+                )
+
+        pages = [
+            b.page_no for b in blocks[section.start_seq : section.end_seq + 1] if b.page_no is not None
+        ]
+        if pages != sorted(pages):
+            raise ValueError(
+                f"节内 page_no 不是单调不减：sec{section.seq} "
+                f"[{section.start_seq}, {section.end_seq}] → {pages}"
+            )
+        prev = section
+
+
+def _build_chapters(blocks: list[ParsedBlock]) -> list[ParsedChapter]:
     """把块流切成章 → 节的骨架。全程只依赖文档自身，无随机、无时间。"""
     # ---- 没有任何标题：整份材料作为一节（占位标题，不编造章节号）----
     if not any(b.is_heading for b in blocks):
@@ -472,6 +589,13 @@ def _build(blocks: list[ParsedBlock]) -> list[ParsedChapter]:
     if top is None or top <= 1:
         return _build_level_chapters(blocks)
     return _build_numbered_chapters(blocks, numbered, top)
+
+
+def _build(blocks: list[ParsedBlock]) -> list[ParsedChapter]:
+    """`_build_chapters` + 跨节区间不变量自检 —— 对外唯一入口见 `split_outline`。"""
+    chapters = _build_chapters(blocks)
+    _assert_range_contract(blocks, [s for c in chapters for s in c.sections])
+    return chapters
 
 
 # ---------------------------------------------------------------------------

@@ -11,6 +11,17 @@ requires-python = ">=3.11"
 
 # ---- 运行期核心依赖（P2 / P3 需要）----
 # 只放「跑起来必需」的东西，解析类重依赖在下面的可选组里。
+#
+# ⚠️ v1.6 修订（2026-09-19）：**解析链的三个轻量依赖上移到这里**。
+#
+# 原来的划分把 `pymupdf` / `python-docx` / `python-pptx` 放在可选的 `parse` 组，
+# 理由是「P1 需要时才装」。但**这个判断漏了一件事**：
+# `app/parse/` 被 `app.pipeline` 导入，而 `app.main` 导入 `app.pipeline` ——
+# **只要进程起来就一定会 import 它们**。而 Dockerfile 只跑 `pip install -e .`，
+# 于是生产镜像构建直接失败：`ModuleNotFoundError: No module named 'docx'`。
+#
+# **判断标准**：**进程启动路径上会被 import 的，就必须在基础依赖里**；
+# 「几 GB 且只在构建期用」的（PaddleOCR）才放 extra。
 dependencies = [
     "fastapi>=0.115",
     "uvicorn[standard]>=0.32",
@@ -18,6 +29,9 @@ dependencies = [
     "alembic>=1.14",
     "pydantic-settings>=2.6",
     "python-multipart>=0.0.12",
+    "pymupdf>=1.25",      # app/parse/pdf.py —— 启动即 import
+    "python-docx>=1.1",   # app/parse/docx.py
+    "python-pptx>=1.0",   # app/parse/ 的 PPTX 分支
 ]
 
 [project.optional-dependencies]
@@ -28,15 +42,24 @@ dev = [
     "httpx>=0.28",          # FastAPI TestClient 依赖它
     "ruff>=0.8",
 ]
-# 解析链路：P1 需要时才装。
-# ⚠️ 不要和 dev 一起装 —— paddleocr + paddlepaddle 有几个 GB，
-#    和 P2/P3 的日常开发完全无关。
+# 解析链路（轻量）：P1 与任何要复现解析用例的人都装这个 —— 几十 MB。
 parse = [
     "pymupdf>=1.25",
     "python-docx>=1.1",
     "python-pptx>=1.0",
-    "paddleocr>=2.9",
-    "paddlepaddle>=2.6",
+]
+# OCR（重）：**几个 GB**，与后端日常开发和本批次的解析用例都无关，默认不要装。
+# 本批次（A1-2）明确"文本层 PDF 不走 OCR"，装它属于纯成本。
+#
+# ⚠️ 版本下限为什么是 3.x 而不是 2.x（实测结论，不要再改回去）：
+#   · PyPI 的 `paddlepaddle` **只有 3.0.0 起**才提供 win + cp313 的 wheel，
+#     `paddlepaddle` 2.x 最新（2.6.2）**没有 cp313 wheel** → Python 3.13 上装不上；
+#   · 退一步装 `paddleocr 2.9.1` 也不行：它依赖 `numpy<2.0`，与本环境的
+#     numpy 2.3.5 直接冲突。
+#   所以在本环境（Windows + Python 3.13）**只能锁 3.x**。
+ocr = [
+    "paddleocr>=3.7,<4",
+    "paddlepaddle>=3.3,<4",
 ]
 
 [tool.setuptools.packages.find]

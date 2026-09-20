@@ -1,0 +1,57 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* 设计 token（CSS 变量层，供非 Tailwind 场景与内联样式引用） */
+    --xizhi-bg: #f8fafc;
+    --xizhi-surface: #ffffff;
+    --xizhi-border: #e2e8f0;
+    --xizhi-text: #0f172a;
+    --xizhi-muted: #64748b;
+    --xizhi-brand: #2563eb;
+  }
+
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+
+  body {
+    @apply bg-slate-50 text-slate-900 antialiased;
+    margin: 0;
+  }
+
+  /* 桌面端为基准视口（SPEC §2.4：不做移动端适配，基准 1440×900） */
+  #root {
+    min-width: 1024px;
+  }
+}
+
+@layer components {
+  .xizhi-card {
+    @apply rounded-xl border border-slate-200 bg-white shadow-card;
+  }
+
+  .xizhi-focus {
+    @apply outline-none ring-2 ring-brand-500/40 ring-offset-1;
+  }
+}
+
+/* 细滚动条，避免长表格破坏版面 */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 9999px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+  background-clip: content-box;
+}
