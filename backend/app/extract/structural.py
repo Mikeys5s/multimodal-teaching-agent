@@ -62,6 +62,68 @@ _NEEDS_REVIEW = 1
 _HARD_HINTS = ("证明", "推导", "算法", "复杂度", "拥塞", "握手", "窗口", "收敛", "compute", "prove")
 
 
+#: 明显不是知识点名的模式（**只去明显垃圾**，剩下的交人工 —— 美佳拍板）。
+#:
+#: 这些是真实教材里抽出来的垃圾样本（今早那次抽取泄漏的）：
+#:
+#:     CHAPTER   FIVE   END-TO-END PROTOCOLS   Victory   —Winston Churchill
+#:
+#: 分类：
+#: ① 全大写短词（页眉/章名残留）—— "CHAPTER"、"FIVE"
+#: ② 署名/引语（`—Winston Churchill`、`(Smith, 2019)`）
+#: ③ 纯符号/纯数字
+#: ④ 过于通用的词（"Introduction" 这类单靠它说明不了什么）
+#:
+#: ⚠️ **不做语义判断** —— 那是语义线索的活。
+#: 这里只做"一眼不像知识点名"的过滤，**宁可放过，不可误杀**：
+#: 误杀一个真知识点比留一个垃圾名更糟（前者看不见，后者看得见）。
+_JUNK_PATTERNS = (
+    re.compile(r"^[—\-–]"),                      # 破折号开头 = 引语署名
+    re.compile(r"^\([^)]{0,40}\)$"),            # 整条就是一个括号
+    re.compile(r"^[\W_]+$"),                     # 全是符号
+    re.compile(r"^\d+$"),                        # 纯数字
+)
+
+#: CJK（中日韩）字符 —— 用来区分「纯英文全大写」和「中英混合」。
+#:
+#: ⚠️ 这个常量是**为了修一个真实误杀**才加的：
+#:    `"TCP 拥塞控制"` 曾被判成"全大写短词"丢掉（见 `_is_junk_name`）。
+_CJK_RE = re.compile(r"[\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff]")
+
+
+#: 全大写且很短的词 —— 页眉/章名残留（`CHAPTER` `FIVE` `TCP/IP` 这种除外）
+#: 长度阈值 12：`TCP/IP`(6) 会被放过，`END-TO-END PROTOCOLS`(20) 会被拦
+_JUNK_ALLCAPS_MAX = 12
+
+
+def _is_junk_name(name: str) -> bool:
+    """这个候选名是不是"一眼不像知识点"的垃圾。"""
+    n = (name or "").strip()
+    if len(n) < 4:
+        return True
+    for pat in _JUNK_PATTERNS:
+        if pat.match(n):
+            return True
+    # 全大写短词（页眉/章名残留）。
+    #
+    # ⚠️ **必须同时要求"没有 CJK 字符"** —— 第一版我只写了 `n.isupper()`，
+    #    结果 **`"TCP 拥塞控制"` 被判成垃圾丢掉了**：
+    #    Python 的 `str.isupper()` 只检查「有大小写的字符」，
+    #    中文无大小写，于是唯一的 cased 字符 `TCP` 全大写 → 返回 True。
+    #
+    #    **中英混合的短名会被整类误杀** —— 而我们的目标学科是计算机网络，
+    #    教材英文、讲义中文，**这种名字才是常态**。
+    if (
+        n.isupper()
+        and len(n) <= _JUNK_ALLCAPS_MAX
+        and not _CJK_RE.search(n)
+        and "/" not in n
+        and not any(c.isdigit() for c in n)
+    ):
+        return True
+    return False
+
+
 def _clean(text: str) -> str:
     """去 markdown 标记与多余空白，用于做知识点名。"""
     t = re.sub(r"[`*_#>\[\]()]", "", text or "")
@@ -78,7 +140,7 @@ def _name_from_block(content: str) -> str | None:
         m = pat.match(first_line)
         if m:
             name = _clean(m.group(1))
-            if 2 <= len(name) <= _MAX_NAME * 2:
+            if 2 <= len(name) <= _MAX_NAME * 2 and not _is_junk_name(name):
                 return name[:_MAX_NAME]
 
     # 没有定义句式就退回"第一句话的前若干字" —— **宁可给个粗糙的名字，也不丢一个候选**。
@@ -86,6 +148,10 @@ def _name_from_block(content: str) -> str | None:
     head = _clean(first_line)
     head = re.split(r"[。；;.!?]", head)[0]
     if len(head) < 4:
+        return None
+    # ★ 清洗：垃圾名宁可**丢弃这个候选**，也不要写进库 ——
+    #   它会被 /graph /path /tutor 三页显示出来，比"少一个知识点"难看得多。
+    if _is_junk_name(head):
         return None
     return head[:_MAX_NAME]
 

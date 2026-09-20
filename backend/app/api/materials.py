@@ -24,7 +24,15 @@ from app.core.errors import ApiError, ErrorCode
 from app.core.pagination import PageData, PageParams
 from app.core.response import Envelope, MarkdownResponse, ok, text_response
 from app.db import engine, get_db
-from app.models import Job, Material, MaterialBlock, utc_now_iso
+from app.models import (
+    Chapter,
+    Job,
+    KnowledgePoint,
+    Material,
+    MaterialBlock,
+    Section,
+    utc_now_iso,
+)
 from app.models.ids import block_id, hash_bytes
 from app.models.ids import material_id as make_material_id
 from app.pipeline import run_parse_job
@@ -99,6 +107,67 @@ def _parse_block_type(block_type: str | None) -> str | None:
             {"allowed": list(BLOCK_TYPES)},
         )
     return block_type
+
+
+def _real_outline(db: DbSession, material_id: str) -> OutlineOut:
+    """按**真实的 chapters / sections** 推导大纲。
+
+    ⚠️ 这里原先返回的是 `_mock_outline()` —— 一份**写死的大纲**
+    （章的 id 是 `ch_9f2a1c40_000`、标题是"传输层"）。
+
+    后果不是"少了个字段"，是**三份完全不同的材料返回一模一样的大纲**。
+    P3 灌了 Ch03/Ch05/Ch06 三份英文教材（计算机网络），
+    三份拿到的都是"传输层概述 / 可靠数据传输 / TCP 拥塞控制" ——
+    **一眼假，而且是演示时最容易被点开的那一页。**
+
+    `chapters` 与 `sections` 表在解析阶段就已经落库了
+    （解析完成后文案是「256 个块、31 章 54 节」），这里读出来即可。
+    """
+    chapters = db.scalars(
+        select(Chapter)
+        .where(Chapter.material_id == material_id)
+        .order_by(Chapter.seq)
+    ).all()
+    sections = db.scalars(
+        select(Section)
+        .where(Section.material_id == material_id)
+        .order_by(Section.chapter_id, Section.seq)
+    ).all()
+
+    # 每节的知识点数 —— 前端要显示"这一节抽了几个"
+    counts = dict(
+        db.execute(
+            select(KnowledgePoint.section_id, func.count())
+            .where(KnowledgePoint.material_id == material_id)
+            .group_by(KnowledgePoint.section_id)
+        ).all()
+    )
+
+    by_chapter: dict[str, list[OutlineSectionOut]] = {}
+    for sec in sections:
+        by_chapter.setdefault(sec.chapter_id, []).append(
+            OutlineSectionOut(
+                id=sec.id,
+                number=sec.number,
+                title=sec.title,
+                seq=sec.seq,
+                knowledge_point_count=int(counts.get(sec.id, 0)),
+            )
+        )
+
+    return OutlineOut(
+        material_id=material_id,
+        chapters=[
+            OutlineChapterOut(
+                id=ch.id,
+                number=ch.number,
+                title=ch.title,
+                seq=ch.seq,
+                sections=by_chapter.get(ch.id, []),
+            )
+            for ch in chapters
+        ],
+    )
 
 
 def _mock_outline(material_id: str) -> OutlineOut:
@@ -536,7 +605,13 @@ def get_markdown(material_id: str, db: DbSession):
 )
 def get_outline(material_id: str, db: DbSession) -> Envelope[OutlineOut]:
     _require_material(material_id, db)
-    return ok(_mock_outline(material_id))
+    # ⚠️ 先确认素材存在 —— 否则"不存在的 id"会静默返回一份空大纲，
+    #    调用方分不清"没有章节"和"素材不存在"。
+    if db.get(Material, material_id) is None:
+        raise ApiError(ErrorCode.NOT_FOUND, f"素材 {material_id} 不存在")
+
+    # ★ 真实推导，不再返回写死的大纲
+    return ok(_real_outline(db, material_id))
 
 
 # ---------------------------------------------------------------------------
