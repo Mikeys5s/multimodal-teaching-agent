@@ -199,13 +199,24 @@ def _seed_minimal(db_path: str) -> tuple[str, str]:
         MaterialBlock,
         Section,
     )
+    # ★ **枚举值从模型里读，不要硬编码。**
+    #
+    # 我第一版写的是 `source_type="pdf"` —— 而合法值是 `"pdf_text"`
+    # （`models/_common.py` 的 `SOURCE_TYPES`），于是撞上 CHECK 约束。
+    # **同一个坑我今天栽了两次**（本地造数据时一次、这里一次）。
+    #
+    # 硬编码枚举值的问题不在于"这次写错了"，而在于**它总会过期** ——
+    # 常量改了、加了新值、或者我看错了，都会静默地变成运行时错误。
+    # 从源头读，就不会有这个问题。
+    from app.models._common import PARSE_METHODS, SOURCE_TYPES
 
     eng = create_engine(f"sqlite:///{db_path}", future=True)
     with Session(eng) as s:
         s.add(Material(
             id="mat_audit_r2", filename="audit-probe.pdf", file_hash="a" * 64,
             stored_path=db_path, mime_type="application/pdf", size_bytes=1,
-            source_type="pdf", parse_method="text_extract", status="done",
+            source_type=SOURCE_TYPES[0], parse_method=PARSE_METHODS[0],
+            status="done",
             page_count=1, char_count=100, quality_score=0.9,
         ))
         s.add(Chapter(id="ch_audit_r2", material_id="mat_audit_r2",
@@ -308,7 +319,35 @@ def main(argv: list[str] | None = None) -> int:
     if mock:
         print("=> 还有假数据。**D9 功能冻结前应为 0**。")
         return 1
-    print("=> 全部真实 ✅")
+
+    # ---- 轮 2 · 有数据的库 --------------------------------------------------
+    #
+    # ⚠️ **只看轮 1 就说「全部真实」，是覆盖面不足的结论。**
+    #
+    # 轮 1 用不存在的 id（`mat_probe`），验的是「空库上不该有数据」。
+    # **但库里有数据时返回的形状对不对，它一个字都没说** ——
+    # 而 P3 报的「三份材料返回一模一样的 outline」恰好是"每一份都非空"，
+    # **轮 1 完全看不出来**。
+    print()
+    print("=" * 84)
+    print("轮 2 · 有数据的库（用真实存在的 id 打一遍）")
+    print("=" * 84)
+    rows2 = audit_round2(client)
+    bad2 = [r for r in rows2 if "**" in r[2]]
+    for path, code, note in rows2:
+        mark = "⚠️ 没读出" if "**" in note else "✅ 非空  "
+        print(f"  {mark} {path:<44} {code}  {note}")
+
+    print()
+    print("=" * 84)
+    if bad2:
+        print(f"=> ❌ **轮 2 未通过**（{len(bad2)} 个端点）")
+        print("   库里有数据，但这些端点没读出来 ——")
+        print("   它们很可能还在走 mock，或者返回的形状变了。")
+        return 1
+    print("=> ✅ **两轮都通过**")
+    print(f"     轮 1：{len(real)} 个端点，空库上不该有数据 —— 全部正确地返回空/报错")
+    print(f"     轮 2：{len(rows2)} 个读端点，有数据的库上必须读出数据 —— 全部非空")
     return 0
 
 
