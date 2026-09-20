@@ -102,6 +102,40 @@ def _verify_and_prune(session: Session, mat_id: str) -> dict[str, Any]:
     }
 
 
+#: 任务超过这个时长还停在 running，就判为失败（秒）。
+#:
+#: 为什么需要它：原先**没有任何回收机制**，一个失败的任务会永远留在 running，
+#: `/jobs` 里越积越多，而且**看起来像"还在跑"** —— 比起真失败，更难排查。
+#: 真实案例：两个任务在演示库里躺了一整夜，状态还是 running。
+STALE_JOB_TIMEOUT_SEC = 600
+
+
+def reap_stale_jobs(session: Session, timeout_sec: int = STALE_JOB_TIMEOUT_SEC) -> int:
+    """把超时仍在 running 的任务标为 failed。返回回收条数。
+
+    在**任务列表查询前**调用即可（不需要后台定时器 —— 本项目不允许引入 Celery，
+    而"每次读任务列表时顺手回收"已经足够：卡住的任务本来就要有人去看才会发现）。
+    """
+    from datetime import datetime, timedelta, timezone
+
+    cutoff = (datetime.now(timezone.utc) - timedelta(seconds=timeout_sec)).isoformat()
+    stale = session.scalars(
+        select(Job).where(Job.status == "running", Job.started_at < cutoff)
+    ).all()
+    for job in stale:
+        job.status = "failed"
+        job.progress = 100
+        job.stage_detail = "任务超时"
+        job.error_message = (
+            f"超过 {timeout_sec // 60} 分钟仍无进展，已自动判为失败"
+            "（可能是抽取异常被吞掉，或进程重启）"
+        )
+        job.finished_at = utc_now_iso()
+    if stale:
+        session.commit()
+    return len(stale)
+
+
 def run_extract(session: Session, mat_ids: list[str]) -> dict[str, Any]:
     """对一批素材做抽取 + 校验。**事务边界在这里。**"""
     per_material: list[dict[str, Any]] = []
@@ -135,8 +169,20 @@ def run_extract_job(session: Session, job_id: str, mat_ids: list[str]) -> dict[s
     try:
         result = run_extract(session, mat_ids)
     except Exception as exc:  # noqa: BLE001
+        # ⚠️ **必须先把 session 回滚到可用状态，再写失败状态。**
+        #
+        #    原先直接 `session.commit()` —— 但异常（如 IntegrityError）已经把
+        #    session 打成失败态，**这个 commit 也会抛异常**，于是：
+        #      · 任务永远留在 `running`
+        #      · `error_message` 一个字都写不进去
+        #      · 上游只看到「卡住了」，**原因完全不可见**
+        #
+        #    真实案例：一份 703 块的材料因为同节重名撞唯一约束，
+        #    表现成「14 分钟停在 progress=15」，查了很久才找到真因。
+        #    **错误处理路径自己也会失败 —— 这是最容易被忽略的一类缺陷。**
+        session.rollback()
         job = session.get(Job, job_id)
-        if job is not None:
+        if job is not None and job.status == "running":
             job.status = "failed"
             job.progress = 100
             job.stage_detail = "抽取失败"

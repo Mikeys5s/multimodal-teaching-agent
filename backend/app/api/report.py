@@ -16,6 +16,7 @@ from app.core.response import CsvResponse, Envelope, ok, text_response
 from app.db import get_db
 from app.kp_view import load_kp_items
 from app.models import KnowledgePoint
+from app.quality import acceptance_sample_sizes
 from app.quality import check_acceptance as quality_check_acceptance
 from app.quality import compute as quality_compute
 from app.schemas.report import (
@@ -110,9 +111,24 @@ def quality_report(db: DbSession) -> Envelope[QualityReportOut]:
                 grounded_rate=report["qa"]["grounded_rate"],
                 refuse_count=report["qa"]["refuse_count"],
             ),
-            acceptance=[AcceptanceRowOut(**row._asdict()) for row in quality_check_acceptance(report)],
+            acceptance=_acceptance_rows(report),
         )
     )
+
+
+def _acceptance_rows(report: dict[str, Any]) -> list[AcceptanceRowOut]:
+    """把验收行 + 样本量拼起来。
+
+    原先只返回行本身 —— 于是 0 个知识点时报告显示"五项全绿"。
+    `passed=None` 表示"样本为 0，无从判定"；`sample_size=0` 说明为什么。
+    """
+    sizes = acceptance_sample_sizes(report)
+    out: list[AcceptanceRowOut] = []
+    for row in quality_check_acceptance(report):
+        d = dict(row._asdict())
+        d["sample_size"] = sizes.get(row.label)
+        out.append(AcceptanceRowOut(**d))
+    return out
 
 
 # ---------------------------------------------------------------------------

@@ -179,10 +179,27 @@ def extract_material(session: Session, mat_id: str) -> dict[str, Any]:
     now = utc_now_iso()
     created: list[KnowledgePoint] = []
 
+    # ⚠️ **同一节内必须按 name 去重**（`uq_kp_section_name` 是硬约束）。
+    #
+    #    这个约束是对的 —— 它的注释写着理由：同一节里有重名知识点，
+    #    依赖边就会指向「哪个重名的？」，**无法解释**（而可解释性是我们答辩的核心）。
+    #
+    #    而这里原先没去重，后果不是"少抽了几个"，是**整个抽取任务崩掉**：
+    #    真实教材一份材料就有 999 个候选，其中大量同节重名
+    #    （`CHAPTER` / `FIVE` / `Victory` …）→ flush 抛 IntegrityError
+    #    → 而错误处理路径自己也失败 → **任务永远卡在 running**。
+    #
+    #    语义上也该去重：**同一个节里出现两次同一个名字，本来就是一个知识点。**
+    _seen_in_section: dict[str, set[str]] = {}
+
     def _add_kp(block: MaterialBlock, sec: Section, seq_in_unit: int) -> None:
         name = _name_from_block(block.content_md)
         if not name:
             return
+        bucket = _seen_in_section.setdefault(sec.id, set())
+        if name in bucket:
+            return
+        bucket.add(name)
         quote = _clean(block.content_md)[:300]
         kp = KnowledgePoint(
             id=knowledge_point_id(mat_id, sec.seq, sec.seq, len(created)),
