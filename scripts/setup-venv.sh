@@ -15,6 +15,15 @@
 #
 #   bash scripts/setup-venv.sh              # 首次搭建
 #   bash scripts/setup-venv.sh --rebuild    # 环境坏了，推倒重建
+#   bash scripts/setup-venv.sh --check      # **只读自检**：不改任何文件，只报告环境健康
+#   bash scripts/setup-venv.sh --check --repo <路径>   # 自检另一个仓库副本（测试用）
+#
+# `--check` 的退出码：**0 = 健康，1 = 有问题**（venv 未建 / 建在了项目内 /
+# python.exe 跑不起来 / `[dev]` 依赖缺失 都会给 1）。
+# 它只读，不建目录、不装依赖、不动 junction —— 出任何问题都只说怎么修。
+#
+# `--repo <路径>` 只影响 `--check`（和将来可能的只读模式）：把"仓库根"指到别处，
+# 于是 `backend/.venv` 等路径都相对那个目录解析。给 `tmp_path` 造情形测试用。
 #
 # 可用环境变量覆盖（便于测试，正常不用管）：
 #   XIZHI_VENV_DIR   外部 venv 位置，默认 %USERPROFILE%\.venvs\xizhi-backend
@@ -32,11 +41,54 @@
 
 set -u
 
+# ---------------------------------------------------------------------------
+# 参数解析（必须在算 REPO_ROOT 之前，因为 --repo 会改它）
+# ---------------------------------------------------------------------------
+REBUILD=0
+CHECK=0
+REPO_ARG=""
+while [ "$#" -gt 0 ]; do
+  case "$1" in
+    --rebuild) REBUILD=1 ;;
+    --check)   CHECK=1 ;;
+    --repo)    shift; REPO_ARG="${1:-}" ;;
+    --repo=*)  REPO_ARG="${1#--repo=}" ;;
+    *)
+      echo "未知参数：$1" >&2
+      echo "用法：bash scripts/setup-venv.sh [--rebuild|--check] [--repo <路径>]" >&2
+      exit 2
+      ;;
+  esac
+  shift
+done
+
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+if [ -n "$REPO_ARG" ]; then
+  # 允许传 Windows 路径（C:\...）或 POSIX 路径（/c/...）
+  REPO_ROOT="$(cd "${REPO_ARG//\\//}" 2>/dev/null && pwd)" \
+    || { echo "找不到仓库路径：$REPO_ARG" >&2; exit 2; }
+fi
 BACKEND="$REPO_ROOT/backend"
 PYPI="https://pypi.org/simple"
 
 to_win() {   # /d/muti_tagent/x  ->  D:\muti_tagent\x
+  # 路径**存在**时优先问 MSYS 自己（`pwd -W` 直接给带盘符的 Windows 形式）。
+  # 原因：Git Bash 有挂载映射 —— 例如 `%TEMP%` 会显示成 `/tmp/...`，
+  # 纯字符串替换会把它变成**没有盘符**的 `\tmp\...`，后续所有存在性判断都会错。
+  #
+  # ⚠️ 只能对**父目录**用 `pwd -W`，最后一段自己拼：`cd` 会**穿透 junction**，
+  #    对它用 `pwd -W` 会返回**目标**的路径 —— 那样 `backend/.venv` 就会被
+  #    误判成"项目内的真实目录"（自检的核心判定全错）。
+  local dir name w
+  dir="$(dirname "$1")"
+  name="$(basename "$1")"
+  if [ -n "$dir" ] && [ -d "$dir" ]; then
+    w="$(cd "$dir" 2>/dev/null && pwd -W 2>/dev/null)"
+    if [ -n "$w" ]; then
+      printf '%s\\%s' "$(printf '%s' "$w" | sed -e 's|/|\\|g')" "$name"
+      return
+    fi
+  fi
   printf '%s' "$1" | sed -e 's|^/\([a-zA-Z]\)/|\U\1:\\|' -e 's|/|\\|g'
 }
 to_posix() { # C:\Users\x  ->  /c/Users/x
@@ -67,35 +119,223 @@ LINK_WIN="$(to_win "$LINK_POSIX")"
 TARGET_WIN="${XIZHI_VENV_DIR:-${VENV_HOME_WIN}\\xizhi-backend}"
 TARGET_POSIX="$(to_posix "$TARGET_WIN")"
 
-REBUILD=0
-[ "${1:-}" = "--rebuild" ] && REBUILD=1
-
 say() { printf '\n\033[1m%s\033[0m\n' "$*"; }
 ok()  { printf '  [OK] %s\n' "$*"; }
 bad() { printf '  [!!] %s\n' "$*"; }
 die() { bad "$*"; exit 1; }
+
+# --check 专用的三种标记
+c_ok()   { printf '  ✅ %s\n' "$*"; }
+c_warn() { printf '  ⚠️ %s\n' "$*"; }
+c_bad()  { printf '  ❌ %s\n' "$*"; }
+
+find_python() {  # 打印一个 ≥3.11 的 python 路径；找不到则返回非 0
+  local cand
+  for cand in \
+    "$(to_posix "$HOME_WIN")/.workbuddy/binaries/python/versions/3.13.12/python.exe" \
+    "$(command -v python 2>/dev/null || true)" \
+    "$(command -v python3 2>/dev/null || true)" \
+    "/c/Python313/python.exe" \
+    "/c/Python312/python.exe" ; do
+    [ -n "$cand" ] && [ -x "$cand" ] || continue
+    if "$cand" -c 'import sys; sys.exit(0 if sys.version_info[:2] >= (3, 11) else 1)' 2>/dev/null; then
+      printf '%s' "$cand"; return 0
+    fi
+  done
+  return 1
+}
 
 echo "仓库根目录 : $REPO_ROOT"
 echo "用户主目录 : $HOME_WIN"
 echo "junction   : $LINK_WIN"
 echo "外部 venv  : $TARGET_WIN"
 
+# ===========================================================================
+# --check：**只读自检**。不建目录、不装依赖、不动 junction、不删任何东西。
+# 退出码：0 = 健康，1 = 有问题。
+# ===========================================================================
+if [ "$CHECK" = "1" ]; then
+  RC=0
+  CPY="$(find_python || true)"
+
+  echo
+  echo "=================================================="
+  echo " 析知后端环境自检（只读，不会修改任何文件）"
+  echo "=================================================="
+
+  # -------------------------------------------------------------------------
+  # [1] junction 位置：不存在 / 真实目录 / junction
+  # -------------------------------------------------------------------------
+  echo
+  echo "[1] backend/.venv 的形态（本应是指向项目外的 junction）"
+  VENV_TYPE="UNKNOWN"
+  VENV_TARGET=""
+  if [ -n "$CPY" ]; then
+    VENV_PROBE="$("$CPY" - "$LINK_WIN" <<'PYEOF' 2>/dev/null
+import os, stat, sys
+p = sys.argv[1]
+try:
+    st = os.lstat(p)
+except OSError:
+    print("TYPE=MISSING")
+    raise SystemExit(0)
+# junction / 软链在 Windows 上都是 reparse point；os.path.islink 对 junction 不可靠
+attrs = getattr(st, "st_file_attributes", 0)
+reparse = bool(attrs & getattr(stat, "FILE_ATTRIBUTE_REPARSE_POINT", 0))
+if reparse:
+    print("TYPE=REPARSE")
+elif stat.S_ISDIR(st.st_mode):
+    print("TYPE=REALDIR")
+else:
+    print("TYPE=OTHER")
+if reparse:
+    try:
+        print("TARGET=" + os.readlink(p))
+    except OSError:
+        pass
+PYEOF
+)"
+    VENV_TYPE="$(printf '%s\n' "$VENV_PROBE" | sed -n 's/^TYPE=//p')"
+    VENV_TARGET="$(printf '%s\n' "$VENV_PROBE" | sed -n 's/^TARGET=//p')"
+  fi
+
+  case "$VENV_TYPE" in
+    MISSING)
+      c_bad "未建 —— $LINK_WIN 不存在"
+      echo "      环境还没搭。建它："
+      echo "          bash scripts/setup-venv.sh"
+      RC=1
+      ;;
+    REALDIR)
+      c_bad "这是一个**真实目录** —— venv 建在了项目内！"
+      echo "      ⚠️ 本机的清理程序会成批删除项目目录里的文件："
+      echo "         .venv/Lib/site-packages/ 被清空过多次，你的依赖会被删。"
+      echo "      修法（把 venv 挪到项目外，命令路径一个字都不变）："
+      echo "          bash scripts/setup-venv.sh --rebuild"
+      RC=1
+      ;;
+    REPARSE)
+      if [ -n "$VENV_TARGET" ]; then
+        c_ok "是 junction（目录联接），指向：$VENV_TARGET"
+      else
+        c_ok "是 junction（目录联接）—— 文件在项目外，安全"
+      fi
+      ;;
+    *)
+      c_bad "无法判断 $LINK_WIN 的类型（探测结果 TYPE=$VENV_TYPE）"
+      echo "      修法：bash scripts/setup-venv.sh --rebuild"
+      RC=1
+      ;;
+  esac
+
+  # -------------------------------------------------------------------------
+  # [2] venv 里的 python.exe 能不能跑
+  # -------------------------------------------------------------------------
+  echo
+  echo "[2] backend/.venv/Scripts/python.exe 是否可用"
+  VPY="$LINK_POSIX/Scripts/python.exe"
+  VPY_OK=0
+  if [ -f "$VPY" ]; then
+    PVER="$("$VPY" -c 'import platform; print(platform.python_version())' 2>/dev/null)"
+    if [ -n "$PVER" ]; then
+      c_ok "可用，Python $PVER"
+      VPY_OK=1
+    else
+      c_bad "python.exe 在，但跑不起来（venv 可能被删过文件）"
+      echo "      修法：bash scripts/setup-venv.sh --rebuild"
+      RC=1
+    fi
+  else
+    # 区分"还没建"与"建过但内容没了"：后者正是本机清理程序干的事（目录在、文件被删空），
+    # 必须判**有问题**（RC=1）—— 否则这个自检对最该抓的情形反而是绿的。
+    if [ "$VENV_TYPE" = "MISSING" ]; then
+      c_warn "找不到 $LINK_WIN\\Scripts\\python.exe（venv 还没建）"
+    else
+      c_bad "venv 里没有可用的 python.exe —— 目录在、内容没了（很可能被清理程序删空过）"
+      echo "      修法：bash scripts/setup-venv.sh --rebuild"
+      RC=1
+    fi
+  fi
+
+  # -------------------------------------------------------------------------
+  # [3] 依赖分组：[dev] 与 [parse]
+  # -------------------------------------------------------------------------
+  echo
+  echo "[3] 依赖分组"
+  if [ "$VPY_OK" = "1" ]; then
+    if "$VPY" -c 'import pytest, ruff' 2>/dev/null; then
+      c_ok "[dev] 已装（pytest / ruff 可 import）"
+    else
+      c_bad "[dev] 缺失或有损坏（pytest / ruff 有 import 不了的）"
+      echo "      装它：.venv/Scripts/python.exe -m pip install -e \".[dev]\""
+      RC=1
+    fi
+    MISSING_PARSE="$("$VPY" - <<'PYEOF' 2>/dev/null
+import importlib.util as u
+mods = [("pymupdf", "pymupdf"), ("python-docx", "docx"), ("python-pptx", "pptx")]
+missing = []
+for dist, mod in mods:
+    try:
+        if u.find_spec(mod) is None:
+            missing.append(dist)
+    except Exception:
+        missing.append(dist)
+print(",".join(missing))
+PYEOF
+)"
+    if [ -n "$MISSING_PARSE" ]; then
+      c_warn "[parse] 有缺失：$MISSING_PARSE（只有跑解析链路 P1 才需要）"
+      echo "      需要时再装：.venv/Scripts/python.exe -m pip install -e \".[parse]\""
+    else
+      c_ok "[parse] 已装（pymupdf / docx / pptx 可 import）"
+    fi
+  else
+    c_warn "跳过依赖检查（venv 里的 python 不可用）"
+  fi
+
+  # -------------------------------------------------------------------------
+  # [4] 项目外的真实 venv（文件物理位置）
+  # -------------------------------------------------------------------------
+  echo
+  echo "[4] 项目外真实 venv（文件实际存放处）"
+  if [ -d "$TARGET_POSIX" ]; then
+    TCOUNT="$(find "$TARGET_POSIX" -type f 2>/dev/null | wc -l | tr -d ' ')"
+    c_ok "存在：$TARGET_WIN（约 $TCOUNT 个文件）"
+  else
+    c_warn "不存在：$TARGET_WIN（首次搭建时会自动创建）"
+  fi
+
+  # -------------------------------------------------------------------------
+  # [5] 下一步建议
+  # -------------------------------------------------------------------------
+  echo
+  echo "[5] 下一步建议"
+  if [ "$RC" = "0" ]; then
+    echo "  环境健康。继续开发："
+    echo "      cd backend && .venv/Scripts/python.exe -m pytest -q"
+  else
+    echo "  照上面 ❌ 的提示处理。常用命令："
+    echo "      bash scripts/setup-venv.sh            # 首次搭建"
+    echo "      bash scripts/setup-venv.sh --rebuild  # 坏了重建"
+    echo "      bash scripts/setup-venv.sh --check    # 再自检一次"
+  fi
+
+  echo
+  echo "=================================================="
+  if [ "$RC" = "0" ]; then
+    echo " 自检结果：健康 ✅（退出码 0）"
+  else
+    echo " 自检结果：有问题 ❌（退出码 1）"
+  fi
+  echo "=================================================="
+  exit "$RC"
+fi
+
 # ---------------------------------------------------------------------------
 # 0. 找 Python ≥ 3.11
 # ---------------------------------------------------------------------------
 say "[0/5] 找 Python"
-PY=""
-for cand in \
-  "$(to_posix "$HOME_WIN")/.workbuddy/binaries/python/versions/3.13.12/python.exe" \
-  "$(command -v python 2>/dev/null || true)" \
-  "$(command -v python3 2>/dev/null || true)" \
-  "/c/Python313/python.exe" \
-  "/c/Python312/python.exe" ; do
-  [ -n "$cand" ] && [ -x "$cand" ] || continue
-  if "$cand" -c 'import sys; sys.exit(0 if sys.version_info[:2] >= (3, 11) else 1)' 2>/dev/null; then
-    PY="$cand"; break
-  fi
-done
+PY="$(find_python || true)"
 [ -n "$PY" ] || die "找不到 Python ≥ 3.11（见 docs/dev-environment.md §1）"
 ok "$PY  ($("$PY" -c 'import platform; print(platform.python_version())'))"
 
