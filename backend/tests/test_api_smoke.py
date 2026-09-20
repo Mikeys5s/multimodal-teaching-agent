@@ -589,8 +589,12 @@ def test_learning_path_is_ordered_and_explainable() -> None:
     )
     assert kp_id, "抽取之后应当有知识点 —— 否则后面测的不是路径"
 
+    # ⚠️ `data` **本身就是数组**（api-spec §4.4 承诺顶层数组）。
+    #    原先写 `data["steps"]` —— 那是"对象"时代的形状，
+    #    改成数组之后直接 `TypeError: list indices must be integers`。
     data = assert_envelope_ok(client.get(f"/api/learning-path?kp_id={kp_id}"))
-    steps = data["steps"]
+    assert isinstance(data, list), f"§4.4 要求顶层数组，实际 {type(data).__name__}"
+    steps = data
     assert steps
     assert [s["order"] for s in steps] == list(range(1, len(steps) + 1)), "order 必须连续"
     assert steps[0]["is_start_point"] is True and steps[0]["reason"] is None

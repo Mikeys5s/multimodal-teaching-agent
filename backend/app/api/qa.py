@@ -34,7 +34,11 @@ from sqlalchemy.orm import Session
 
 from app.core.errors import ApiError, ErrorCode
 from app.core.response import Envelope, ok
-from app.db import get_db
+from app.db import SessionLocal, get_db
+from app.models import QaSession
+from app.tutor import next_seq as tutor_next_seq
+from app.tutor import run_turn as tutor_run_turn
+from app.tutor.sse import event_stream as tutor_sse_events
 from app.schemas.qa import (
     AskIn,
     DiagnosisKpOut,
@@ -59,8 +63,11 @@ router = APIRouter(tags=["qa"])
 
 DbSession = Annotated[Session, Depends(get_db)]
 
-# ★ 骨架阶段开关：True = 业务数据返回 mock；P3 实现真实业务时置 False
-MOCK_MODE = True
+# ★ 骨架阶段开关。**已置 False** —— 真实链路见 `_real_event_stream`。
+#
+# 保留这个常量而不是删掉，是为了让"曾经返回过快排"这件事可查
+# （`_mock_event_stream` 也一并保留作对照）。D9 之后可以整段删除。
+MOCK_MODE = False
 
 SESSION_ID = "qs_9f2a1c40_001"
 
@@ -70,9 +77,28 @@ SESSION_ID = "qs_9f2a1c40_001"
 # ---------------------------------------------------------------------------
 
 
-def _require_session(session_id: str) -> None:
+def _require_session(session_id: str, db: DbSession) -> None:
+    """确认会话**真的存在**。
+
+    ## 这里原来只检查 id 前缀
+
+    ```python
     if not session_id.startswith("qs_"):
-        raise ApiError(ErrorCode.NOT_FOUND, f"会话 {session_id} 不存在（id 应以 qs_ 开头）")
+        raise ApiError(...)
+    ```
+
+    **它看起来像"检查会话存在"，实际只是"id 长得像会话"** ——
+    于是随便一个 `qs_xxx` 都能通过，然后穿到 `run_turn` 里抛
+    `ValueError` → **500**（而不是一个干净的 404）。
+
+    **「长得像」和「真的是」是两件事** —— 校验必须落在数据上，不能落在格式上。
+    这和今天在闸③ 里修的那个是同一条：
+    **判据要跟"我想知道的事实"对齐，不是跟"好写"对齐。**
+    """
+    if not session_id.startswith("qs_"):
+        raise ApiError(ErrorCode.NOT_FOUND, f"会话 {session_id} 不存在")
+    if db.get(QaSession, session_id) is None:
+        raise ApiError(ErrorCode.NOT_FOUND, f"会话 {session_id} 不存在")
 
 
 def _sse_frame(event: str, seq: int, data: str) -> str:
@@ -112,7 +138,7 @@ def create_session(payload: SessionCreateIn, db: DbSession) -> Envelope[SessionC
     description="返回会话信息 + 全部轮次。",
 )
 def get_session(session_id: str, db: DbSession) -> Envelope[SessionDetailOut]:
-    _require_session(session_id)
+    _require_session(session_id, db)
     # TODO(P3): 从 qa_turns 读取真实轮次
     return ok(
         SessionDetailOut(
@@ -191,7 +217,7 @@ def ask(
     db: DbSession,
     last_event_id: Annotated[str | None, Header(alias="Last-Event-ID")] = None,
 ) -> StreamingResponse:
-    _require_session(session_id)
+    _require_session(session_id, db)
 
     # 续推：客户端带了 Last-Event-ID 就从它之后继续
     start_seq = 1
@@ -199,7 +225,7 @@ def ask(
         start_seq = int(last_event_id) + 1
 
     return StreamingResponse(
-        _mock_event_stream(session_id, start_seq),
+        _real_event_stream(session_id, payload.question, start_seq),
         media_type="text/event-stream",
         headers={
             "Cache-Control": "no-cache",
@@ -208,11 +234,41 @@ def ask(
     )
 
 
-def _mock_event_stream(session_id: str, start_seq: int) -> Iterator[str]:
-    """★ 骨架阶段的 mock 事件序列 —— 顺序与字段严格按 api-spec §5.2。
+def _real_event_stream(session_id: str, question: str, start_seq: int) -> Iterator[str]:
+    """真实事件流：**检索 → 状态机 → 模板组装 → SSE**（SPEC §5.3）。
 
-    这段代码的价值不在于"能回答"，而在于**把 SSE 契约跑通**：
-    P3 可以据此把前端的流式渲染、溯源卡片、三件产出面板全部写完。
+    ## 为什么这里自己开 Session，而不是用 `Depends(get_db)`
+
+    `Depends` 的 session 在**端点函数返回时**就关了，
+    而这个生成器是**在响应开始流式输出之后**才被消费的 —— 用它会撞"session 已关闭"。
+    所以 `SessionLocal()` 在这里开、`with` 里关，**生命周期和流一致**。
+
+    ## ⚠️ 原来这里是 `_mock_event_stream`
+
+    它的内容是**写死的"快排"**（`content_md="这题为什么用快排不用冒泡？"`、
+    `name="快速排序的分区思想"`），**完全忽略 `payload.question`** ——
+    所以 P3 灌计算机网络教材、问计算机网络的问题，界面上跳出快速排序。
+
+    **那是最容易被评委当场发现的一类问题**：不是"功能少"，是"答的和问的没关系"。
+    """
+    with SessionLocal() as db:
+        student_seq = tutor_next_seq(db, session_id)
+        result = tutor_run_turn(
+            db, session_id=session_id, student_text=question, seq=student_seq
+        )
+        # 事件顺序（retrieved → state → delta* → diagnosis → done）由 tutor.sse 保证；
+        # 端点只拼帧 —— 让"顺序是契约"这件事只有一个地方说了算。
+        for event_name, model in tutor_sse_events(
+            result, session_id=session_id, student_seq=student_seq, start_seq=start_seq
+        ):
+            yield _sse_frame(event_name, model.seq, model.model_dump_json())
+
+
+def _mock_event_stream(session_id: str, start_seq: int) -> Iterator[str]:
+    """⚠️ **已弃用**，保留仅为对照（`MOCK_MODE` 为 True 时才走）。
+
+    真实链路见 `_real_event_stream`。这个函数留在文件里，是为了让
+    "曾经返回过快排"这件事**在代码里可查** —— 而不是删掉之后就没人记得。
     """
     # TODO(P3): 换成真实的状态机 + 检索 + 生成
     seq = start_seq
@@ -299,7 +355,7 @@ def _mock_event_stream(session_id: str, start_seq: int) -> Iterator[str]:
     ),
 )
 def get_state(session_id: str, db: DbSession) -> Envelope[QaStateOut]:
-    _require_session(session_id)
+    _require_session(session_id, db)
     # TODO(P3): 从会话的最后一条 turn 反推真实状态
     return ok(
         QaStateOut(
@@ -325,7 +381,7 @@ def get_state(session_id: str, db: DbSession) -> Envelope[QaStateOut]:
     description="汇总本会话全部卡点与建议练习 —— 是「三件产出」在一轮对话上的聚合。",
 )
 def get_session_report(session_id: str, db: DbSession) -> Envelope[SessionReportOut]:
-    _require_session(session_id)
+    _require_session(session_id, db)
     # TODO(P3): 聚合真实轮次
     return ok(
         SessionReportOut(
@@ -362,6 +418,6 @@ def get_session_report(session_id: str, db: DbSession) -> Envelope[SessionReport
     description="删除会话及其全部轮次（级联）。",
 )
 def delete_session(session_id: str, db: DbSession) -> Envelope[dict]:
-    _require_session(session_id)
+    _require_session(session_id, db)
     # TODO(P3): 真实删除
     return ok({"deleted": session_id})

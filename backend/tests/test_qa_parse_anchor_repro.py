@@ -323,8 +323,15 @@ def test_audio_and_ocr_fields_stay_null(pdf_path: Path, session: Session) -> Non
         assert row.ocr_confidence is None
 
 
-def test_persist_writes_nothing_for_a_scan_document(tmp_path: Path, session: Session) -> None:
-    """扫描版不产出块 → 库里也不该有任何行（否则就是伪造内容）。"""
+def test_persist_writes_nothing_for_a_scan_document(
+    ocr_unavailable: None, tmp_path: Path, session: Session
+) -> None:
+    """扫描版不产出块 → 库里也不该有任何行（否则就是伪造内容）。
+
+    挂 `ocr_unavailable`：这条守的是"扫描版没块就不许落库"，与 OCR 认字无关；
+    D3 之后扫描版会真起 paddle 引擎（本机 ≈17 s/页），固定成"本机没装 `[ocr]`"
+    即可（同一条降级路径），断言一条都没放松。
+    """
     doc_page = pymupdf.open()
     page = doc_page.new_page()
     pix = pymupdf.Pixmap(pymupdf.csRGB, pymupdf.IRect(0, 0, 300, 200))

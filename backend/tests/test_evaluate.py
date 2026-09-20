@@ -121,17 +121,34 @@ def _edge(session: Session, prereq: str, kp: str, reason: str = "不学懂前置
 
 
 # ---------------------------------------------------------------------------
-# 1. 空库：真空满足
+# 1. 空库：**样本为 0，无从判定**
+#
+# ⚠️ 这条原先叫 `test_empty_db_is_vacuously_green`，断言 `all(ok)` ——
+#    也就是把「真空满足」这个行为**固定下来了**（注释里自己都写着）。
+#
+#    2026-09-20 改口径（SPEC §7 把这几项定义为**实际指标**）：
+#    **分母为 0 的比率不该报"达标"** —— 报绿是误报，
+#    评审一问"数据量多少"就露底。现在报 `None` = N/A。
+#
+#    但**比率本身仍然断言 1.0** —— 这不是矛盾的，而是说明了为什么必须靠
+#    `passed=None` 兜底：**比值本身看不出它是从 0 个样本算出来的**。
 # ---------------------------------------------------------------------------
 
 
-def test_empty_db_is_vacuously_green(ev) -> None:
+def test_empty_db_reports_not_applicable(ev) -> None:
     r = ev.collect()
     assert r["knowledge_points"]["total"] == 0
+    # 比率按定义仍是 1.0（分母为 0）—— **正因为看不出问题，才需要 N/A 兜底**
     assert r["knowledge_points"]["structure_complete_rate"] == 1.0
     assert r["graph"]["cycle_count"] == 0
     assert r["qa"]["hallucination_rate"] == 0.0
-    assert all(ok for *_, ok in ev.check_acceptance(r))
+
+    rows = ev.check_acceptance(r)
+    # ★ 关键断言：样本为 0 → **每一条都必须 None，不能是 True**
+    assert all(ok is None for *_, ok in rows), (
+        "空库时验收指标必须是 N/A（None）—— 报 True 就是真空满足："
+        f"实际 {[(row[0], row[-1]) for row in rows]}"
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -172,7 +189,18 @@ def test_acyclic_graph_passes(ev, engine: Engine) -> None:
     r = ev.collect()
     assert r["graph"]["edge_count"] == 2
     assert r["graph"]["cycle_count"] == 0
-    assert all(ok for *_, ok in ev.check_acceptance(r))
+
+    # ⚠️ 只检查**样本非 0** 的行。
+    #    这里的图有真实数据（3 知识点 / 2 边），但 **`幻觉率` 的样本是答疑轮次 = 0**
+    #    —— 那一行是 N/A（`None`），**既不该算通过也不该算失败**。
+    #    原来写 `all(ok for *_, ok in rows)` 会把 N/A 当失败。
+    rows = ev.check_acceptance(r)
+    applicable = {row[0]: row[-1] for row in rows if row[-1] is not None}
+    na = [row[0] for row in rows if row[-1] is None]
+
+    assert all(applicable.values()), f"有样本的指标必须全过：{applicable}"
+    # N/A 只应出现在"答疑轮次为 0"这一条上 —— 数量对不上说明有别的行没数据
+    assert all("幻觉率" in label for label in na), f"意外出现 N/A：{na}"
 
 
 def test_edge_direction_mapping_is_not_reversed(ev, engine: Engine) -> None:

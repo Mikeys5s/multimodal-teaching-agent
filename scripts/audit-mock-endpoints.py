@@ -111,7 +111,17 @@ def data_volume(data: Any) -> tuple[int, str]:
         return len(data["items"]), f"items[{len(data['items'])}]"
     if isinstance(data.get("total"), int):
         return data["total"], f"total={data['total']}"
-    for key in ("nodes", "edges", "steps", "hard_prerequisites", "turns"):
+    # ⚠️ **白名单要够宽，否则会落到最后的 `leaves` 检查上去。**
+    #
+    # 2026-09-20 实测：`/outline` 返回 `{material_id, chapters: [...]}`，
+    # `chapters` 不在下面这行里 → 落到 `leaves`（只有 `material_id` 非空）→
+    # **`return 1, "有非空字段"`** —— 于是 **mock 和真实返回同一个值 `n=1`**：
+    # 既可能漏检，也可能误报（真实的空 outline 也被判"假数据"）。
+    for key in (
+        "nodes", "edges", "steps", "hard_prerequisites", "turns",
+        # ★ 结构型字段：返回"章/节/块"的端点，直接数它才是它们的"数据条数"
+        "chapters", "sections", "blocks", "sessions", "turns", "items",
+    ):
         if isinstance(data.get(key), list):
             return len(data[key]), f"{key}[{len(data[key])}]"
     for section in ("materials", "knowledge_points"):
@@ -119,10 +129,153 @@ def data_volume(data: Any) -> tuple[int, str]:
         if isinstance(sec, dict) and isinstance(sec.get("total"), int):
             return sec["total"], f"{section}.total={sec['total']}"
 
+    # ★ **递归数一遍叶子里的列表**（白名单没命中时的兜底）。
+    #
+    # 为什么需要它：白名单只能列举"我知道的结构"，而**响应形状会变**。
+    # 兜底用"数所有列表元素的条数"是**形状无关**的 ——
+    # mock 的 1 章「传输层」和真实的 0 章，这才区分得开。
+    found = _count_list_items(data)
+    if found:
+        return found, f"递归统计 {found} 条"
+
     leaves = [v for v in data.values() if not isinstance(v, (dict, list))]
     if all(v in (None, "", 0, False, []) for v in leaves):
         return 0, "全空"
     return 1, "有非空字段"
+
+
+def _count_list_items(node: Any) -> int:
+    """递归数出这个响应体里**所有列表的元素总数**。
+
+    形状无关 —— 不依赖任何具体字段名。
+    `chapters: [{sections: [a, b]}]` -> 1 + 2 = 3 条。
+    """
+    if isinstance(node, list):
+        return len(node) + sum(_count_list_items(x) for x in node)
+    if isinstance(node, dict):
+        return sum(_count_list_items(v) for v in node.values())
+    return 0
+
+
+# ---------------------------------------------------------------------------
+# 轮 2 · 有数据的库：用**真实存在的 id** 打一遍
+# ---------------------------------------------------------------------------
+#
+# ⚠️ **这才是能发现 P3 那类问题的一轮。**
+#
+# 轮 1 用不存在的 id（`mat_probe`）—— 它验的是"空库上不该有数据"。
+# 但**库里有数据时，读端点必须返回非空**；返回空就说明它没在读库（还在走 mock）。
+#
+# 不跑这一轮，就会漏掉「三份材料返回一模一样的 outline」这种：
+# 它每一份都"有数据"（都不是空），轮 1 完全看不出来。
+
+#: 轮 2 要打的端点 —— `{mid}` / `{kid}` 会被替换成**临时库里真实存在**的 id。
+ROUND2_PATHS = [
+    "/api/materials",
+    "/api/materials/{mid}/blocks",
+    "/api/materials/{mid}/outline",
+    "/api/knowledge-points",
+    "/api/knowledge-graph",
+    "/api/report/quality",
+]
+
+
+def _seed_minimal(db_path: str) -> tuple[str, str]:
+    """在临时库里插一份**最小真实数据**，返回 (material_id, kp_id)。
+
+    故意做得"最小"：1 份素材 / 1 章 / 1 节 / 2 个知识点 / 1 条边 ——
+    足够让每个读端点都返回非空，又不会让脚本变慢或难懂。
+    """
+    import os
+
+    from sqlalchemy import create_engine
+    from sqlalchemy.orm import Session
+
+    from app.models import (
+        Chapter,
+        KnowledgePoint,
+        KpPrerequisite,
+        Material,
+        MaterialBlock,
+        Section,
+    )
+    # ★ **枚举值从模型里读，不要硬编码。**
+    #
+    # 我第一版写的是 `source_type="pdf"` —— 而合法值是 `"pdf_text"`
+    # （`models/_common.py` 的 `SOURCE_TYPES`），于是撞上 CHECK 约束。
+    # **同一个坑我今天栽了两次**（本地造数据时一次、这里一次）。
+    #
+    # 硬编码枚举值的问题不在于"这次写错了"，而在于**它总会过期** ——
+    # 常量改了、加了新值、或者我看错了，都会静默地变成运行时错误。
+    # 从源头读，就不会有这个问题。
+    from app.models._common import PARSE_METHODS, SOURCE_TYPES
+
+    eng = create_engine(f"sqlite:///{db_path}", future=True)
+    with Session(eng) as s:
+        s.add(Material(
+            id="mat_audit_r2", filename="audit-probe.pdf", file_hash="a" * 64,
+            stored_path=db_path, mime_type="application/pdf", size_bytes=1,
+            source_type=SOURCE_TYPES[0], parse_method=PARSE_METHODS[0],
+            status="done",
+            page_count=1, char_count=100, quality_score=0.9,
+        ))
+        s.add(Chapter(id="ch_audit_r2", material_id="mat_audit_r2",
+                      number="1", title="审计用章", seq=0))
+        s.add(Section(id="sec_audit_r2", material_id="mat_audit_r2",
+                      chapter_id="ch_audit_r2", number="1.1", title="审计用节", seq=0))
+        s.add(MaterialBlock(id="blk_audit_r2", material_id="mat_audit_r2",
+                            seq=0, page_no=1, block_type="heading",
+                            content_md="1.1 审计用节"))
+        for i, name in enumerate(("审计用知识点甲", "审计用知识点乙")):
+            s.add(KnowledgePoint(
+                id=f"kp_audit_r2_{i}", section_id="sec_audit_r2",
+                chapter_id="ch_audit_r2", material_id="mat_audit_r2",
+                name=name, summary_md=name, difficulty=3,
+                difficulty_reason="审计用", kp_type="concept",
+                source_material_id="mat_audit_r2", source_page=1,
+                source_block_id="blk_audit_r2", source_quote=name,
+                confidence=0.5, needs_review=1, seq=i,
+            ))
+        s.add(KpPrerequisite(
+            kp_id="kp_audit_r2_1", prereq_kp_id="kp_audit_r2_0",
+            relation_type="hard", reason="审计用：甲先于乙",
+            evidence_quote="审计用知识点甲", source_channel="structure",
+            confidence=0.6, needs_review=1, pruned=0,
+        ))
+        s.commit()
+    eng.dispose()
+    return "mat_audit_r2", "kp_audit_r2_0"
+
+
+def audit_round2(client) -> list[tuple[str, int, str]]:
+    """轮 2：用真实 id 打一遍，返回 [(path, code, note)]。
+
+    判据**与轮 1 相反**：**有数据的库上，读端点必须返回非空**。
+    返回空（或 404）= 端点没在读库。
+    """
+    from app.config import settings
+
+    mid, kid = _seed_minimal(str(settings.db_file))
+    out: list[tuple[str, int, str]] = []
+
+    for tmpl in ROUND2_PATHS:
+        path = tmpl.format(mid=mid, kid=kid)
+        resp = client.get(path)
+        code = resp.status_code
+        if code != 200:
+            out.append((path, code, f"**有数据的库上返回 {code}** —— 端点没读库？"))
+            continue
+        try:
+            body = resp.json()
+            data = body.get("data") if isinstance(body, dict) else body
+        except Exception:  # noqa: BLE001
+            data = None
+        n, summary = data_volume(data)
+        if n == 0:
+            out.append((path, code, f"**200 但 0 条（{summary}）** —— 库里有数据却没读出来"))
+        else:
+            out.append((path, code, f"非空（{summary}）"))
+    return out
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -166,7 +319,35 @@ def main(argv: list[str] | None = None) -> int:
     if mock:
         print("=> 还有假数据。**D9 功能冻结前应为 0**。")
         return 1
-    print("=> 全部真实 ✅")
+
+    # ---- 轮 2 · 有数据的库 --------------------------------------------------
+    #
+    # ⚠️ **只看轮 1 就说「全部真实」，是覆盖面不足的结论。**
+    #
+    # 轮 1 用不存在的 id（`mat_probe`），验的是「空库上不该有数据」。
+    # **但库里有数据时返回的形状对不对，它一个字都没说** ——
+    # 而 P3 报的「三份材料返回一模一样的 outline」恰好是"每一份都非空"，
+    # **轮 1 完全看不出来**。
+    print()
+    print("=" * 84)
+    print("轮 2 · 有数据的库（用真实存在的 id 打一遍）")
+    print("=" * 84)
+    rows2 = audit_round2(client)
+    bad2 = [r for r in rows2 if "**" in r[2]]
+    for path, code, note in rows2:
+        mark = "⚠️ 没读出" if "**" in note else "✅ 非空  "
+        print(f"  {mark} {path:<44} {code}  {note}")
+
+    print()
+    print("=" * 84)
+    if bad2:
+        print(f"=> ❌ **轮 2 未通过**（{len(bad2)} 个端点）")
+        print("   库里有数据，但这些端点没读出来 ——")
+        print("   它们很可能还在走 mock，或者返回的形状变了。")
+        return 1
+    print("=> ✅ **两轮都通过**")
+    print(f"     轮 1：{len(real)} 个端点，空库上不该有数据 —— 全部正确地返回空/报错")
+    print(f"     轮 2：{len(rows2)} 个读端点，有数据的库上必须读出数据 —— 全部非空")
     return 0
 
 
