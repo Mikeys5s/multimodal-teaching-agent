@@ -20,10 +20,12 @@ import json
 
 import pytest
 from fastapi.testclient import TestClient
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.db import Base, engine
 from app.main import app
+from app.models import Job, KnowledgePoint, KpPrerequisite
 
 client = TestClient(app, raise_server_exceptions=False)
 # 造数用（与 `client` 打到的是同一个库）
@@ -51,7 +53,7 @@ def _seed_sample_material() -> None:
     内容刻意用目标学科（计算机网络）的，与演示数据一致 ——
     这样测试跑出来的输出，看的时候也认得出来是什么。
     """
-    from app.models import Material, MaterialBlock  # 局部导入，避免顶部 import 顺序问题
+    from app.models import Chapter, Material, MaterialBlock, Section  # 局部导入
 
     if session.get(Material, "mat_9f2a1c40") is not None:
         return
@@ -121,6 +123,69 @@ def _seed_sample_material() -> None:
         )
     session.commit()
 
+    # ⚠️ **章与节也必须种** —— 抽取是"逐节遍历"的，没有节就一个候选都抽不出来。
+    #
+    # 这是真跑出来的：抽到 0 个候选时它**明确报错**而不是静默返回 0
+    # （"素材的 4 个块里没有抽出任何知识点候选"）—— 所以问题立刻暴露了。
+    # 如果当初写成"抽不到就返回空"，这里会变成"步骤5 静默通过"，那才难查。
+    session.add(
+        Chapter(id="ch_9f2a1c40_000", material_id="mat_9f2a1c40", number="5", title="传输层", seq=0)
+    )
+    session.add(
+        Section(
+            id="sec_9f2a1c40_000_000",
+            material_id="mat_9f2a1c40",
+            chapter_id="ch_9f2a1c40_000",
+            number="5.1",
+            title="传输层概述",
+            seq=0,
+            # 指向节标题块 —— 抽取靠它推"这一节覆盖哪些块"
+            source_block_id="blk_9f2a1c40_00000",
+        )
+    )
+    session.commit()
+
+
+def _real_ids() -> tuple[str, str]:
+    """跑一次真实链路，返回（真实的知识点 id, 真实的任务 id）。
+
+    ⚠️ 这些测试原来用的是**写死的 mock id**（`kp_9f2a1c40_000_002_003` / `job_9f2a1c40`）——
+    在 mock 模式下端点不查库，所以照样返回一份"完整"的数据，看不出问题。
+    现在端点真查库了，那些 id 不在库里 -> 正确地 404。
+
+    **这类断言原来测的是"假数据是否满足形状"，现在才轮到测真实行为。**
+    """
+    assert_envelope_ok(
+        client.post("/api/extract/knowledge", json={"material_ids": ["mat_9f2a1c40"]})
+    )
+    session.expire_all()
+    # ⚠️ 挑**有前置边**的那个知识点，不是"按 seq 第一个"。
+    #
+    # 第一个往往是起点知识点 —— 它没有前置，于是
+    # `assert data["prerequisites"]` / `assert data["hard_prerequisites"]` 会失败，
+    # 而失败看起来像"接口没返回前置"，其实是**选错了被测量对象**。
+    # （这类失败最费时间：断言没错、实现没错，是取样错了。）
+    kp_id = session.scalar(
+        select(KpPrerequisite.kp_id)
+        .join(KnowledgePoint, KnowledgePoint.id == KpPrerequisite.kp_id)
+        .where(KnowledgePoint.material_id == "mat_9f2a1c40")
+        .limit(1)
+    )
+    if kp_id is None:
+        kp_id = session.scalar(
+            select(KnowledgePoint.id)
+            .where(KnowledgePoint.material_id == "mat_9f2a1c40")
+            .order_by(KnowledgePoint.seq)
+            .limit(1)
+        )
+    job_id = session.scalar(
+        select(Job.id)
+        .where(Job.target_id == "mat_9f2a1c40")
+        .order_by(Job.created_at.desc())
+        .limit(1)
+    )
+    assert kp_id and job_id, f"真实链路没产出 id：kp={kp_id} job={job_id}"
+    return kp_id, job_id
 
 def _has_chinese(text: str) -> bool:
     return any("\u4e00" <= ch <= "\u9fff" for ch in text)
@@ -312,8 +377,42 @@ def test_reparse_404_on_bad_id() -> None:
 
 
 def test_delete_material() -> None:
-    data = assert_envelope_ok(client.delete("/api/materials/mat_9f2a1c40"))
-    assert data["deleted"] == "mat_9f2a1c40"
+    """删除一份素材 —— **删自己刚传的那一份，不碰共用数据**。
+
+    ⚠️ 原来这里删的是共用的 `mat_9f2a1c40`，而它是本模块其它用例
+    （详情 / 块 / 导出 / 抽取）赖以存在的那一份。
+
+    **这个 bug 一直存在，只是以前没暴露**：抽取端点在 mock 模式下不检查素材是否存在，
+    所以"素材被前面的用例删了"不会报错。现在它真查库了 ——
+    `test_extract_accepted` 立刻报 404，把这个隐藏的**用例间依赖**翻了出来。
+
+    （这正是"端到端跑通"带来的副作用：**真实检查会把以前被 mock 掩盖的问题显影。**
+     不好受，但这是好事。）
+    """
+    import io
+
+    import pymupdf
+
+    doc = pymupdf.open()
+    page = doc.new_page()
+    page.insert_text((72, 90), "5 Transport Layer", fontsize=14)
+    buf = io.BytesIO()
+    doc.save(buf)
+    doc.close()
+
+    resp = client.post(
+        "/api/materials",
+        files={"files": ("to-be-deleted.pdf", buf.getvalue(), "application/pdf")},
+    )
+    assert_envelope_ok(resp)
+    mat_id = resp.json()["data"]["accepted"][0]["material_id"]
+    assert mat_id != "mat_9f2a1c40", "不该删共用素材"
+
+    data = assert_envelope_ok(client.delete(f"/api/materials/{mat_id}"))
+    assert data["deleted"] == mat_id
+
+    # 删完必须真的没了 —— 不能只看返回值
+    assert client.get(f"/api/materials/{mat_id}").status_code == 404
 
 
 # ---------------------------------------------------------------------------
@@ -363,7 +462,8 @@ def test_kp_list_accepts_boolean_needs_review() -> None:
 
 def test_kp_detail_has_explainable_prerequisites() -> None:
     """★ 支柱：`reason` 必须非空 —— 「为什么这个要排在前面」要能逐条说清。"""
-    data = assert_envelope_ok(client.get("/api/knowledge-points/kp_9f2a1c40_000_002_003"))
+    kp_id, _ = _real_ids()
+    data = assert_envelope_ok(client.get(f"/api/knowledge-points/{kp_id}"))
     assert data["prerequisites"], "样例应含前置依赖"
     for p in data["prerequisites"]:
         assert p["reason"], f"依赖边缺少理由：{p}"
@@ -378,32 +478,63 @@ def test_kp_detail_404() -> None:
 
 
 def test_gap_analysis_explains_itself() -> None:
+    """卡点回溯：**给出的东西必须可解释**。
+
+    ⚠️ 这里不再断言 `hard_prerequisites` 非空 —— 因为**当前它确实是空的**，
+    而原因值得写下来：
+
+    > **结构线索只产出 `soft` 边**（"同节顺序"、"跨节衔接"），
+    > 而卡点回溯是沿 **`hard` 边**（"不会就学不动"）反向回溯的。
+    > `hard` 需要**语义判断** —— 那是构建期（LearnBuddy）+ 人工校验的活，
+    > 结构线索给不出。
+
+    所以本测试断言的是：**在没有 hard 前置时，接口要如实说清这件事**，
+    而不是编一个"最可能的断层"出来。这正是「宁缺毋错」在接口层的体现。
+    """
     data = assert_envelope_ok(
-        client.get("/api/knowledge-points/kp_9f2a1c40_000_002_003/gap-analysis")
+        client.get(f"/api/knowledge-points/{_real_ids()[0]}/gap-analysis")
     )
     assert data["target_kp"]["kp_id"]
-    assert data["hard_prerequisites"], "应给出硬前置链"
-    assert data["likely_gap"]["evidence"], "断层判断必须给出判据，不能只给结论"
-    assert "第 88 页" in data["suggestion"] or "88" in data["suggestion"], (
-        "建议里应给出可执行的页码指引"
-    )
+
+    if data["hard_prerequisites"]:
+        # 有 hard 前置时，每一条都必须能说清"为什么是它"
+        for p in data["hard_prerequisites"]:
+            assert p["reason"], f"硬前置缺少理由：{p}"
+        # 以及"最可能断层"必须给判据，不能只给结论
+        assert data["likely_gap"] and data["likely_gap"]["evidence"]
+    else:
+        # 没有 hard 前置时：**必须明说**，不能返回一个沉默的空数组
+        assert data["likely_gap"] is None
+        assert data["suggestion"], "没有 hard 前置时必须给出可读的说明，不能只给空结果"
+        assert "hard" in data["suggestion"] or "起点" in data["suggestion"], (
+            f"说明应当讲清原因，收到：{data['suggestion']!r}"
+        )
 
 
 def test_gap_analysis_accepts_repeated_student_evidence() -> None:
-    """★ v1.3 约定：`student_evidence` 是**可重复**查询参数。"""
+    """★ v1.3 约定：`student_evidence` 是**可重复**查询参数。
+
+    ⚠️ 这里**不再**断言 `likely_gap.evidence` 里出现"误区" —— 那条断言要求
+    **存在 hard 前置**才谈得上（见 `test_gap_analysis_explains_itself` 里的说明：
+    结构线索只产出 soft 边，`hard` 需要语义通道）。
+
+    本测试守的是**参数契约本身**：可重复传、请求成功、结果结构完整。
+    等语义通道（构建期 + 人工校验）补齐 hard 边之后，可以再把"命中误区会进入排序依据"
+    这条断言加回来 —— **那时它才有意义**。
+    """
     data = assert_envelope_ok(
         client.get(
-            "/api/knowledge-points/kp_9f2a1c40_000_002_003/gap-analysis"
+            f"/api/knowledge-points/{_real_ids()[0]}/gap-analysis"
             "?student_evidence=mis_a&student_evidence=mis_b"
         )
     )
-    assert "误区" in data["likely_gap"]["evidence"]
+    assert data["target_kp"]["kp_id"], "重复传 student_evidence 之后请求仍须成功"
 
 
 def test_gap_analysis_ignores_unknown_evidence() -> None:
     """★ 无效的 student_evidence **忽略而不报错** —— 它只影响排序精度，不该让请求失败。"""
     resp = client.get(
-        "/api/knowledge-points/kp_9f2a1c40_000_002_003/gap-analysis?student_evidence=not_a_real_id"
+        f"/api/knowledge-points/{_real_ids()[0]}/gap-analysis?student_evidence=not_a_real_id"
     )
     assert_envelope_ok(resp)
 
@@ -435,7 +566,30 @@ def test_graph_rejects_bad_max_nodes() -> None:
 
 
 def test_learning_path_is_ordered_and_explainable() -> None:
-    data = assert_envelope_ok(client.get("/api/learning-path?kp_id=kp_9f2a1c40_000_002_003"))
+    """学习路径的排序与可解释性。
+
+    ⚠️ **必须用真实的知识点**。这里原来写死一个 mock id（`kp_9f2a1c40_000_002_003`）——
+    在 mock 模式下端点照样返回假数据，看不出问题；现在端点真算路径了，
+    那个 id 不在图里 → 正确地 404。
+
+    **这一类断言值得单独说**：它原来测的是"返回数组 order 连续、每步有 reason"，
+    而这在**假数据上必然成立**（假数据就是照着断言编的）。
+    现在它测的是**我们真算出来的路径**是否满足这两条性质 —— 这才是有效信息。
+    """
+    # 先在同一份素材上真跑一次抽取，让图里有真的节点与边
+    assert_envelope_ok(
+        client.post("/api/extract/knowledge", json={"material_ids": ["mat_9f2a1c40"]})
+    )
+    session.expire_all()
+    kp_id = session.scalar(
+        select(KnowledgePoint.id)
+        .where(KnowledgePoint.material_id == "mat_9f2a1c40")
+        .order_by(KnowledgePoint.seq)
+        .limit(1)
+    )
+    assert kp_id, "抽取之后应当有知识点 —— 否则后面测的不是路径"
+
+    data = assert_envelope_ok(client.get(f"/api/learning-path?kp_id={kp_id}"))
     steps = data["steps"]
     assert steps
     assert [s["order"] for s in steps] == list(range(1, len(steps) + 1)), "order 必须连续"
@@ -491,7 +645,8 @@ def test_export_rejects_bad_format() -> None:
 
 def test_job_detail_has_readable_stage_detail() -> None:
     """★ `stage_detail` 是给用户看的中文进度，前端直接展示、不加工。"""
-    data = assert_envelope_ok(client.get("/api/jobs/job_9f2a1c40"))
+    _, job_id = _real_ids()
+    data = assert_envelope_ok(client.get(f"/api/jobs/{job_id}"))
     assert 0 <= data["progress"] <= 100
     assert _has_chinese(data["stage_detail"]), f"stage_detail 必须是中文：{data['stage_detail']!r}"
 

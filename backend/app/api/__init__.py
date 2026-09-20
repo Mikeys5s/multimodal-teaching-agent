@@ -28,7 +28,7 @@ DELETE /api/qa/sessions/{id}        删除会话
 
 from fastapi import APIRouter
 
-from app.api import extract, graph, jobs, knowledge, materials, meta, qa, report
+from app.api import extract, graph, jobs, knowledge, materials, meta, qa, report, review
 
 api_router = APIRouter(prefix="/api")
 api_router.include_router(meta.router)
@@ -39,3 +39,4 @@ api_router.include_router(graph.router)
 api_router.include_router(report.router)
 api_router.include_router(jobs.router)
 api_router.include_router(qa.router)
+api_router.include_router(review.router)

@@ -103,18 +103,22 @@ def _make_pdf() -> bytes:
 # ---------------------------------------------------------------------------
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason=(
-        "端到端链路尚未接通：步骤1 上传端点不落库（POST /materials 只做校验）。"
-        "链路接好后**这条会自动变成 XPASS 并让测试套件变红** —— "
-        "那是有意的：它会强制移除这个标记，不让'已知不通'被遗忘。"
-    ),
-)
 def test_end_to_end_pipeline() -> None:
     """★ 从上传到学习路径，七步全通。
 
     **失败时看断言消息里的步骤编号** —— 它直接告诉你链路断在哪一段。
+
+    ---
+
+    **2026-09-19：本条已从 `xfail(strict=True)` 转为正式通过。**
+
+    它曾经是 xfail 的，那是刻意的：链路没接通时让"已知不通"被**显式记录**
+    而不是被遗忘；一旦接通，`strict=True` 会让 XPASS 把测试套件顶红，
+    **强制把这个标记摘掉**。今天它真的被顶红了，所以标记摘了。
+
+    **这条测试抓到的第一个真问题**：FastAPI 的路由装饰器后面必须紧跟端点函数 ——
+    我把两个 helper 写在中间，于是 `/materials` 变成了"要求一个 ext 字段"的接口。
+    **而 `test_api_smoke.py` 碰不到这条路**（它只发空请求验 400）。
     """
     pdf = _make_pdf()
 
@@ -180,6 +184,34 @@ def test_end_to_end_pipeline() -> None:
     for kp in kps:
         assert kp.section_id and kp.chapter_id, f"知识点 {kp.id} 缺三级结构归属（A2-1）"
         assert kp.source_quote, f"知识点 {kp.id} 缺溯源原文（A2-3）"
+
+    # ---- 步骤 5b：**抽取质量的可测下界** ⚠️ --------------------------------
+    #
+    # 为什么必须有这一段：上面那句 `assert kps` **几乎必然通过** ——
+    # 抽取规则是"标题块 + 段落里的定义句式"，只要块够多就一定有候选。
+    # **一条必然通过的断言，信息量是零**：它证明了"链路通"，证明不了"抽得对"。
+    #
+    # 下面这几条是**真正会失败**的下界。
+    n_secs = len(sections)
+    assert len(kps) >= max(1, n_secs), (
+        f"抽出的知识点（{len(kps)}）比节数（{n_secs}）还少 —— "
+        "每个节至少该产出一个候选，这通常意味着某节的块区间推错了"
+    )
+    # 同一个节内不允许重名 —— 重名意味着同一段内容被抽了两遍
+    for sec in sections:
+        names = [k.name for k in kps if k.section_id == sec.id]
+        assert len(names) == len(set(names)), (
+            f"节「{sec.title}」内出现重名知识点：{[n for n in names if names.count(n) > 1]}"
+        )
+    # 结构线索的产出**必须全部**标 needs_review —— 它是候选，不是结论
+    assert all(k.needs_review == 1 for k in kps), (
+        "结构线索抽出的知识点必须全部标 needs_review=1 —— 它只是候选，判断权在人"
+    )
+    # 溯源片段要够长才有核对价值（太短等于没给来源）
+    for kp in kps:
+        assert len((kp.source_quote or "").strip()) >= 4, (
+            f"知识点 {kp.id} 的溯源片段过短（{len(kp.source_quote or '')} 字符），核对不了"
+        )
 
     # ---- 步骤 6：依赖边 -------------------------------------------------
     kp_ids = [k.id for k in kps]
