@@ -42,12 +42,40 @@ docs/extraction-channel.md 的硬规则是「**一节要能抽出 3–12 个知�
 
 更深的标题不丢：它们要么成为节（叶子），要么作为容器留在节描述里。
 
+章标题**没有编号**时怎么办（第三批）
+------------------------------------
+字号法（`parse.pdf`）给不出"章"这个语义，真实教材里章标题常常只在**章扉页**上
+以"大字 + 居中/居右 + 无编号"的形式出现（本教材第 9 页：
+`CHAPTER` / `ONE` / `FOUNDATION`，而 1.1 直到第 10 页才开始）。此时"根 = 最浅
+一层的标题"会退化：扉页标题与前置部分（封面、目录、PREFACE）全都被判成一级
+标题，各自成章 —— 章数凭空多出来，节归属整体错位，而且**不会报错**。
+
+所以本模块在**存在编号标题**时改用"编号结构定章"：
+
+  1. 取所有能拆出章节号的标题，`top` = 其中**最浅**的编号深度（`1.1` → 2）；
+  2. `top == 1`（有 `第1章` / `1 Introduction` / `Chapter 1. xxx` 这样的章号）
+     → 走原来的"层级树"路径，行为不变；
+  3. `top >= 2`（**文档里根本没有带编号的章标题**）→ 章 = 按编号前 `top-1` 段
+     前缀聚成的组（`1.1`/`1.2`/`1.3` → 同一章 `1`），组内的节树仍按编号深度搭。
+     第一个编号标题之前的块（封面 / 目录 / 前言 / 章扉页）整体归入一个
+     **"前言"占位章** —— 这是原来就有的机制，只是边界从"第一个根标题"挪到
+     "第一个编号标题"。
+
+取舍与已知代价（方向仍是"宁可少判，不可造章"）：
+  · 章标题行本身**不是**章根，它只定章号（无编号时回退成章号本身）；
+  · 无编号的标题若落在某一章内部，不会被强行认成"节"，而是**并进相邻节的块
+    区间**（内容一个字不丢，只是归属粗一点）—— 因为"跨章前置内容"与"章内
+    无编号标题"在结构上无法可靠区分，硬分会造出假节；
+  · 章与章之间夹着的前置内容会落进**前一章的末节**区间，同样是块区间口径下
+    的保守取舍。
+
 本模块**只依赖文档自身结构**，无随机数、无抽样、不读时钟 —— 同输入必然
 同输出（A2-7）。
 """
 
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass, field
 
 from app.parse.blocks import ParsedBlock, ParsedDocument, split_heading_number
@@ -56,6 +84,15 @@ from app.parse.blocks import ParsedBlock, ParsedDocument, split_heading_number
 _PREAMBLE_TITLE = "前言"
 #: 整份材料一个标题都没有时的占位标题。
 _NO_HEADING_TITLE = "全文"
+
+#: 章扉页标题行的字符数上限（与 `pdf.HEADING_MAX_CHARS` 同口径的护栏）。
+_TITLE_MAX_CHARS = 100
+#: "不齐左"的判据：左边界比版心左边界右移 ≥ 本行行高的这个倍数。
+#: 章扉页标题常居中 / 居右，而正文与章内小节标题都齐左 —— 用这条把
+#: "章标题"与"章内无编号的小节标题"分开（后者与正文同一起排线）。
+_TITLE_INDENT_RATIO = 1.0
+#: 章扉页标题只在这一页或它**前一页**上找（章扉页紧邻该章的第一个编号节）。
+_TITLE_PAGE_SPAN = 1
 
 
 @dataclass(frozen=True)
@@ -182,18 +219,33 @@ def _has_direct_content(node: _Node) -> bool:
     return node.end_seq > node.seq
 
 
-def _build_tree(blocks: list[ParsedBlock]) -> list[_Node]:
+def _build_tree(
+    blocks: list[ParsedBlock],
+    *,
+    only: set[int] | None = None,
+    limit: int | None = None,
+) -> list[_Node]:
     """把所有标题块搭成一棵树，返回最浅一层的根节点（= 章）。
 
     用单调栈：《按文档顺序》遇到层级 ≤ 栈顶的标题就弹栈（被弹出的节点在此刻
     确定了自身的 `end_seq`），再挂到新栈顶下面。这样每个节点的势力范围天然
     是"到下一个同级或更浅标题之前"，与"章/节"的直觉一致。
+
+    `only` / `limit` 供"编号结构定章"那条路径用：
+      · `only`：只把集合里的标题纳入（每个章只搭自己那一组的树）；
+      · `limit`：势力范围的**闭区间上界**（章与章之间要断开，否则末节点会
+        一路吃到底、把下一章的扉页正文算进本章）。
+    默认（都为 None）就是"整篇文档一棵树"，与第一批的行为逐字一致。
     """
     roots: list[_Node] = []
     stack: list[_Node] = []
+    stop = len(blocks) if limit is None else min(limit + 1, len(blocks))
 
-    for idx, block in enumerate(blocks):
+    for idx in range(stop):
+        block = blocks[idx]
         if not block.is_heading:
+            continue
+        if only is not None and idx not in only:
             continue
         level = block.heading_level or 1
         while stack and stack[-1].level >= level:
@@ -206,8 +258,8 @@ def _build_tree(blocks: list[ParsedBlock]) -> list[_Node]:
             roots.append(node)
         stack.append(node)
 
-    for node in stack:  # 还没被弹掉的，势力范围一直到文末
-        node.end_seq = len(blocks) - 1
+    for node in stack:  # 还没被弹掉的，势力范围一直到上界
+        node.end_seq = stop - 1
     return roots
 
 
@@ -246,6 +298,211 @@ def _flatten_sections(nodes: list[_Node]) -> list[tuple[int, str | None, str, in
             out.append((node.seq, number, title, node.seq + 1, node.children[0].seq - 1))
         out.extend(_flatten_sections(node.children))
     return out
+
+
+def _chapter_prefix(number: str, length: int) -> str:
+    """从章节号原貌里取前 `length` 段**阿拉伯数字**作为章号（`1.1.2` + 1 → `1`）。
+
+    取不出足够的数字段时**回退成整串**（`一、` 这种压根没有阿拉伯数字的编号）；
+    `第1节` 这类只有一个数字段的，取到的就是 `1`。两条路都是**各自成章** ——
+    这是保守方向：宁可把两章拆成两章，也不把两章并成一章（并错会让节的归属
+    整体错位且不报错；拆错只是章数偏多，人工一眼能看出来）。
+    """
+    if length <= 0:
+        return number
+    parts = re.findall(r"\d+", number)
+    if len(parts) >= length:
+        return ".".join(parts[:length])
+    return number
+
+
+def _document_left(blocks: list[ParsedBlock]) -> float | None:
+    """本文档的版心左边界（所有块左边界的**最小值**，不写死任何页宽常量）。
+
+    用最小值而不是众数：页面上总有一段正文是齐左的，而"齐左"正是用来区分
+    "章扉页标题（居中/居右）"与"章内小节标题（齐左）"的参照物。
+    """
+    xs = [b.bbox[0] for b in blocks if b.bbox is not None]
+    return min(xs) if xs else None
+
+
+def _is_title_like(block: ParsedBlock, body_left: float | None) -> bool:
+    """这一行像"章扉页标题"吗 —— 判据只有一条：**不齐左**。
+
+    行高用 bbox 高度近似（`parse.pdf` 里一行的高度 ≈ 字号 × 1.0–1.2，够用）。
+    几何信息缺失（DOCX、无 bbox）时一律 False —— 判不出来就不认，
+    章标题回退成章号，不猜。
+    """
+    if block.bbox is None or body_left is None:
+        return False
+    x0, top, _, bottom = block.bbox
+    line_height = max(bottom - top, 1.0)
+    return x0 - body_left >= _TITLE_INDENT_RATIO * line_height
+
+
+def _front_title(
+    blocks: list[ParsedBlock],
+    first_head_seq: int,
+    body_left: float | None,
+    used: set[int],
+) -> int | None:
+    """给"章标题没有编号"的章找它的扉页标题行（找不到返回 None）。
+
+    只在**该章第一个编号节所在页及其前一页**上找 —— 章扉页总是紧邻着本章的
+    第一个编号节（实测：扉页在第 9 页，`1.1` 在第 10 页）。这条页界把前置部分
+    的标题（目录 `TABLE OF CONTENTS`、`PREFACE`，它们也居中、也大字号）挡在
+    门外，不需要任何"前置部分"的内容特征。
+
+    候选条件：无编号 ∧ 已被判成 heading ∧ **不齐左** ∧ 长度 ≤ `_TITLE_MAX_CHARS`。
+    多个候选时取**最长**的一行（并列取靠后的一行）：章扉页的版式是
+    「`CHAPTER` / 序号词 / 标题」，序号词（`ONE` / `I`）总是极短，
+    标题才是信息量最大的那一行。
+    """
+    page = blocks[first_head_seq].page_no
+    if page is None:
+        return None
+    pages = {page - offset for offset in range(_TITLE_PAGE_SPAN + 1)}
+
+    candidates = [
+        idx
+        for idx, block in enumerate(blocks[:first_head_seq])
+        if idx not in used
+        and block.is_heading
+        and block.page_no in pages
+        and split_heading_number(block.content_md) is None
+        and 0 < len(block.content_md.strip()) <= _TITLE_MAX_CHARS
+        and _is_title_like(block, body_left)
+    ]
+    if not candidates:
+        return None
+    return max(candidates, key=lambda idx: (len(blocks[idx].content_md.strip()), idx))
+
+
+def _preamble_chapter(end_seq: int) -> ParsedChapter:
+    """把"第一个（真）章开始之前"的块收成一个「前言」占位章。
+
+    保留这个占位章的用意是**不静默丢内容**：封面、目录、PREFACE、章扉页这些块
+    也得有个去处，否则它们既不在任何节里、也没人告诉下游"这里有一批块被跳过了"。
+    它是**占位**章：`number` 为 None，一眼能与真章区分（真章都有章号）。
+    """
+    section = ParsedSection(
+        chapter_seq=0,
+        chapter_number=None,
+        chapter_title=_PREAMBLE_TITLE,
+        chapter_heading_seq=0,
+        seq=0,
+        number=None,
+        title=_PREAMBLE_TITLE,
+        heading_seq=0,
+        start_seq=0,
+        end_seq=end_seq,
+    )
+    return ParsedChapter(
+        seq=0, number=None, title=_PREAMBLE_TITLE, heading_seq=0, sections=(section,)
+    )
+
+
+def _sections_of(
+    roots: list[_Node],
+    number: str | None,
+    title: str,
+    chapter_seq: int,
+    chapter_heading_seq: int,
+) -> tuple[ParsedSection, ...]:
+    return tuple(
+        ParsedSection(
+            chapter_seq=chapter_seq,
+            chapter_number=number,
+            chapter_title=title,
+            chapter_heading_seq=chapter_heading_seq,
+            seq=sec_seq,
+            number=sec_number,
+            title=sec_title,
+            heading_seq=heading_seq,
+            start_seq=start,
+            end_seq=end,
+        )
+        for sec_seq, (heading_seq, sec_number, sec_title, start, end) in enumerate(
+            _flatten_sections(roots)
+        )
+    )
+
+
+def _build_level_chapters(blocks: list[ParsedBlock]) -> list[ParsedChapter]:
+    """第一批的路径：`章 = 最浅一层的标题`（适用于**有编号章标题**的文档）。"""
+    roots = _build_tree(blocks)
+    chapters: list[ParsedChapter] = []
+
+    # ---- 第一个章标题之前的块：单独成"前言"章，不硬塞进第一章 ----
+    if roots and roots[0].seq > 0:
+        chapters.append(_preamble_chapter(roots[0].seq - 1))
+
+    for root in roots:
+        number, title = _number_and_title(root.block)
+        chapter_seq = len(chapters)
+        chapters.append(
+            ParsedChapter(
+                seq=chapter_seq,
+                number=number,
+                title=title,
+                heading_seq=root.seq,
+                sections=_sections_of([root], number, title, chapter_seq, root.seq),
+            )
+        )
+    return chapters
+
+
+def _build_numbered_chapters(
+    blocks: list[ParsedBlock], numbered: list[tuple[int, str, int]], top: int
+) -> list[ParsedChapter]:
+    """第三批的路径：`文档里没有带编号的章标题`（`top >= 2`）时，章由**编号前缀**定。
+
+    见模块 docstring「章标题没有编号时怎么办」。`numbered` 是
+    `(seq, 章节号原貌, 编号深度)` 的文档序列表。
+    """
+    prefix_len = top - 1
+    groups: list[tuple[str, list[int]]] = []
+    for seq, number, _depth in numbered:
+        key = _chapter_prefix(number, prefix_len)
+        if groups and groups[-1][0] == key:
+            groups[-1][1].append(seq)
+        else:
+            groups.append((key, [seq]))
+
+    body_left = _document_left(blocks)
+    used_titles: set[int] = set()
+    chapters: list[ParsedChapter] = []
+
+    if numbered[0][0] > 0:
+        chapters.append(_preamble_chapter(numbered[0][0] - 1))
+
+    for index, (key, head_seqs) in enumerate(groups):
+        # 本章的势力范围止于下一章的第一个编号标题之前 —— 不设这个上界，
+        # 本章的末节点会一路吃到底，把后面所有章的前置内容都算进来。
+        limit = groups[index + 1][1][0] - 1 if index + 1 < len(groups) else len(blocks) - 1
+        title_seq = _front_title(blocks, head_seqs[0], body_left, used_titles)
+        if title_seq is not None:
+            used_titles.add(title_seq)
+            title = _number_and_title(blocks[title_seq])[1]
+            heading_seq = title_seq
+        else:
+            # 找不出章标题行就不编：章号原貌当标题（真章都有章号，只有占位章为 None）。
+            title = key
+            heading_seq = head_seqs[0]
+
+        roots = _build_tree(blocks, only=set(head_seqs), limit=limit)
+        chapter_seq = len(chapters)
+        chapters.append(
+            ParsedChapter(
+                seq=chapter_seq,
+                number=key,
+                title=title,
+                heading_seq=heading_seq,
+                sections=_sections_of(roots, key, title, chapter_seq, heading_seq),
+            )
+        )
+    return chapters
+
 
 
 def _assert_range_contract(blocks: list[ParsedBlock], sections: list[ParsedSection]) -> None:
@@ -319,60 +576,19 @@ def _build_chapters(blocks: list[ParsedBlock]) -> list[ParsedChapter]:
             )
         ]
 
-    roots = _build_tree(blocks)
-    chapters: list[ParsedChapter] = []
+    # ---- 有编号标题吗？有就由"编号结构"定章，没有就退回"层级树"定章 ----
+    numbered: list[tuple[int, str, int]] = []
+    for seq, block in enumerate(blocks):
+        if not block.is_heading:
+            continue
+        parsed = split_heading_number(block.content_md)
+        if parsed is not None:
+            numbered.append((seq, parsed.number, parsed.depth))
 
-    # ---- 第一个章标题之前的块：单独成"前言"章，不硬塞进第一章 ----
-    if roots and roots[0].seq > 0:
-        section = ParsedSection(
-            chapter_seq=0,
-            chapter_number=None,
-            chapter_title=_PREAMBLE_TITLE,
-            chapter_heading_seq=0,
-            seq=0,
-            number=None,
-            title=_PREAMBLE_TITLE,
-            heading_seq=0,
-            start_seq=0,
-            end_seq=roots[0].seq - 1,
-        )
-        chapters.append(
-            ParsedChapter(
-                seq=0, number=None, title=_PREAMBLE_TITLE, heading_seq=0, sections=(section,)
-            )
-        )
-
-    for root in roots:
-        number, title = _number_and_title(root.block)
-        chapter_seq = len(chapters)
-        sections = tuple(
-            ParsedSection(
-                chapter_seq=chapter_seq,
-                chapter_number=number,
-                chapter_title=title,
-                chapter_heading_seq=root.seq,
-                seq=sec_seq,
-                number=sec_number,
-                title=sec_title,
-                heading_seq=heading_seq,
-                start_seq=start,
-                end_seq=end,
-            )
-            for sec_seq, (heading_seq, sec_number, sec_title, start, end) in enumerate(
-                _flatten_sections([root])
-            )
-        )
-        chapters.append(
-            ParsedChapter(
-                seq=chapter_seq,
-                number=number,
-                title=title,
-                heading_seq=root.seq,
-                sections=sections,
-            )
-        )
-
-    return chapters
+    top = min((depth for _, _, depth in numbered), default=None)
+    if top is None or top <= 1:
+        return _build_level_chapters(blocks)
+    return _build_numbered_chapters(blocks, numbered, top)
 
 
 def _build(blocks: list[ParsedBlock]) -> list[ParsedChapter]:

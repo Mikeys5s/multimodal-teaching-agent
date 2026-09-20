@@ -156,6 +156,30 @@ HEADING_MAX_CHARS = 100
 #: 字号法判定标题时，最多允许几行。标题一般不跨很多行。
 HEADING_MAX_LINES = 3
 
+# ---- 封面装饰行否决（第三批）----
+#
+# 封面书名 / 副标题 / 作者行用的是全书**最大**的字号，字号法因此把它们判成
+# 一级标题；而"章 = 最浅一层的标题"的骨架规则就会把封面书名两行当成两章。
+# 实测（真实教材前 30 页）：改前 2 章 / 21 节，这"2 章"正是封面书名
+# （`Computer Networks: A Systems` / `Approach`），真实结构只有 Chapter 1 一章。
+#
+# 判据是**合取**，缺一不可 —— 单看任何一条都会误伤真章标题：
+#   ① 位于文档**前 `COVER_PAGES` 页**（封面 / 版权页）；
+#   ② **没有编号**（`split_heading_number` 认不出章节号）；
+#   ③ 字号 ≥ 正文字号 + `COVER_SIZE_DELTA`（明显大于正文）；
+#   ④ 所在页的"普通字号块"不超过 `COVER_MAX_BODY_BLOCKS` 个 ——
+#      封面页是"一屏大字 + 一个日期行"，而**章扉页**（实测第 9 页）上
+#      紧跟着整页正文段落（9 个普通块），第 ④ 条把章扉页挡在门外。
+# 方向与去噪一致：**宁可漏判一个真章标题，也不凭空造章**。
+COVER_PAGES = 2
+#: 封面装饰行的字号门槛（相对正文的增量）。取 2×`HEADING_SIZE_DELTA`：
+#: 实测封面书名 24.8pt、副标题 / 作者 17.2pt、正文 10.9pt（门槛 = 13.9），
+#: 而版权页的日期行 12.0pt 落在门槛之下（它本来就该是正文）。
+COVER_SIZE_DELTA = 2 * HEADING_SIZE_DELTA
+#: 封面页允许出现的"普通字号块"数上限。超过它就说明这页是**正文页**，
+#: 不是封面 —— 即使页码很小也一样，宁可漏判。
+COVER_MAX_BODY_BLOCKS = 1
+
 # ---- 页眉 / 页脚 / 页码去噪（第二批）----
 #
 # 四条信号是**合取**：任何一条单独用都会误删正文（见模块 docstring）。下面每个
@@ -758,6 +782,41 @@ def _denoise(
     return kept, _DenoiseReport(**counts)
 
 
+def _cover_decorations(raws: list[_RawBlock], body_size: float) -> frozenset[int]:
+    """挑出"封面装饰行"的下标 —— 这些块**不判 heading**（判据见上方常量区）。
+
+    为什么必须在这里（分类前）否决，而不是在骨架阶段"合并"：字号法一旦把它们
+    判成一级标题，"章 = 最浅一层标题"的规则就会一路错下去（骨架错位不报错）。
+    在分类这一层否决最省事，也最容易用单块级别的用例钉住。
+
+    第 ④ 条（"这一页普通字号块很少"）是**唯一**能把封面与章扉页分开的信号：
+    两者都是"大字 + 无编号 + 靠页首"，区别在于封面整页只有大字与一个日期行，
+    章扉页后面紧跟着整页正文。没有它就会把每一章的扉页标题一起否决掉 ——
+    那属于"漏判真章"，虽然方向可接受，但没有必要付这个代价。
+    """
+    if body_size <= 0:
+        return frozenset()
+
+    threshold = body_size + COVER_SIZE_DELTA
+    bodyish: dict[int, int] = {}
+    for raw in raws:
+        if raw.max_size < threshold:
+            bodyish[raw.page_no] = bodyish.get(raw.page_no, 0) + 1
+
+    out: set[int] = set()
+    for index, raw in enumerate(raws):
+        if raw.page_no > COVER_PAGES:
+            continue
+        if raw.max_size < threshold:
+            continue
+        if split_heading_number(raw.text) is not None:
+            continue
+        if bodyish.get(raw.page_no, 0) > COVER_MAX_BODY_BLOCKS:
+            continue
+        out.add(index)
+    return frozenset(out)
+
+
 def _sample_page_indices(page_count: int, limit: int) -> list[int]:
     """均匀取样页下标（0-based），含首页与末页，结果可复现。"""
     if page_count <= 0:
@@ -1068,8 +1127,14 @@ def parse_pdf(path: str | Path) -> ParsedDocument:
 
     # 先判块类型（heading/paragraph），**再**合并续行：反过来的话标题会被
     # 当成上一段的续行吞掉，或者合并后的块字号信息变脏导致标题判错。
+    # 封面装饰行在**最前面**否决：它用的是全书最大字号，字号法必然把它判成
+    # 一级标题，而一级标题就是"章"—— 不在这里拦住，封面书名就会成为章。
+    cover = _cover_decorations(raws, body_size)
     classified: list[tuple[_RawBlock, str, int | None]] = []
-    for raw in raws:
+    for index, raw in enumerate(raws):
+        if index in cover:
+            classified.append((raw, "paragraph", None))
+            continue
         block_type, heading_level = _classify(raw, body_size, size_levels)
         classified.append((raw, block_type, heading_level))
 
