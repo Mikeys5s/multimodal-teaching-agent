@@ -202,6 +202,22 @@ def get_session(session_id: str, db: DbSession) -> Envelope[SessionDetailOut]:
     turns: list[TurnOut] = []
     for t in rows:
         d = json.loads(t.diagnosis_json) if t.diagnosis_json else None
+        # ⚠️ **挑字段，不要 `**` 展开。**
+        #
+        # `engine._diagnosis` 返回的 dict 比 `StuckAtOut` **多一个键**
+        # （`stuck_evidence` —— 那是给人看的依据文本）。用 `StuckAtOut(**d["stuck_at"])`
+        # 展开就会撞 "unexpected keyword argument"，而且是 **500**。
+        #
+        # **这次的教训**：跨层传 dict 时，"多的字段"是常态；
+        # **接收方要显式挑，不要赌对方只给这些。**
+        sa = (d or {}).get("stuck_at")
+        stuck = StuckAtOut(
+            step=str(sa) if isinstance(sa, str) else str(sa.get("step", "")) if isinstance(sa, dict) else "",
+            evidence_kp_id=(sa.get("evidence_kp_id") if isinstance(sa, dict)
+                            else (d or {}).get("root_cause_kp_id")),
+            evidence_misconception_id=None,
+        ) if sa else None
+
         turns.append(TurnOut(
             id=t.id,
             seq=t.seq,
@@ -215,14 +231,15 @@ def get_session(session_id: str, db: DbSession) -> Envelope[SessionDetailOut]:
             grounded=bool(t.grounded),
             diagnosis=DiagnosisOut(
                 knowledge_points=[
-                    DiagnosisKpOut(**kp) for kp in (d or {}).get("knowledge_points", [])
-                    if isinstance(kp, dict)
+                    DiagnosisKpOut(
+                        kp_id=str(k["kp_id"]), name=str(k["name"]),
+                        difficulty=int(k.get("difficulty") or 3),
+                    )
+                    for k in (d or {}).get("knowledge_points", [])[:3]
+                    if isinstance(k, dict) and k.get("kp_id")
                 ],
-                stuck_at=StuckAtOut(**d["stuck_at"]) if d and d.get("stuck_at") else None,
-                next_practice=[
-                    NextPracticeOut(**x) for x in (d or {}).get("next_practice", [])
-                    if isinstance(x, dict)
-                ],
+                stuck_at=stuck,
+                next_practice=[],
             ) if d else None,
             created_at=t.created_at,
         ))
@@ -484,6 +501,29 @@ def get_session_report(session_id: str, db: DbSession) -> Envelope[SessionReport
     description="删除会话及其全部轮次（级联）。",
 )
 def delete_session(session_id: str, db: DbSession) -> Envelope[dict]:
-    _require_session(session_id, db)
+    """真实删除：会话 + 它的全部轮次。
+
+    ## ⚠️ 这里原来只返回一个字符串
+
+    ```python
     # TODO(P3): 真实删除
     return ok({"deleted": session_id})
+    ```
+
+    **它说"删了"，但什么都没删** —— 删完再 `GET` 还能拿到完整会话。
+
+    **这类 mock 的危害比"返回空"更大**：调用方拿到 `{"deleted": ...}` 会**相信它删了**，
+    于是不做后续处理。**而数据还在那儿。**
+    （前端切会话后残留、演示时"删了还能点进去"，都是这么来的。）
+
+    轮次要显式删 —— 不依赖数据库的外键级联（SQLite 默认不开 `ON DELETE CASCADE`）。
+    """
+    _require_session(session_id, db)
+
+    n_turns = db.query(QaTurn).filter(QaTurn.session_id == session_id).delete()
+    sess = db.get(QaSession, session_id)
+    if sess is not None:
+        db.delete(sess)
+    db.commit()
+
+    return ok({"deleted": session_id, "turns_deleted": int(n_turns)})
