@@ -27,17 +27,22 @@ from __future__ import annotations
 
 from collections.abc import Iterator
 from typing import Annotated
+from uuid import uuid4
+
+import json
 
 from fastapi import APIRouter, Depends, Header
 from fastapi.responses import StreamingResponse
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.core.errors import ApiError, ErrorCode
 from app.core.response import Envelope, ok
 from app.db import SessionLocal, get_db
-from app.models import QaSession
+from app.models import QaSession, QaTurn
+from app.models._common import utc_now_iso
 from app.tutor import next_seq as tutor_next_seq
-from app.tutor import run_turn as tutor_run_turn
+from app.tutor import report_of_session, run_turn as tutor_run_turn, state_of_session
 from app.tutor.sse import event_stream as tutor_sse_events
 from app.schemas.qa import (
     AskIn,
@@ -122,8 +127,42 @@ def _sse_frame(event: str, seq: int, data: str) -> str:
     description="`material_scope` 为空数组表示在**全部材料**范围内答疑。",
 )
 def create_session(payload: SessionCreateIn, db: DbSession) -> Envelope[SessionCreatedOut]:
+    """建一个**真实**会话。
+
+    ## ⚠️ 这里原来是 mock
+
+    ```python
     # TODO(P3): 落库到 qa_sessions
-    return ok(SessionCreatedOut(session_id=SESSION_ID))
+    return ok(SessionCreatedOut(session_id=SESSION_ID))     # SESSION_ID 是个常量！
+    ```
+
+    **它返回写死的 `qs_9f2a1c40_001`**，不落库、不看入参。
+
+    **后果不只是"少写一行"**：`ask` 的链路是
+    `create_session → ask(each turn) → 落 qa_turns`，
+    **第一步是假的 → 库里没有会话 → `ask` 直接 404。**
+
+    **整条链路是断的，但每个端点单独看都"返回 200"。**
+    这正是我今天反复遇到的那类问题：**分项都通过，合起来不通。**
+
+    （我是靠**真的去打一次线上 `/ask`** 才发现的 —— 而它在我"端到端测试全过"之后
+      才暴露，因为那次测试用的是**容器里我自己造的会话**，绕过了 `create_session`。）
+    """
+    sid = f"qs_{uuid4().hex[:12]}"
+    # material_scope：空数组 = 全部材料（api-spec 的约定）
+    # 存成 `"all"` 或逗号分隔 —— 与 `retrieve.search_kps` 的解析保持一致
+    scope = ",".join(payload.material_scope) if payload.material_scope else "all"
+    now = utc_now_iso()
+
+    db.add(QaSession(
+        id=sid,
+        student_label=payload.student_label,
+        material_scope=scope,
+        created_at=now,
+        updated_at=now,
+    ))
+    db.commit()
+    return ok(SessionCreatedOut(session_id=sid))
 
 
 # ---------------------------------------------------------------------------
@@ -138,61 +177,65 @@ def create_session(payload: SessionCreateIn, db: DbSession) -> Envelope[SessionC
     description="返回会话信息 + 全部轮次。",
 )
 def get_session(session_id: str, db: DbSession) -> Envelope[SessionDetailOut]:
+    """返回会话信息 + **全部真实轮次**。
+
+    ## ⚠️ 这里原来是 57 行写死的 mock
+
+    返回的是一段固定的"快排"对话（`这题为什么用快排不用冒泡？` /
+    `快速排序的分区思想` / `手写一次 Hoare 分区过程`），
+    **跟这个会话实际聊过什么毫无关系**。
+
+    **这就是 P3 报的那类问题的另一半**：
+    `ask` 是 mock（答什么都是快排）+ `get_session` 是 mock（读什么都是快排）
+    —— **两端都假，而且假的内容一模一样**，所以看起来"自洽"。
+
+    学生刷新页面会看到一段自己从没聊过的话 —— **这是最容易被当场抓住的那种 bug**。
+    """
     _require_session(session_id, db)
-    # TODO(P3): 从 qa_turns 读取真实轮次
-    return ok(
-        SessionDetailOut(
-            id=session_id,
-            student_label="demo",
-            material_scope=["mat_9f2a1c40"],
-            created_at="2026-09-17T13:20:01+00:00",
-            updated_at="2026-09-17T13:22:44+00:00",
-            turns=[
-                TurnOut(
-                    id="turn_0001",
-                    seq=0,
-                    role="student",
-                    content_md="这题为什么用快排不用冒泡？",
-                    turn_type="student_question",
-                    grounded=False,
-                    created_at="2026-09-17T13:20:05+00:00",
-                ),
-                TurnOut(
-                    id="turn_0002",
-                    seq=1,
-                    role="tutor",
-                    content_md=(
-                        "先想一个问题：如果数组已经是升序的，冒泡排序还需要比较多少次？快速排序呢？"
-                    ),
-                    turn_type="probe",
-                    retrieved_kp_ids=["kp_9f2a1c40_000_002_003"],
-                    retrieved_block_ids=["blk_9f2a1c40_00003"],
-                    grounded=True,
-                    diagnosis=DiagnosisOut(
-                        knowledge_points=[
-                            DiagnosisKpOut(
-                                kp_id="kp_9f2a1c40_000_002_003",
-                                name="快速排序的分区思想",
-                                difficulty=3,
-                            )
-                        ],
-                        stuck_at=StuckAtOut(
-                            step="尚未建立分区与最终位置的关系",
-                            evidence_kp_id="kp_9f2a1c40_000_002_003",
-                        ),
-                        next_practice=[
-                            NextPracticeOut(
-                                kp_id="kp_9f2a1c40_000_002_003",
-                                task="手写一次 Hoare 分区过程",
-                            )
-                        ],
-                    ),
-                    latency_ms=2310,
-                    created_at="2026-09-17T13:20:07+00:00",
-                ),
-            ],
-        )
-    )
+    sess = db.get(QaSession, session_id)
+    assert sess is not None  # _require_session 已经把 None 挡掉了
+
+    rows = db.scalars(
+        select(QaTurn).where(QaTurn.session_id == session_id).order_by(QaTurn.seq)
+    ).all()
+
+    turns: list[TurnOut] = []
+    for t in rows:
+        d = json.loads(t.diagnosis_json) if t.diagnosis_json else None
+        turns.append(TurnOut(
+            id=t.id,
+            seq=t.seq,
+            role=t.role,
+            content_md=t.content_md,
+            turn_type=t.turn_type,
+            retrieved_kp_ids=json.loads(t.retrieved_kp_ids) if t.retrieved_kp_ids else [],
+            retrieved_block_ids=(
+                json.loads(t.retrieved_block_ids) if t.retrieved_block_ids else []
+            ),
+            grounded=bool(t.grounded),
+            diagnosis=DiagnosisOut(
+                knowledge_points=[
+                    DiagnosisKpOut(**kp) for kp in (d or {}).get("knowledge_points", [])
+                    if isinstance(kp, dict)
+                ],
+                stuck_at=StuckAtOut(**d["stuck_at"]) if d and d.get("stuck_at") else None,
+                next_practice=[
+                    NextPracticeOut(**x) for x in (d or {}).get("next_practice", [])
+                    if isinstance(x, dict)
+                ],
+            ) if d else None,
+            created_at=t.created_at,
+        ))
+
+    return ok(SessionDetailOut(
+        id=sess.id,
+        student_label=sess.student_label,
+        # 存的 "all" 要还原成列表语义（api-spec：空数组 = 全部材料）
+        material_scope=[] if sess.material_scope == "all" else sess.material_scope.split(","),
+        created_at=sess.created_at,
+        updated_at=sess.updated_at,
+        turns=turns,
+    ))
 
 
 # ---------------------------------------------------------------------------
@@ -355,18 +398,37 @@ def _mock_event_stream(session_id: str, start_seq: int) -> Iterator[str]:
     ),
 )
 def get_state(session_id: str, db: DbSession) -> Envelope[QaStateOut]:
+    """真实状态：**从已落库的轮次反推**（`tutor.state_of_session`）。
+
+    ## ⚠️ 这里原来返回写死的值
+
+    ```python
+    state="S2_HINT1", hint_level=1, consecutive_failures=1,
+    current_kp_id="kp_9f2a1c40_000_002_003", next_action="hint2"
+    ```
+
+    **一个刚建的会话（0 轮）也会返回"已经提示了 1 次、失败了 1 次"。**
+
+    而这个端点的规格里写得很清楚：
+
+    > 把它暴露成接口 + 前端可视化（如三轮进度指示器），
+    > 就能让评委**看见引导策略的存在**
+
+    —— **一个假的进度指示器，比没有更糟。**
+    评委问一句"这个 1 是怎么来的"，就答不上来了。
+
+    规则、`next_action`、`consecutive_failures` 全部由 `state_of_session` 一处给出。
+    """
     _require_session(session_id, db)
-    # TODO(P3): 从会话的最后一条 turn 反推真实状态
-    return ok(
-        QaStateOut(
-            state="S2_HINT1",
-            hint_level=1,
-            consecutive_failures=1,
-            current_kp_id="kp_9f2a1c40_000_002_003",
-            next_action="hint2",
-            explain_threshold=2,
-        )
-    )
+    st = state_of_session(db, session_id)
+    return ok(QaStateOut(
+        state=st.state.value,
+        hint_level=st.hint_level,
+        consecutive_failures=st.consecutive_failures,
+        current_kp_id=st.current_kp_id,
+        next_action=st.next_action,
+        explain_threshold=st.explain_threshold,
+    ))
 
 
 # ---------------------------------------------------------------------------
@@ -381,29 +443,33 @@ def get_state(session_id: str, db: DbSession) -> Envelope[QaStateOut]:
     description="汇总本会话全部卡点与建议练习 —— 是「三件产出」在一轮对话上的聚合。",
 )
 def get_session_report(session_id: str, db: DbSession) -> Envelope[SessionReportOut]:
+    """真实报告：聚合本会话的 `diagnosis_json`（`tutor.report_of_session`）。
+
+    ## ⚠️ 这里原来也是写死的
+
+    ```
+    本次答疑共 8 轮，全部回答均基于教材内容（接地率 100%）。
+    卡点集中在「快速排序的分区思想」……
+    ```
+
+    **一个新会话（0 轮）也会这么写。**
+
+    而 `grounded_rate` 是 SPEC 里「**幻觉率必须为 0**」那条红线的载体 ——
+    **一个恒定 100% 的比率，等于没有这个指标。**
+
+    现在：接地率的分母是**导师轮**（SPEC 原话），
+    **越界拒答的轮次按 0 计入，会如实把比率拉下来** —— 这才是它该有的行为。
+    """
     _require_session(session_id, db)
-    # TODO(P3): 聚合真实轮次
-    return ok(
-        SessionReportOut(
-            session_id=session_id,
-            turn_count=8,
-            grounded_rate=1.0,
-            stuck_points=[
-                StuckAtOut(
-                    step="尚未建立分区与最终位置的关系",
-                    evidence_kp_id="kp_9f2a1c40_000_002_003",
-                )
-            ],
-            suggested_practices=[
-                NextPracticeOut(kp_id="kp_9f2a1c40_000_002_003", task="手写一次 Hoare 分区过程")
-            ],
-            summary_md=(
-                "本次答疑共 8 轮，全部回答均基于教材内容（接地率 100%）。\n\n"
-                "卡点集中在「快速排序的分区思想」——建议先用一个小数组手写一遍分区过程，"
-                "再回头看复杂度分析。"
-            ),
-        )
-    )
+    rep = report_of_session(db, session_id)
+    return ok(SessionReportOut(
+        session_id=session_id,
+        turn_count=rep.turn_count,
+        grounded_rate=rep.grounded_rate,
+        stuck_points=[StuckAtOut(**x) for x in rep.stuck_points],
+        suggested_practices=[NextPracticeOut(**x) for x in rep.suggested_practices],
+        summary_md=rep.summary_md,
+    ))
 
 
 # ---------------------------------------------------------------------------
