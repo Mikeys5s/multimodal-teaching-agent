@@ -240,5 +240,8 @@ def test_end_to_end_pipeline() -> None:
 
     resp = client.get(f"/api/learning-path?kp_id={kp_ids[0]}")
     assert resp.status_code == 200, f"步骤7 学习路径接口失败：{resp.status_code}"
-    steps = (resp.json().get("data") or {}).get("steps") or []
+    # ⚠️ 同上：`data` 是数组，不能再 `.get("steps")`
+    #    （原写法在 list 上调 `.get()` → AttributeError）
+    _d = resp.json().get("data")
+    steps = _d if isinstance(_d, list) else []
     assert steps, "步骤7 学习路径为空 —— 拓扑排序没接上或图不连通"

@@ -203,7 +203,14 @@ def render(report: dict[str, Any], db_file: str) -> str:
     rows = check_acceptance(report)
     width = max(_dwidth(r.label) for r in rows)
     for r in rows:
-        mark = "PASS" if r.passed else "FAIL"
+        # ⚠️ **三态，不是二态。**（2026-09-20 改）
+        #
+        # `r.passed` 可以是 `None` = **样本为 0，无从判定**。
+        # 原来写的是 `"PASS" if r.passed else "FAIL"` —— `None` 是 falsy，
+        # **于是"没数据可判"被显示成"不达标"**，健康的图也让 `--strict` 返回 1。
+        #
+        # 这两件事必须分开：前者是缺数据，后者是真的不合格。
+        mark = "N/A" if r.passed is None else ("PASS" if r.passed else "FAIL")
         # 显示格式由显式标注的 kind 决定，不靠数值大小猜（见 quality.ACCEPTANCE 的注释）
         if r.kind == "rate":
             shown, exp = _pct(r.actual), _pct(r.expected)
