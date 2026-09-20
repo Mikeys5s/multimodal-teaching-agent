@@ -74,6 +74,14 @@ DbSession = Annotated[Session, Depends(get_db)]
 # （`_mock_event_stream` 也一并保留作对照）。D9 之后可以整段删除。
 MOCK_MODE = False
 
+#: SSE `seq` 的轮次步长 —— 每轮从 `student_seq * STRIDE + 1` 开始。
+#:
+#: 取值理由（SPEC §5.2 第 3 条要求"会话内单调递增、跨轮次不重置"）：
+#: - 一轮实测 6–20 个事件，1000 留了 50 倍余量
+#: - 比"在会话上存一个计数器"简单：**不需要改表、不需要迁移**
+#: - 前端能自己算，不必额外接口
+SEQ_TURN_STRIDE = 1000
+
 SESSION_ID = "qs_9f2a1c40_001"
 
 
@@ -279,9 +287,34 @@ def ask(
 ) -> StreamingResponse:
     _require_session(session_id, db)
 
-    # 续推：客户端带了 Last-Event-ID 就从它之后继续
-    start_seq = 1
+    # ---- seq 的起点（SPEC §5.2 第 3 条：会话内单调递增，**跨轮次不重置**）----
+    #
+    # ⚠️ 这里原来是 `start_seq = 1`（每轮归 1）—— **违反 §5.2**。
+    #
+    # `Last-Event-ID` **只在断线续推时才带**；正常第二轮请求不带它，
+    # 于是 `start_seq` 又回 1 —— P3 用两轮实验验证到了：
+    #
+    #     第 1 轮：id 1..6
+    #     第 2 轮：id 1..6     ← 又从 1 开始
+    #
+    # **后果**：前端的 `Last-Event-ID` 恢复机制拿到的是一个**跨轮重复**的 id，
+    # 断线重连会指到错误的轮次。
+    #
+    # ## 修法：让 seq 由「轮次」决定，而不是「每次请求」
+    #
+    #     start_seq = student_seq * 1000 + 1
+    #
+    # - **单调递增**：`student_seq` 每轮 +2（学生轮 + 导师轮），seq 一定更大
+    # - **留足空间**：一轮不可能发 1000 个事件（实测 6–20 个）
+    # - **可预测**：前端能自己算，不需要额外接口
+    # - **续推仍对**：同一轮内 seq 连续，`Last-Event-ID` 依然能定位
+    #
+    # （P3 复测通过的另三条 —— 单轮内 `id` 与 `data.seq` 一致、`id` 在 `event` 之前、
+    #   事件顺序固定 —— 本改动不影响。）
+    student_seq = tutor_next_seq(db, session_id)
+    start_seq = student_seq * SEQ_TURN_STRIDE + 1
     if last_event_id and last_event_id.isdigit():
+        # 续推：客户端带了 Last-Event-ID 就从它之后继续（**同一轮内**）
         start_seq = int(last_event_id) + 1
 
     return StreamingResponse(
