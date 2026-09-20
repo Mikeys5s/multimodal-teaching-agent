@@ -103,7 +103,17 @@ def get_graph(
 
 @router.get(
     "/learning-path",
-    response_model=Envelope[LearningPathOut],
+    # ⚠️ **顶层数组，不是对象** —— api-spec §4.4 就是这么承诺的。
+    #
+    #    原先这里是 `Envelope[LearningPathOut]`，实际返回 `{target_kp_id, steps}`，
+    #    与 spec 不符。后果不是"少了字段"，是**前端 `/path` 页直接崩**：
+    #    `PathTimeline` 对返回值做 `for (const step of steps)`，
+    #    而对象不可迭代 -> `steps is not iterable`；且 `steps.length` 是 undefined，
+    #    连「加载中 / 空状态 / 时间线」三个分支全部落空 -> **白屏且无提示**。
+    #
+    #    P3 在前端做了"两种形状都读"的兼容层兜住了（并因此在 #15 评论区请我收口）。
+    #    **spec 是唯一权威源** —— 所以这里改后端，不是改 spec。
+    response_model=Envelope[list[LearningPathStepOut]],
     summary="学习路径",
     description=(
         "拓扑有序的学习路径。\n\n"
@@ -114,7 +124,7 @@ def get_graph(
 def get_learning_path(
     db: DbSession,
     kp_id: Annotated[str, Query(description="目标知识点 id")],
-) -> Envelope[LearningPathOut]:
+) -> Envelope[list[LearningPathStepOut]]:
     if not kp_id.startswith("kp_"):
         raise ApiError(ErrorCode.NOT_FOUND, f"知识点 {kp_id} 不存在（id 应以 kp_ 开头）")
 
@@ -148,4 +158,9 @@ def get_learning_path(
         )
         for i, s in enumerate(result["steps"])
     ]
-    return ok(LearningPathOut(target_kp_id=kp_id, steps=steps))
+    # ★ **返回顶层数组**（api-spec §4.4 的承诺）。
+    #
+    # ⚠️ 改 `response_model` 时**必须同时改这里** —— 否则模型说"要数组"、
+    #    函数返回对象，FastAPI 会在响应校验那一步抛错。
+    #    （我这次就先改了签名，隔了几步才想起来看返回体 —— 差一点又漏。）
+    return ok(steps)

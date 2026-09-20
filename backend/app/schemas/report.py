@@ -66,7 +66,18 @@ class AcceptanceRowOut(BaseModel):
     expected: float = Field(description="期望值")
     kind: str = Field(description="`rate`（比率，按百分比展示）或 `count`（计数，按整数展示）")
     actual: float | None = Field(default=None, description="实测值；取不到时为 null")
-    passed: bool = Field(description="是否达标。**取不到值一律算不达标**，不能当成通过")
+    passed: bool | None = Field(
+        default=None,
+        description=(
+            "是否达标。**取不到值一律算不达标**（false）；"
+            "**样本为 0 时为 null** —— 那是「无从判定」，不是「不达标」，"
+            "两者不能混为一谈，否则会出现「0 个数据也五项全绿」的真空满足"
+        ),
+    )
+    sample_size: float | None = Field(
+        default=None,
+        description="该指标的样本量。**为 0 时 passed 必为 null** —— 让评审一眼看得出数据量",
+    )
 
 
 class QualityReportOut(BaseModel):

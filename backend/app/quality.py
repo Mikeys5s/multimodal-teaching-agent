@@ -110,12 +110,29 @@ except ModuleNotFoundError as exc:  # pragma: no cover - 只在部署漏拷 skil
 #
 # ⚠️ 路径必须是**完整路径**。第一版把 `knowledge_points.` 前缀漏了，
 #    `_dig` 取不到值返回 None，于是**在满数据的库上也会误判 FAIL**。
-ACCEPTANCE: dict[str, tuple[str, float, str]] = {
-    "A2-1 三级结构完整率": ("knowledge_points.structure_complete_rate", 1.0, "rate"),
-    "A2-3 溯源覆盖率": ("knowledge_points.grounding_rate", 1.0, "rate"),
-    "B1-2 依赖图环数": ("graph.cycle_count", 0.0, "count"),
-    "B1-5 边理由完备率": ("graph.reason_complete_rate", 1.0, "rate"),
-    "幻觉率（0 = 全部基于材料）": ("qa.hallucination_rate", 0.0, "rate"),
+#: label -> (值路径, 期望值, 类型, **样本量路径**)
+#:
+#: ⚠️ **第四项（样本量）是后加的，它比前三项都重要。**
+#: 没有它，`structure_complete_rate` 在 0 个知识点时按定义等于 1.0
+#: —— 报告会显示"五项验收全绿"，而实际上**什么都还没测**。
+ACCEPTANCE: dict[str, tuple[str, float, str, str]] = {
+    "A2-1 三级结构完整率": (
+        "knowledge_points.structure_complete_rate", 1.0, "rate",
+        "knowledge_points.total",
+    ),
+    "A2-3 溯源覆盖率": (
+        "knowledge_points.grounding_rate", 1.0, "rate",
+        "knowledge_points.total",
+    ),
+    "B1-2 依赖图环数": ("graph.cycle_count", 0.0, "count", "graph.edge_count"),
+    "B1-5 边理由完备率": (
+        "graph.reason_complete_rate", 1.0, "rate",
+        "graph.edge_count",
+    ),
+    "幻觉率（0 = 全部基于材料）": (
+        "qa.hallucination_rate", 0.0, "rate",
+        "qa.turn_count",
+    ),
 }
 
 
@@ -131,7 +148,12 @@ class AcceptanceRow(NamedTuple):
     expected: float
     kind: str
     actual: float | None
-    passed: bool
+    #: `None` = **样本为 0，无从判定**（不是"不达标"）。
+    #:
+    #: ⚠️ 不能把"没东西可测"和"测了但不达标"混成同一个值：
+    #: 前者应该显示 N/A，后者才该标红。原先两者都表现成 `True`
+    #: （分母为 0 的比率恒等于 1.0），评审看到"五项全绿"一追问数据量就露底。
+    passed: bool | None
 
 
 # ---------------------------------------------------------------------------
@@ -394,6 +416,24 @@ def compute(db: Session) -> dict[str, Any]:
     }
 
 
+def acceptance_sample_sizes(report: dict[str, Any]) -> dict[str, float | None]:
+    """每条验收指标的**样本量** —— label -> sample_size。
+
+    和 `check_acceptance` 并列而不是塞进 `AcceptanceRow`：
+    那个 NamedTuple 的元数被 CLI 与测试的元组解包依赖，**不能加字段**。
+
+    为什么要单独把样本量暴露出去：
+    `structure_complete_rate` 这类比率**在样本为 0 时按定义等于 1.0**，
+    只报 `passed=true` 会让评审以为"测过了、且合格"。
+    **带上样本量，评审一眼就能看出"这条其实没有数据支撑"。**
+    """
+    out: dict[str, float | None] = {}
+    for label, (_path, _expected, _kind, sample_path) in ACCEPTANCE.items():
+        v = _dig(report, sample_path)
+        out[label] = float(v) if isinstance(v, (int, float)) else None
+    return out
+
+
 def check_acceptance(report: dict[str, Any]) -> list[AcceptanceRow]:
     """逐条对照验收指标。返回结构化行（端点与 CLI 共用）。
 
@@ -403,11 +443,23 @@ def check_acceptance(report: dict[str, Any]) -> list[AcceptanceRow]:
     端点要按字段建响应模型）。两种用法不必各自维护一套结构。
     """
     rows: list[AcceptanceRow] = []
-    for label, (path, expected, kind) in ACCEPTANCE.items():
+    for label, (path, expected, kind, sample_path) in ACCEPTANCE.items():
         actual = _dig(report, path)
+        sample = _dig(report, sample_path)
+
         if not isinstance(actual, (int, float)):
             # 取不到值 = 路径写错或报告结构变了。**不能当成通过**。
-            passed = False
+            passed: bool | None = False
+        elif isinstance(sample, (int, float)) and float(sample) == 0:
+            # ★ **样本为 0 → 无从判定，`None`。**
+            #
+            # 这里就是"真空满足"的入口：分母为 0 时比率恒等于期望值
+            # （完整率 1.0、覆盖率 1.0、环数 0.0），于是**永远"全绿"**。
+            # 但那是"没有数据"，不是"数据合格"。
+            #
+            # 判成 `False` 也不对 —— 那会把"还没测"说成"不达标"。
+            # 只有 `None` 诚实：**这条现在无法判定**。
+            passed = None
         else:
             passed = abs(float(actual) - float(expected)) < 1e-9
         rows.append(AcceptanceRow(label, expected, kind, actual, passed))
