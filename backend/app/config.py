@@ -48,6 +48,12 @@ class Settings(BaseSettings):
     # 生产环境是单容器同源部署，不需要 CORS（SPEC §4.7）。
     dev_frontend_origin: str = "http://localhost:5173"
 
+    # ---- 前端产物（单容器部署）----
+    # 相对路径锚定到 backend/，所以默认值 `../frontend/dist` 指向仓库根的 frontend/dist。
+    # 容器里的目录布局与仓库一致（`/app/backend` + `/app/frontend/dist`），
+    # 因此**同一份配置在本地和容器里都成立**，不需要靠环境变量区分。
+    frontend_dist: str = "../frontend/dist"
+
     # ---- 路径解析 ----
 
     def resolve(self, raw: str) -> Path:
@@ -62,6 +68,10 @@ class Settings(BaseSettings):
     @property
     def upload_path(self) -> Path:
         return self.resolve(self.upload_dir)
+
+    @property
+    def frontend_dist_path(self) -> Path:
+        return self.resolve(self.frontend_dist)
 
     @property
     def max_upload_bytes(self) -> int:

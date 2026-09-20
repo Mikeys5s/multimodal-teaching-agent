@@ -1,0 +1,157 @@
+# 开发规范（在这个项目里怎么干活）
+
+> **本文是「开发」这件事的单一来源。** Skill `xizhi-dev` 只是它的薄封装。
+>
+> 相关：[`CONTRIBUTING.md`](../CONTRIBUTING.md)（Git 协作） ·
+> [`dev-environment.md`](dev-environment.md)（环境坑全集） ·
+> [`review-playbook.md`](review-playbook.md)（验收清单） · [`SPEC.md`](../SPEC.md)（唯一权威源）
+
+---
+
+## 1. 铁律
+
+| # | 规则 | 为什么 |
+|---|---|---|
+| 1 | **`SPEC.md` 是唯一权威源**。偏离 spec 的实现视为缺陷 | 三个人三个脑子，不锚定在一处必然分叉 |
+| 2 | **改 spec 走流程**：§12 登记 → 改章节 → 升版本 → 同步 → 再改代码 | 否则文档和实现会各说各话 |
+| 3 | **验收标准必须是可测指标**，不接受"基本实现" | 不可测的指标等于没有指标 |
+| 4 | **宁缺毋错**：检索不到就明说"材料里没有"，**幻觉率必须为 0** | 这是产品信任的地基 |
+| 5 | **先给 2–3 个方案 + 权衡 + 推荐，等确认再动手** | 方向错了，写得越快越亏 |
+| 6 | **先写测试再写实现**（至少同时） | 本项目最贵的两个 bug 都是"写的时候自认为对" |
+| 7 | **坏消息先报** | 藏起来的坏消息会变成更大的坏消息 |
+
+---
+
+## 2. 干活的顺序
+
+```
+读 SPEC 相关章节
+  → 看 Issue / PR 现状（别人可能已经在做，或已经定了口径）
+  → 契约优先：先确认数据结构 / 接口 / 字段语义，再写实现
+  → 写测试（尤其"坏数据"的测试，不只是"正常路径"）
+  → 写实现
+  → 自查：ruff + pytest + git status
+  → PR（关联 Issue）→ 至少 1 人 review → 合并
+```
+
+**第 2 步最容易被跳过，代价最大。** 今天有两次差点重复劳动：
+`backend/tests/` 的归属、`ParsedSection` 的区间语义 —— 都是"先看现状"能避免的。
+
+---
+
+## 3. ⚠️ 环境坑规避（本机实测，全部踩过）
+
+### 3.1 工作区文件会被成批删除 —— 未定责（Issue #20）
+
+**现状**：本机有程序在删文件，已发生 5 次。`git restore .` 能救（文件都在 git 里）。
+
+**每次 `switch` / `checkout` / `commit` / `merge` 之后，先 `git status` 一眼。**
+看到一片 ` D` 就 `git restore .` —— **成本 2 秒**。
+
+> **最危险的场景**：在"文件已被删、还没恢复"的状态下继续写代码并提交 ——
+> 那会把删除结果**固化进历史**。
+
+**另外**：`.git/refs/heads/*`（刚写的松散 ref）也会被删 →
+**分支不推进**，而 `git commit` 的输出看起来完全正常。详见 Issue #20。
+
+### 3.2 原生 Windows 程序要 Windows 路径
+
+**规律**：**原生 Windows 程序**要 `C:/...`；**bash 内建与 MSYS 工具**才认 `/c/...`。
+
+**已踩的 5 个实例**：
+
+| 命令 | 传 POSIX 路径的后果 |
+|---|---|
+| `python -m venv /c/x/y` | **静默建不出** `Scripts/python.exe` |
+| `ssh-keygen -f /c/Users/...` | `Saving key failed` —— **而目录明明存在** |
+| `powershell -Command "... '/d/foo'"` | 建到了 `D:\d\foo` |
+| `scp /d/... host:...` | `No such file or directory` |
+| `git -C /c/...` | `cannot change to '...'` |
+
+**共同点：报错信息指不到真正原因。**
+问自己一句：**这个程序是原生的还是 MSYS 的？**
+
+### 3.3 别把命令输出吞掉再判成败
+
+```bash
+ssh-keygen ... > /dev/null 2>&1 && echo "已生成"     # ← 实际什么都没生成，白跑一轮
+```
+
+**失败路径要看得见。** 判成败之前先让输出出来。
+
+### 3.4 别给 bash 脚本接管道
+
+```bash
+docker compose build 2>&1 | tail -30      # ← 输出被缓冲，构建跑 19 分钟一个字看不到
+```
+
+**改成写文件、事后再读**：`docker compose build > /root/build.log 2>&1`，然后 `tail` 日志。
+
+**同类**：`pwsh -Command ... | head` 也会被 Bash 过滤器吞掉输出（见 `dev-environment.md`）。
+
+### 3.5 禁用 `git rebase`
+
+**P1 实测：`rebase` 会让 `.git/refs/` 整个目录消失，稳定复现 2/2，仓库直接不可用。**
+
+同步 main 一律用 `merge`。
+
+### 3.6 本环境 bash 缺常用命令
+
+`sleep` · `seq` · `chmod` · `od` · `cygpath` 都没有。
+
+**替代**：等改用 `python -c "import time; time.sleep(n)"`；循环用 `while [ $i -lt N ]`。
+
+### 3.7 国内网络：pip / npm / Docker 都要配镜像源
+
+| 用什么 | 坑 | 修 |
+|---|---|---|
+| **Docker 拉镜像** | `registry-1.docker.io` **直连超时** | 配 `/etc/docker/daemon.json` 的 `registry-mirrors`（本地实测差 **500 倍**） |
+| **pip** | **"通"但慢到像卡死**（13 分钟没跑完） | `PIP_INDEX_URL=https://mirrors.aliyun.com/pypi/simple/` → **30 秒** |
+| **npm** | 同理，包多更明显 | `NPM_REGISTRY=https://registry.npmmirror.com` |
+
+> **「通」和「快」是两回事。** pip 那个坑最阴：进程 CPU 54%，
+> **看起来像在编译，其实不是** —— 让人往错方向查了很久。
+
+### 3.8 TLS 证书问题**每台机器不一样**
+
+- 有人的症状是**卡 90 秒后 `server closed abruptly`** → `http.sslBackend=openssl` 有效
+- 有人是 **`CRYPT_E_NO_REVOCATION_CHECK`**（吊销列表查不到）→ openssl 也不通，
+  只能作用域限定地关校验：`git config --global http."https://github.com/".sslVerify false`
+
+**先看错误码再选方案**，别当"网络波动"忍。
+
+---
+
+## 4. 提交纪律
+
+| 场合 | 规则 |
+|---|---|
+| 分支 | `git switch main` → `git pull --ff-only` → `git switch -c feat/简短任务名` |
+| 命名 | `feat/` `fix/` `docs/` `test/` `chore/` |
+| 提交信息 | 「类型 + 简短说明」，**不加 `[P1]` 前缀**（人员归属由 commit author 记录） |
+| 流程 | **一律走 PR**，至少 1 名队友 review 后合并 |
+| 同步 | `merge`（**不是 rebase**）；个人分支用 `--force-with-lease` |
+| 已共享的提交 | 用 `git revert`，**不改写公共历史** |
+| 提交前 | 必跑 `git status` + `git diff --staged`（禁 `.env` / Key / 隐私） |
+| **频度** | **每完成一小块就提交推送** —— 本机环境不稳，**攒着不推是风险** |
+
+---
+
+## 5. 写代码时的三个自问
+
+1. **这个错了会有人知道吗？** —— 如果答案是"不会"，那你需要一条断言或一个测试
+2. **我的"完成"有证据吗？** —— 测试通过？命令输出？**没验证过的"完成"不算完成**
+3. **换一份数据/换一个人跑，还成立吗？** —— 硬编码阈值、本机路径、私货依赖，都要问这一句
+
+---
+
+## 6. 反面教材（都是真的）
+
+| 做法 | 代价 |
+|---|---|
+| 只跑"正常路径"的测试就宣布完成 | 3 个静默 bug **在空库上完全看不出来**，直到写测试才暴露 |
+| 把 `ssh-keygen` 的输出重定向掉 | 白跑一轮，还以为密钥生成了 |
+| 给构建命令接 `tail` | 19 分钟看不到任何进度 |
+| 一次性攒了半天的改动不推 | 文件被删时差点全丢 |
+
+**共同点：都是"看起来在做事，其实没在推进"。**
