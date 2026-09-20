@@ -11,7 +11,7 @@
     pymupdf 的 `FileDataError` —— 后者会绕过全局异常处理器变成 500 + 英文堆栈；
   · `message` 必须含中文，且**不许**出现 `Traceback` / `Error` / `Exception` /
     `Errno` / 底层英文原话（"cannot open"、"broken document" 等）；
-  · 不支持格式的 `message` 必须**点名具体格式**（"PPTX"、"图片"、"音频"），
+  · 不支持格式的 `message` 必须**点名具体格式**（"图片"、"音频"、"旧版 .doc"），
     并给出替代做法（转 PDF / DOCX）。
 
 夹具全部程序化生成，不依赖仓库外的素材文件。
@@ -236,6 +236,11 @@ def test_no_english_stacktrace_leaks_for_any_broken_input(tmp_path: Path) -> Non
         ("b.pdf", b"not a pdf at all"),
         ("c.docx", b"not a docx at all"),
         ("d.docx", b"\xd0\xcf\x11\xe0\xa1\xb1\x1a\xe1" + b"\x00" * 32),
+        # .pptx 已接入解析链路（本批次），坏字节走的是"损坏"分支 —— 同样是给用户
+        # 看的中文，不许漏底层异常原话。
+        ("e.pptx", b""),
+        ("f.pptx", b"not a pptx at all"),
+        ("g.pptx", b"\xd0\xcf\x11\xe0\xa1\xb1\x1a\xe1" + b"\x00" * 32),
     ):
         target = tmp_path / name
         target.write_bytes(data)
@@ -255,7 +260,8 @@ def test_no_english_stacktrace_leaks_for_any_broken_input(tmp_path: Path) -> Non
 @pytest.mark.parametrize(
     ("filename", "keyword"),
     [
-        ("讲义.pptx", "PPTX"),
+        # .pptx 已移出"未接格式"（本批次接入，见 tests/test_parse_pptx.py）；
+        # 旧版 .ppt 仍拒绝，且要求它明确指路"另存为 .pptx"。
         ("讲义.ppt", "PPT"),
         ("讲义.doc", "旧版 .doc"),
         ("扫描件.png", "图片"),
@@ -268,9 +274,9 @@ def test_no_english_stacktrace_leaks_for_any_broken_input(tmp_path: Path) -> Non
     ],
 )
 def test_pending_format_names_the_concrete_format(tmp_path: Path, filename: str, keyword: str) -> None:
-    """★ 场景 4：`.pptx` / 图片 / 音频 → `UNSUPPORTED_FORMAT` 且 message 点名格式。
+    """★ 场景 4：未接的格式（`.ppt` / 图片 / 音频 / 旧版 .doc）→ `UNSUPPORTED_FORMAT` 且点名格式。
 
-    笼统的"不支持"会让用户反复重试；点名"PPTX"并给出替代做法才有用。
+    笼统的"不支持"会让用户反复重试；点名具体格式并给出替代做法才有用。
     """
     target = tmp_path / filename
     target.write_bytes(b"placeholder bytes")
@@ -312,8 +318,13 @@ def test_file_without_extension_is_reported_as_such(tmp_path: Path) -> None:
 
 
 def test_unsupported_format_is_decided_by_extension_not_by_content(tmp_path: Path) -> None:
-    """扩展名分派必须发生在读文件内容之前 —— 内容是垃圾也不该 500。"""
-    target = tmp_path / "空壳.pptx"
+    """扩展名分派必须发生在读文件内容之前 —— 内容是垃圾也不该 500。
+
+    `.pptx` 已接入解析链路，这里改用仍未接的 `.png` 来验同一条纪律：内容不是
+    合法 PNG，但因为扩展名先分派，得到的是 `UNSUPPORTED_FORMAT` 而不是
+    "文件损坏"或 500。
+    """
+    target = tmp_path / "空壳.png"
     target.write_bytes(b"\x00" * 4)
     with pytest.raises(ApiError) as excinfo:
         parse_material(target)
@@ -355,7 +366,9 @@ def test_failures_do_not_pollute_following_parses(tmp_path: Path) -> None:
         ErrorCode.NOT_FOUND,
         ErrorCode.INVALID_PARAM,
         ErrorCode.INVALID_PARAM,
-        ErrorCode.UNSUPPORTED_FORMAT,
+        # .pptx 已接入解析链路：`b"PK"` 是半个 zip 头，走"损坏"分支
+        # （INVALID_PARAM），不再是 UNSUPPORTED_FORMAT。
+        ErrorCode.INVALID_PARAM,
         ErrorCode.UNSUPPORTED_FORMAT,
     ]
 
