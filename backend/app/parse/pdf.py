@@ -534,7 +534,9 @@ def _column_gutter(boxes: list[tuple[float, float]]) -> float | None:
 
     best = 0.0
     center: float | None = None
-    for (_, prev_right), (next_left, _) in zip(covered, covered[1:]):
+    # `strict=False` 是**有意**的：这是"相邻两段"的成对遍历（等价于 pairwise），
+    # 末段自然没有后继；配对的长度差在这里是语义，不是错误。
+    for (_, prev_right), (next_left, _) in zip(covered, covered[1:], strict=False):
         width = next_left - prev_right
         if width > best:
             best = width
@@ -570,8 +572,11 @@ def _reading_order_blocks(blocks: list[dict[str, Any]]) -> list[dict[str, Any]]:
     if split is None:
         return blocks
 
-    left = [block for block, (_, hi_x) in zip(blocks, boxes) if hi_x <= split]
-    right = [block for block, (lo_x, _) in zip(blocks, boxes) if lo_x >= split]
+    # `boxes` 与 `blocks` 是同一轮循环里同步 append 的，长度必然相同。这里仍用
+    # `strict=False`：万一长度不一致，也要**退回原顺序**（由下面那道
+    # `len(left) + len(right) != len(blocks)` 闸门接住），而不是抛异常把整份材料判失败。
+    left = [block for block, (_, hi_x) in zip(blocks, boxes, strict=False) if hi_x <= split]
+    right = [block for block, (lo_x, _) in zip(blocks, boxes, strict=False) if lo_x >= split]
     if len(left) < COLUMN_MIN_BLOCKS_PER_SIDE or len(right) < COLUMN_MIN_BLOCKS_PER_SIDE:
         return blocks
     if len(left) + len(right) != len(blocks):
