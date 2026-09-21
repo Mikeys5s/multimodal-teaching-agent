@@ -102,25 +102,24 @@ def _stuck_count(session: Session, session_id: str) -> int:
     for turn in _history(session, session_id):
         if turn.role != "tutor":
             continue
-        if turn.turn_type in ("hint1", "hint2"):
+        if turn.turn_type in ("hint1", "hint2", "explain"):
+            # ★ `explain` **也要 +1**（2026-09-21 全链路实测发现我昨天只修了一半）
+            #
+            # `STUCK_THRESHOLD = 2`，所以第 2 次答不上是**直接跳 `explain`**（不是 `hint2`）。
+            # 我昨天把它从"清零"改成了"不增减" —— **不清零是对的，但不 +1 是错的**：
+            #
+            #     第 1 次答不上 → hint1     → stuck = 1   ✅
+            #     第 2 次答不上 → explain   → stuck = 1   ❌ 应该是 2
+            #
+            # **`explain` 是「第 2 次答不上」这个事实的产物** ——
+            # 它记的是"学生又失败了一次"，所以它和 `hint1`/`hint2` 一样要计入。
+            #
+            # 只"不清零"不够 —— 那只是让数字**停在 1**，而它该**走到 2**。
+            # **"不要再犯错"和"要做对"是两件事。**
             stuck += 1
         elif turn.turn_type == "confirm":
             # ★ **只有"答对"才清零。**
             stuck = 0
-        # ⚠️ `explain` **不清零**（2026-09-21 全链路实测发现）
-        #
-        # 我第一版把 `explain` 和 `confirm` 一起清零了 —— **那是错的**。
-        #
-        # `explain` 是「**连续 2 次答不上**」这条规则的**结果**，不是"学生答对了"。
-        # 清零之后：
-        #   · `get_state` 会显示 `consecutive_failures=0`
-        #   · **而那个数字正是"他确实卡住了"的证据**
-        #   · 而且下一轮如果学生继续答不上，计数会从 1 重新开始
-        #     —— **R3 的"连续"语义被重置了，学生会一直循环在 hint1/hint2**
-        #
-        # 实测症状（full_chain_check）：
-        #     第 1 次答不知道 -> S2_HINT1 / failures=1
-        #     第 2 次答不知道 -> S4_EXPLAIN / failures=0    ← 应该是 2
     return stuck
 
 
