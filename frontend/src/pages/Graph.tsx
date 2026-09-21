@@ -1,10 +1,11 @@
-import { RefreshCw, SlidersHorizontal } from 'lucide-react'
+import { RefreshCw, ShieldCheck, SlidersHorizontal } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
 import { GraphCanvas } from '@/components/graph/GraphCanvas'
 import { GraphStatsPanel } from '@/components/graph/GraphStatsPanel'
 import { KnowledgePointDrawer } from '@/components/graph/KnowledgePointDrawer'
+import { ReviewDrawer } from '@/components/graph/ReviewDrawer'
 import { Button } from '@/components/ui/Button'
 import { EmptyState, ErrorState, InlineError, LoadingState } from '@/components/ui/Feedback'
 import { useRequest } from '@/hooks/useRequest'
@@ -28,6 +29,7 @@ export default function Graph() {
   const [maxNodes, setMaxNodes] = useState(200)
   const [reviewOnly, setReviewOnly] = useState(false)
   const [selectedId, setSelectedId] = useState<string | null>(null)
+  const [reviewOpen, setReviewOpen] = useState(false)
 
   const graphReq = useRequest(
     () => api.getKnowledgeGraph({ chapter_id: chapterId || undefined, max_nodes: maxNodes }),
@@ -35,6 +37,8 @@ export default function Graph() {
   )
   // 章节筛选的服务端参数只吃 chapter_id，标题得从知识点列表里取（失败不影响图谱本身）
   const chapterProbe = useRequest(() => api.listKnowledgePoints({ page_size: CHAPTER_PROBE_PAGE_SIZE }), [])
+  // 复核队列条数：决定「人工校验」入口上显示多少条待裁决（空队列时入口仍在，便于口播这条能力）
+  const reviewQueueReq = useRequest(() => api.listReviewQueue({ limit: 200 }), [])
 
   const graph = graphReq.data
 
@@ -68,6 +72,7 @@ export default function Graph() {
   }, [graph, viewNodes])
 
   const filtered = reviewOnly || chapterId !== ''
+  const pendingReviewCount = reviewQueueReq.data?.total ?? 0
 
   return (
     <div className="mx-auto max-w-6xl space-y-5">
@@ -127,6 +132,21 @@ export default function Graph() {
           />
           只看待复核节点（{reviewCount}）
         </label>
+
+        {/* 人工校验入口 —— 主创新点「AI 预抽取 + 人工校验」的可点击证据（见 ReviewDrawer 注释） */}
+        <button
+          type="button"
+          onClick={() => setReviewOpen(true)}
+          className="ml-auto inline-flex items-center gap-1.5 rounded-lg border border-brand-200 bg-brand-50 px-2.5 py-1.5 text-xs font-medium text-brand-700 hover:bg-brand-100"
+        >
+          <ShieldCheck className="h-3.5 w-3.5" aria-hidden />
+          人工校验
+          {pendingReviewCount > 0 && (
+            <span className="rounded-full bg-brand-600 px-1.5 py-0.5 text-[11px] leading-none text-white">
+              {pendingReviewCount}
+            </span>
+          )}
+        </button>
 
         {filtered && (
           <button
@@ -212,6 +232,21 @@ export default function Graph() {
       )}
 
       {selectedId && <KnowledgePointDrawer kpId={selectedId} onClose={() => setSelectedId(null)} />}
+
+      {reviewOpen && (
+        <ReviewDrawer
+          onClose={() => {
+            setReviewOpen(false)
+            void reviewQueueReq.reload()
+          }}
+          onDecided={() => {
+            // 采纳一条候选边后：图重新拉（needs_review 角标会更新），
+            // 且因为该边已进正式图，/path 的学习路径会随之变化 —— 这就是纪律④ 要演的因果。
+            void graphReq.reload()
+            void reviewQueueReq.reload()
+          }}
+        />
+      )}
     </div>
   )
 }

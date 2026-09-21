@@ -22,6 +22,9 @@ import type {
   QaState,
   QualityReport,
   Question,
+  ReviewDecision,
+  ReviewDecisionOut,
+  ReviewQueueOut,
   SessionDetailOut,
   SessionReportOut,
   UploadResult,
@@ -143,6 +146,29 @@ export const api = {
 
   /* ---------------- 质量报告 ---------------- */
   getQualityReport: () => request<QualityReport>('/report/quality'),
+
+  /* ---------------- 7. 人工校验工作台（v1.3 端点 29 / 30） ----------------
+   *
+   * 主创新点「AI 预抽取 + 人工校验」的交互入口。**前端曾长期没有消费这两个端点**
+   * （后端 #51 就绪、直到 9/21 才补 UI）→ 视频里「人工复核」那一步只能用 Swagger 演。
+   * 详见 Issue #66 与 docs/deliverable-plan.md 纪律④。
+   */
+  /** 待复核的候选依赖边。队列为空 = 图上没有未经人确认的依赖。 */
+  listReviewQueue: (q: { limit?: number } = {}) =>
+    request<ReviewQueueOut>('/review/queue', { query: { limit: q.limit } }),
+  /**
+   * 裁决一条候选边。
+   *
+   * `accept` → 进正式图（`needs_review=0`）；`reject` → **软删除留痕**（`pruned=1`）。
+   * ⚠️ 驳回是**故意不物理删**的：被驳回的边是「人做了判断」的证据，答辩时比"图很干净"更有说服力。
+   * ⚠️ 边的 id 是**复合键** `(kp_id, prereq_kp_id)` —— 不要传 id。
+   */
+  decideReviewEdge: (body: {
+    kp_id: string
+    prereq_kp_id: string
+    decision: ReviewDecision
+    note?: string
+  }) => request<ReviewDecisionOut>('/review/decide', { method: 'POST', body }),
 
   /* ---------------- 5. 答疑（Stage 3） ---------------- */
   /** 创建会话：响应**只有 `session_id`**（不是完整会话对象），详情要再发 getQaSession */
