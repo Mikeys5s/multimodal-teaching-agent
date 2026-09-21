@@ -408,6 +408,49 @@ export interface GraphStats {
   soft_edge_count: number
 }
 
+/* ---------------------------------------------------------------------------
+ * 人工校验工作台（复核队列）—— api-spec §7 端点 29 / 30，实现在 backend/app/api/review.py
+ *
+ * 这是主创新点「**AI 预抽取 + 人工校验**」的落点：构建期产出的候选边一律 `needs_review=1`，
+ * 只有**人采纳**之后才进正式图。字段名以 pydantic（`ReviewItemOut` / `DecideIn`）为准。
+ * ------------------------------------------------------------------------- */
+
+/**
+ * 复核队列的一项。**目前只有 `kind='edge'`** —— 知识点本身不走人工裁决，走 `needs_review` 角标。
+ *
+ * ⚠️ `kp_id` 是**后置（依赖方）**、`prereq_kp_id` 是**前置（得先会的那个）** →
+ * 读到的是「`prereq_name` 是 `kp_name` 的前置」。
+ */
+export interface ReviewEdgeItem {
+  kind: 'edge'
+  kp_id: string
+  prereq_kp_id: string
+  kp_name: string
+  prereq_name: string
+  relation_type: RelationType
+  reason: string
+  evidence_quote: string | null
+  confidence: number | null
+  /** `structure`（结构线索）/ `semantic`（语义通道）/ `both`（双通道都支持） */
+  source_channel: string
+}
+
+export interface ReviewQueueOut {
+  items: ReviewEdgeItem[]
+  total: number
+}
+
+/** 裁决结果。`accept` → `needs_review=false`；`reject` → `pruned=true`（**软删除留痕，不物理删**）。 */
+export interface ReviewDecisionOut {
+  kp_id: string
+  prereq_kp_id: string
+  decision: ReviewDecision
+  needs_review: boolean
+  pruned: boolean
+}
+
+export type ReviewDecision = 'accept' | 'reject'
+
 export interface KnowledgeGraph {
   nodes: GraphNode[]
   edges: GraphEdge[]
