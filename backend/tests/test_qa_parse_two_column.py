@@ -13,22 +13,25 @@
 
 实测结论（本次跑出来的，数字是真的）
 ----------------------------------
-1. 块序列 **是逐行交错的**：`L1, R1, L2, R2, L3, R3`
-   —— 不是人读顺序。期望的 `L1, L2, L3, R1, R2, R3` 用 `xfail(strict=False)`
-   钉住（见 `test_two_column_reads_left_column_before_right`）。
-2. **成因已定位**：`app/parse/pdf.py::_raw_blocks` 调的是
+1. 块序列**已按栏**：`L1, L2, L3, R1, R2, R3` —— 与人的读法一致。
+   修法是 `app/parse/pdf.py::_reading_order_blocks()`：只在**多栏页**按中缝
+   （整页零覆盖的纵向缝隙）把块分成左右两组重排，**单栏页走的是与修复前
+   逐字节相同的分支**（见 PR #90）。所以本文件下面这些断言对单栏教材
+   零影响，是真教材（Computer Networks 6e，单栏）能被"顺带验证"的原因。
+2. 修复前的成因（已定位、已修）：`app/parse/pdf.py::_raw_blocks` 调的是
    `page.get_text("dict", sort=True)`。PyMuPDF **不加 `sort`** 时的 block 顺序
    本来就是**按栏**的（实测：`L1,L2,L3,R1,R2,R3`）；是 `sort=True` 把它按
-   坐标重排成了逐行交错。诊断用例见 `test_root_cause_is_pymupdf_sort_true`。
+   坐标重排成了逐行交错。诊断用例见 `test_root_cause_is_pymupdf_sort_true`
+   （它直接测 pymupdf，与本次修复无关，修复后仍应成立）。
 3. 文本**没有丢**：6 行原文一行不少，且每个块的内容都是该页文本层原文的
    **连续子串**（逐字校验，见 `test_two_column_text_is_not_lost`）。
 4. `line_start` / `line_end` 在两栏下**仍然自洽但语义变弱**：每个块都是单行
-   （`line_start == line_end`），页内行号按**当前块顺序**从 1 连续排到 6，
-   即 `L1→1, R1→2, L2→3, R2→4, L3→5, R3→6`。它记录的是"块在**输出序列**里的
-   位置"，**不是**"这一行在页面上的第几行"（左栏第 2 行是 `line=3`）。
-   两栏下拿 `page_no + line_start/line_end` 去框原文会框到**右栏的同一行**，
-   所以 A1-6 的"可定位"在两栏材料上会指错位置 —— 这一条**没有**单独写 xfail
-   （它需要的是"行号按列重新定义"这种更深的设计决定），只在这里如实记录。
+   （`line_start == line_end`），页内行号按**输出序列**从 1 连续排到 6。
+   按栏重排后它与阅读顺序一致了（`L1→1, L2→2, L3→3, R1→4, R2→5, R3→6`），
+   但它记录的是"块在**输出序列**里的位置"，**不是**"这一行在页面上的第几行"。
+   两栏下拿 `page_no + line_start/line_end` 去框原文仍可能框到**另一栏** ——
+   这一条**没有**单独写 xfail（它需要的是"行号按列重新定义"这种更深的设计
+   决定），只在这里如实记录。
 """
 
 from __future__ import annotations
@@ -54,7 +57,9 @@ RIGHT_LINES = ["R1 右栏第一行", "R2 右栏第二行", "R3 右栏第三行"]
 
 #: 人读顺序：**先把左栏读完，再读右栏**。
 EXPECTED_HUMAN_ORDER = LEFT_LINES + RIGHT_LINES
-#: 当前实测顺序：按坐标（先 y 后 x）排序 → 左右栏逐行交错。
+#: **修复前**的实测顺序：按坐标（先 y 后 x）排序 → 左右栏逐行交错。
+#: 保留它有两个用处：① 记录修复的起点；② 让"弱不变式"那条用例（顺序只能是
+#: 这两种之一）在修复前后都成立 —— 它当时的作用就是"不阻挡修复"。
 OBSERVED_ROW_MAJOR_ORDER = [line for pair in zip(LEFT_LINES, RIGHT_LINES, strict=True) for line in pair]
 
 
@@ -197,21 +202,16 @@ def test_two_column_within_column_relative_order_is_preserved(two_column_pdf: Pa
     assert right == RIGHT_LINES
 
 
-@pytest.mark.xfail(
-    strict=False,
-    reason=(
-        "当前实现按坐标排序（先 y 后 x），两栏是**逐行交错**的"
-        "（L1,R1,L2,R2,L3,R3），不是人读顺序。"
-        "需要的改动：在 app/parse/pdf.py::parse_pdf 里加一步**按栏聚块**"
-        "（用 bbox 的 x 区间把同一页的块分栏，栏内按 y、栏间按 x 排序），"
-        "或者在 _raw_blocks 里改用 pymupdf 不加 sort 的 block 顺序"
-        "（实测它本来就是按栏的）。"
-        "这属于版式模型层面的决定，**不在本次只写测试的范围内**，所以只钉住不修。"
-        "strict=False：实现改成按栏读之后本条就会 XPASS，不算失败。"
-    ),
-)
 def test_two_column_reads_left_column_before_right(two_column_pdf: Path) -> None:
-    """期望（当前**未满足**）：先把左栏读完，再读右栏 —— 人读顺序。"""
+    """★ A1-6：先把左栏读完，再读右栏 —— 人读顺序（**硬断言**）。
+
+    这条原本是 `xfail(strict=False)`：当时实现按坐标排序（先 y 后 x），两栏是
+    逐行交错的 `L1,R1,L2,R2,L3,R3`。修法落地后（`_reading_order_blocks()`，
+    见 PR #90）它 XPASS，于是按计划**转成硬断言** —— 从"钉住现状"变成"守住结论"。
+
+    它同时也是"修复没把单栏改坏"的对照面：单栏页根本不进重排分支，
+    所以下面这条断言只可能因为"两栏被判成了单栏"或"中缝判据失灵"而失败。
+    """
     contents = _contents(two_column_pdf)
     assert contents == EXPECTED_HUMAN_ORDER, f"两栏逐行交错了：{contents}"
 

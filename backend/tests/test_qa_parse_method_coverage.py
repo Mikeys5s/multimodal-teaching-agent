@@ -212,54 +212,55 @@ def test_scan_pdf_note_message_is_not_empty_and_is_showable(
 
 
 # ---------------------------------------------------------------------------
-# 图片（OCR 不可用）：拒绝，但要说人话
+# 图片（缺 [ocr] 时）：报错，但要说人话
 # ---------------------------------------------------------------------------
 
 
-def test_image_is_rejected_with_chinese_reason(tmp_path: Path, ocr_unavailable: None) -> None:
-    """★ 图片（合法 PNG）→ 中文 `ApiError`，文案点名「图片」并给出替代做法。
+def test_image_without_ocr_extra_gives_actionable_chinese_error(
+    tmp_path: Path, ocr_unavailable: None
+) -> None:
+    """★ 图片（合法 PNG）+ OCR 不可用 → 中文 `ApiError`，文案点名依赖并给出修法。
 
-    这条与"扫描版 PDF 只识别不解析"同源：本批次没有 OCR，图片里的字读不出来，
-    所以**在扩展名分派阶段就拒绝**，而不是产出一份空的 `image` 材料。
+    ⚠️ 与 9/20 初版期望不同（当时图片在**扩展名分派阶段**就被 `UNSUPPORTED_FORMAT`
+    拒掉，`status_code=400`）：#38 之后图片走 `parse_image()` → `ensure_available()`，
+    **装了 `[ocr]` 就能真解析**，只有"这个部署没装 `[ocr]`"时才报错。
+    所以这条钉的是**降级路径的文案质量**，而不是"图片一律拒绝"。
+
+    两条断言都是原 `xfail` 转正的（#38 把文案补上了）：
+      · 点名「图片」且整句中文 —— 用户知道是文件类型的问题，不是他操作错了；
+      · 点名 `[ocr]` 与 `pip install` —— 运维一眼知道装哪一组、怎么装。
+
+    契约提示（**已登记、不在本 PR 内改**）：缺 `[ocr]` 时用的是
+    `ErrorCode.INTERNAL` / 500（`app/parse/ocr.py::_MISSING_DEPS_MESSAGE`）。
+    语义上这是"本部署能力缺失"而不是"服务内部异常" —— 500 会被前端当成
+    "稍后重试"，而这个错重试一万次也不会好。要不要改成 400 或 503，属于
+    错误码词表 + `docs/api-spec.md` 的变更，按 SPEC §12 单独走流程。
     """
     target = make_png(tmp_path / "photo.png")
     with pytest.raises(ApiError) as excinfo:
         parse_material(target)
 
     err = excinfo.value
-    assert err.code == ErrorCode.UNSUPPORTED_FORMAT
-    assert err.status_code == 400
+    assert err.code == ErrorCode.INTERNAL
+    assert err.status_code == 500
     _assert_chinese(err.message)
     assert "图片" in err.message
-    assert "PDF" in err.message and "DOCX" in err.message, "必须给出替代做法"
-
-
-@pytest.mark.xfail(
-    strict=False,
-    reason=(
-        "任务书期望图片的报错文案点到 [ocr] 这个可选依赖组；实测文案是"
-        "「图片 格式本批次暂不支持解析，请转为 PDF 或 DOCX 后再上传」，没有 [ocr] 字样。"
-        "这属于「文案里没把可选的 OCR 通道指出来」的表述缺口，不是功能缺陷"
-        "（用户上传图片本来就没有可用的替代动作，指路「等 OCR 上线」更诚实）。"
-        "strict=False：哪天文案补上 [ocr] 就会 XPASS，不算失败。"
-    ),
-)
-def test_image_error_points_to_ocr_extra(tmp_path: Path, ocr_unavailable: None) -> None:
-    """任务书期望（当前**未满足**）：图片的拒绝文案里点到 `[ocr]` 通道。"""
-    target = make_png(tmp_path / "photo.png")
-    with pytest.raises(ApiError) as excinfo:
-        parse_material(target)
-    assert "[ocr]" in excinfo.value.message
+    assert "[ocr]" in err.message, "必须点名可选依赖组，运维才知道装哪一组"
+    assert "pip install" in err.message, "必须给出可执行的修法"
 
 
 def test_image_rejection_names_the_png_extension_indirectly(tmp_path: Path, ocr_unavailable: None) -> None:
-    """现状：文案点名的是**类别**（「图片」）而不是扩展名（`.png`）。
+    """文案点名的是**类别**（「图片」）而不是扩展名（`.png`）。
 
     `.xlsx` 这类"见都没见过"的扩展名会被原样回显（见
     `test_qa_parse_robustness.py::test_unknown_extension_is_echoed_back`）；
     图片/音频/旧版 doc 这类**认得出**的格式走的是另一条分支，点名的是类别。
     这是有意的粒度差异（"图片"比"`.png`"更能覆盖 jpg/webp 一起说清楚），
     所以这里断言现状而不是当成缺陷。
+
+    ⚠️ #38 之后这条的实际路径变了：不再走扩展名分派，而是
+    `parse_image()` → `ensure_available()` 的缺依赖文案（它同样用"图片"这个类别词）。
+    断言没变、也不该变 —— 无论走哪条分支，"对用户说类别"这个粒度约定都要守住。
     """
     target = make_png(tmp_path / "photo.png")
     with pytest.raises(ApiError) as excinfo:
