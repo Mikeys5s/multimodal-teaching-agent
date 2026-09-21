@@ -241,6 +241,37 @@ CAPTION_MAX_CHARS = 300
 #: 图注最多允许几行。图注一般一到两行。
 CAPTION_MAX_LINES = 3
 
+# ---- 多栏版面的阅读顺序（第四批）----
+#
+# 为什么需要它：`page.get_text("dict", sort=True)` 的 `sort` 是**全页按 y 再按 x**
+# 排序，落在两栏页上会把左右两栏**逐行交错**。实测两栏样本（左栏 x≈60、右栏
+# x≈330，各 3 行）拿到的块序是 `L1,R1,L2,R2,L3,R3`，而人读顺序是"整栏读完再读
+# 下一栏"（`L1,L2,L3,R1,R2,R3`）。不修的话下游按 `seq` 顺序投喂 / 切分会在句子
+# 中间左右横跳，A1-6 的行号溯源也会指到另一栏去。
+#
+# 修法是**只对多栏页重排**：先看本页有没有一条"整页没有任何块覆盖的纵向缝隙"
+# （中缝）—— 有且两侧都有足够多的块，才判多栏并按栏重排（栏内保持原有相对顺序
+# ＝ y 升序，栏间按 x 升序）；否则**原样返回**。
+# ⚠️ 单栏文档因此走的是与改动前**逐字节相同**的分支（根本走不到重排那段代码），
+# 覆盖率 / 去噪 / 章级骨架都不受影响 —— 这是"保守优先"的核心保证。
+#
+# 为什么中缝判据用"整页零覆盖"而不是"块左边界聚类"：零覆盖意味着
+# **没有任何块横跨这条缝**，因此天然挡住两类误判 ——
+#   · 通栏标题（一块横跨两栏）会让中缝消失 → 本页不重排，保持现状；
+#   · 单栏页里"表格 / 图旁边的窄块"仍被上下的通栏正文覆盖 → 也不会凭空多一条缝。
+# 方向与去噪一致：**宁可漏判（继续交错），不可误判（把单栏顺序改错）**。
+
+#: 判多栏所需的最少块数。块太少时"中缝"多半只是偶然的空档（一页只有两三个
+#: 短块），样本不足不判多栏。
+COLUMN_MIN_BLOCKS = 4
+#: 每栏至少要有这么多块，才认两侧都是"真的一栏"而不是零碎空档。
+COLUMN_MIN_BLOCKS_PER_SIDE = 2
+#: 中缝（整页零覆盖的纵向缝隙）的宽度下限，占**本页内容横向跨度**的比例。
+#: 实测两栏样本：内容跨度 60→445、中缝 175→330（≈35%）；真实两栏讲义的中缝
+#: 一般也在 4% 以上。取 4% 是有意的"宁漏勿误"：漏判只是回到现在的交错顺序，
+#: 误判则会把单栏页里的偶然空档当成中缝、把正确的顺序改错。
+COLUMN_GUTTER_MIN_RATIO = 0.04
+
 #: 同段折行合并：下一块首行与本块末行的"行距"上限，以本块行高为单位。
 #: 单倍行距的折行约为行高的 1.0–1.35 倍（行高 ≈ 字号 × 1.2，行距 ≈ 字号 × 1.2–1.5），
 #: 而段间距普遍 ≥ 1.5 个行高。1.6 落在两者之间：收得住折行，吃不掉段间距。
@@ -465,6 +496,96 @@ def _group_lines(lines: list[_RawBlock]) -> list[_RawBlock]:
     return merged
 
 
+def _column_gutter(boxes: list[tuple[float, float]]) -> float | None:
+    """本页最宽的"中缝"横向中心；没有合格中缝时返回 None。
+
+    `boxes` 是各块的 `(左边界, 右边界)`。中缝 = 一段**整页没有任何块覆盖**的 x
+    区间（做法：把所有 x 区间投影到 x 轴上求并集，再取并集里的空洞）。
+    取最宽的一条空洞，要求宽度 ≥ `COLUMN_GUTTER_MIN_RATIO` × 内容横向跨度。
+
+    "整页零覆盖"是关键：它同时保证"没有块横跨这条缝"（否则缝里会有覆盖），
+    于是跨越中缝的通栏标题 / 通栏图会让本页判不出多栏 —— 那种页**不重排**。
+    """
+    intervals = [(left, right) for left, right in boxes if right > left]
+    if not intervals:
+        return None
+    lo = min(left for left, _ in intervals)
+    hi = max(right for _, right in intervals)
+    span = hi - lo
+    if span <= 0:
+        return None
+
+    events: list[tuple[float, int]] = []
+    for left, right in intervals:
+        events.append((left, 1))
+        events.append((right, -1))
+    events.sort()
+
+    # 扫出一段段"有覆盖"的区间；两段覆盖之间的空洞就是候选中缝。
+    covered: list[tuple[float, float]] = []
+    depth = 0
+    start = lo
+    for x, delta in events:
+        if depth == 0:
+            start = x
+        depth += delta
+        if depth == 0:
+            covered.append((start, x))
+
+    best = 0.0
+    center: float | None = None
+    # `strict=False` 是**有意**的：这是"相邻两段"的成对遍历（等价于 pairwise），
+    # 末段自然没有后继；配对的长度差在这里是语义，不是错误。
+    for (_, prev_right), (next_left, _) in zip(covered, covered[1:], strict=False):
+        width = next_left - prev_right
+        if width > best:
+            best = width
+            center = (prev_right + next_left) / 2.0
+    if center is None or best < COLUMN_GUTTER_MIN_RATIO * span:
+        return None
+    return center
+
+
+def _reading_order_blocks(blocks: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """把一个页面内的 text block 排成**阅读顺序**：多栏页按栏，单栏页原样。
+
+    多栏页的重排规则：找到最宽的中缝 → 把块按"右边界 ≤ 缝心 / 左边界 ≥ 缝心"
+    分成左右两组 → 左边整组在前、右边整组在后（组内保持原有相对顺序，而
+    `sort=True` 的原顺序已是 y 升序，因此栏内自然就是 y 升序）。
+    对左右两组**递归**处理，所以三栏及以上（相邻栏之间都有中缝）也成立。
+
+    任一条件不满足就**原样返回**（顺序与改动前逐字节相同）：块数不足、
+    有块缺 `bbox`、找不到合格中缝、或某一侧的块数少于
+    `COLUMN_MIN_BLOCKS_PER_SIDE`。方向是"宁可漏判，不可误判"。
+    """
+    if len(blocks) < COLUMN_MIN_BLOCKS:
+        return blocks
+
+    boxes: list[tuple[float, float]] = []
+    for block in blocks:
+        box = block.get("bbox")
+        if not box or len(box) != 4:
+            return blocks  # 有块没有几何信息 → 判不了版面，别赌
+        boxes.append((float(box[0]), float(box[2])))
+
+    split = _column_gutter(boxes)
+    if split is None:
+        return blocks
+
+    # `boxes` 与 `blocks` 是同一轮循环里同步 append 的，长度必然相同。这里仍用
+    # `strict=False`：万一长度不一致，也要**退回原顺序**（由下面那道
+    # `len(left) + len(right) != len(blocks)` 闸门接住），而不是抛异常把整份材料判失败。
+    left = [block for block, (_, hi_x) in zip(blocks, boxes, strict=False) if hi_x <= split]
+    right = [block for block, (lo_x, _) in zip(blocks, boxes, strict=False) if lo_x >= split]
+    if len(left) < COLUMN_MIN_BLOCKS_PER_SIDE or len(right) < COLUMN_MIN_BLOCKS_PER_SIDE:
+        return blocks
+    if len(left) + len(right) != len(blocks):
+        # 中缝零覆盖意味着不该有块落在缝心里 —— 真出现了就说明判据被绕过，不重排。
+        return blocks
+
+    return _reading_order_blocks(left) + _reading_order_blocks(right)
+
+
 def _raw_blocks(doc: pymupdf.Document) -> tuple[list[_RawBlock], dict[float, int], int]:
     """逐页抽块。
 
@@ -485,11 +606,13 @@ def _raw_blocks(doc: pymupdf.Document) -> tuple[list[_RawBlock], dict[float, int
         data = page.get_text("dict", sort=True)  # sort=True：按阅读顺序，保证可复现
         line_cursor = 0
 
-        for raw_blk in data.get("blocks", []):
-            if raw_blk.get("type") != 0:
-                image_count += 1
-                continue
-
+        page_blocks = data.get("blocks", [])
+        # 图片块只计数、不产出内容；文本块交给 `_reading_order_blocks` 排阅读顺序
+        # （单栏页原样返回，多栏页按栏重排 —— 见该函数与上方常量区的说明）。
+        image_count += sum(1 for raw_blk in page_blocks if raw_blk.get("type") != 0)
+        for raw_blk in _reading_order_blocks(
+            [raw_blk for raw_blk in page_blocks if raw_blk.get("type") == 0]
+        ):
             line_raws, block_sizes = _line_raws(raw_blk, page_no)
             for size, chars in block_sizes.items():
                 size_chars[size] = size_chars.get(size, 0) + chars
