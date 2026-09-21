@@ -321,11 +321,21 @@ def test_file_without_extension_is_reported_as_such(tmp_path: Path) -> None:
 def test_unsupported_format_is_decided_by_extension_not_by_content(tmp_path: Path) -> None:
     """扩展名分派必须发生在读文件内容之前 —— 内容是垃圾也不该 500。
 
-    `.pptx` 已接入解析链路，这里改用仍未接的 `.png` 来验同一条纪律：内容不是
-    合法 PNG，但因为扩展名先分派，得到的是 `UNSUPPORTED_FORMAT` 而不是
-    "文件损坏"或 500。
+    ## ⚠️ 这个测试的前提被 OCR 接线改掉了（2026-09-21）
+
+    原来它用 `.png` —— 注释里写着「`.pptx` 已接入，这里改用**仍未接**的 `.png`」。
+    **但 `#38` 的 OCR 接线把 `.png` 也接上了**（`IMAGE_SUFFIXES` 里有它），
+    于是这条路径变成"真的去 OCR 一个坏文件" → 报 `INTERNAL`（文件损坏），
+    不再是 `UNSUPPORTED_FORMAT`。
+
+    **这不是代码退化，是测试的前提过时了。**（判断依据：`.png` 确实在
+    `IMAGE_SUFFIXES` 里，而且 `test_corrupt_image_reports_chinese_error`
+    用同样的坏文件验了"图片损坏时报中文错误" ✅ —— 两条路径都对。）
+
+    换成一个**真正未接入**的扩展名，测的是同一条纪律：
+    **"扩展名先分派，别读内容"** —— 即使内容是垃圾。
     """
-    target = tmp_path / "空壳.png"
+    target = tmp_path / "空壳.xyz"
     target.write_bytes(b"\x00" * 4)
     with pytest.raises(ApiError) as excinfo:
         parse_material(target)
