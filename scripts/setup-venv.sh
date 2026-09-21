@@ -19,7 +19,8 @@
 #   bash scripts/setup-venv.sh --check --repo <路径>   # 自检另一个仓库副本（测试用）
 #
 # `--check` 的退出码：**0 = 健康，1 = 有问题**（venv 未建 / 建在了项目内 /
-# python.exe 跑不起来 / `[dev]` 依赖缺失 都会给 1）。
+# python.exe 跑不起来 / `[dev]` 依赖缺失 / **基础依赖缺失**（pymupdf / docx / pptx，
+# 缺了 test 收集阶段就全灭，见 Issue #73）都会给 1）。
 # 它只读，不建目录、不装依赖、不动 junction —— 出任何问题都只说怎么修。
 #
 # `--repo <路径>` 只影响 `--check`（和将来可能的只读模式）：把"仓库根"指到别处，
@@ -258,7 +259,7 @@ PYEOF
   fi
 
   # -------------------------------------------------------------------------
-  # [3] 依赖分组：[dev] 与 [parse]
+  # [3] 依赖分组：[dev] 与**基础依赖**（缺一个整个测试套都收集不了）
   # -------------------------------------------------------------------------
   echo
   echo "[3] 依赖分组"
@@ -270,7 +271,13 @@ PYEOF
       echo "      装它：.venv/Scripts/python.exe -m pip install -e \".[dev]\""
       RC=1
     fi
-    MISSING_PARSE="$("$VPY" - <<'PYEOF' 2>/dev/null
+    # ⚠️ 这三个是**基础依赖**（`backend/pyproject.toml` 的 `[project.dependencies]`），
+    #    名字里带 parse 只是历史原因 —— 它们**不是**「只有 P1 才需要」：
+    #    `app/api` → `app/pipeline` → `app/parse/__init__` 会**模块级**连锁 import 它们，
+    #    缺任何一个都会让**整个测试套**在**收集阶段**全灭。
+    #    实测（Issue #73）：P2 那次 24 个用例全报 `ModuleNotFoundError: No module named
+    #    'pptx'`，而他一行 PPTX 代码都没写。所以这里判 **bad + RC=1**，不是 warn。
+    MISSING_BASE_DEPS="$("$VPY" - <<'PYEOF' 2>/dev/null
 import importlib.util as u
 mods = [("pymupdf", "pymupdf"), ("python-docx", "docx"), ("python-pptx", "pptx")]
 missing = []
@@ -283,11 +290,13 @@ for dist, mod in mods:
 print(",".join(missing))
 PYEOF
 )"
-    if [ -n "$MISSING_PARSE" ]; then
-      c_warn "[parse] 有缺失：$MISSING_PARSE（只有跑解析链路 P1 才需要）"
-      echo "      需要时再装：.venv/Scripts/python.exe -m pip install -e \".[parse]\""
+    if [ -n "$MISSING_BASE_DEPS" ]; then
+      c_bad "缺基础依赖：$MISSING_BASE_DEPS —— 解析链路会 import 它们，缺了**整个测试套**都收集不了"
+      echo "      装它：.venv/Scripts/python.exe -m pip install -e \".[dev]\""
+      echo "      （或直接重建：bash scripts/setup-venv.sh --rebuild）"
+      RC=1
     else
-      c_ok "[parse] 已装（pymupdf / docx / pptx 可 import）"
+      c_ok "pymupdf / docx / pptx 可 import（基础依赖；缺一个测试套就收集不了）"
     fi
   else
     c_warn "跳过依赖检查（venv 里的 python 不可用）"
