@@ -6,11 +6,27 @@ import { EmptyState, ErrorState, LoadingState } from '@/components/ui/Feedback'
 import { useRequest } from '@/hooks/useRequest'
 import { api } from '@/lib/endpoints'
 import { formatPercent, formatScore } from '@/lib/format'
-import type { Example, Misconception, Prerequisite, RelationType } from '@/lib/types'
+import type { Example, KpType, Misconception, Prerequisite, RelationType } from '@/lib/types'
 
 const RELATION_LABEL: Record<RelationType, string> = {
   hard: '硬前置（不会就不能学）',
   soft: '软前置（有帮助，非必需）',
+}
+
+/**
+ * 知识点类型的显示名。
+ *
+ * ⚠️ 这个字段（`kp_type`）是 `GET /api/knowledge-points/{id}` 契约里的**必填**字段，
+ * 而此前整个前端**一处都没渲染**（9/21 交付物审计发现）——
+ * 数据一直在手上却没用上，属于「契约承诺了但界面不给」。
+ */
+const KP_TYPE_LABEL: Record<KpType, string> = {
+  concept: '概念',
+  method: '方法',
+  skill: '技能',
+  principle: '原理',
+  protocol: '协议',
+  other: '其他',
 }
 
 const MISCONCEPTION_SOURCE_LABEL: Record<Misconception['source'], string> = {
@@ -138,6 +154,9 @@ export function KnowledgePointDrawer({ kpId, onClose }: KnowledgePointDrawerProp
             {detail && (
               <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-slate-400">
                 <DifficultyBadge difficulty={detail.difficulty} />
+                <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] text-slate-600">
+                  {KP_TYPE_LABEL[detail.kp_type] ?? detail.kp_type}
+                </span>
                 <span>
                   {detail.chapter.number} {detail.chapter.title}
                   {detail.section.title ? ` · ${detail.section.title}` : ''}

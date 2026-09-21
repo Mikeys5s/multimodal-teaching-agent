@@ -53,7 +53,14 @@ export interface ReviewDrawerProps {
 export function ReviewDrawer({ onClose, onDecided }: ReviewDrawerProps) {
   const queueReq = useRequest(() => api.listReviewQueue({ limit: 200 }), [])
   const [pending, setPending] = useState<string | null>(null)
-  const [note, setNote] = useState('')
+  /**
+   * 驳回原因**按行存**（key = `prereq->kp`）。
+   *
+   * ⚠️ 不能用单个 `note` state：那样 A 行输入的字会同时出现在 B 行的输入框里，
+   * 驳回 B 行时还会把 A 行写的原因带过去 —— 一份理由挂到错误的边上，
+   * 而这一幕恰好会出现在录制镜头里。（9/21 自查时发现并修掉。）
+   */
+  const [notes, setNotes] = useState<Record<string, string>>({})
   const [error, setError] = useState<string | null>(null)
   /** 本次会话内已裁决的边（复合键 → 结果）—— 用于「就地留痕」，不抹掉证据 */
   const [done, setDone] = useState<Record<string, ReviewDecision>>({})
@@ -69,15 +76,21 @@ export function ReviewDrawer({ onClose, onDecided }: ReviewDrawerProps) {
     const key = keyOf(item)
     setPending(key)
     setError(null)
+    // 只取**本行**的备注 —— 这就是按行存的理由
+    const note = (notes[key] ?? '').trim()
     try {
       await api.decideReviewEdge({
         kp_id: item.kp_id,
         prereq_kp_id: item.prereq_kp_id,
         decision,
-        note: decision === 'reject' && note.trim() ? note.trim() : undefined,
+        note: decision === 'reject' && note ? note : undefined,
       })
       setDone((prev) => ({ ...prev, [key]: decision }))
-      setNote('')
+      setNotes((prev) => {
+        const next = { ...prev }
+        delete next[key]
+        return next
+      })
       if (decision === 'accept') setAcceptedCount((n) => n + 1)
       else setRejectedCount((n) => n + 1)
       // 关键：让外层的图重新拉一次 —— 采纳一条 hard 边后，/path 的学习路径会随之变化
@@ -244,8 +257,10 @@ export function ReviewDrawer({ onClose, onDecided }: ReviewDrawerProps) {
                             驳回
                           </Button>
                           <input
-                            value={note}
-                            onChange={(event) => setNote(event.target.value)}
+                            value={notes[key] ?? ''}
+                            onChange={(event) =>
+                              setNotes((prev) => ({ ...prev, [key]: event.target.value }))
+                            }
                             placeholder="驳回原因（可选，会写进理由里便于追溯）"
                             className="h-8 min-w-[200px] flex-1 rounded-lg border border-slate-300 px-2 text-xs text-slate-700"
                           />
