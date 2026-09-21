@@ -671,15 +671,48 @@ def test_job_404() -> None:
 # ---------------------------------------------------------------------------
 
 
+def _seeded_session() -> str:
+    """建一个**真会话**并问一句，返回它的 id。
+
+    ## 为什么需要这个（2026-09-21）
+
+    下面 6 个测试原本都写着 `/api/qa/sessions/qs_9f2a1c40_001` ——
+    **那是 `create_session` 曾经返回的写死常量。**
+
+    等 `create_session` 改成真实 uuid 之后，**那个 id 就不存在了** →
+    这 6 个测试全部 404。
+
+    **它们绿了很久，因为它们一直跟着错误实现走。**
+
+    ⚠️ 顺带一个收获：这正好说明**"只跑一部分测试"有多危险** ——
+    我前几轮只跑 `tests/test_tutor_state.py`（纯函数），
+    **这 6 个失败一次都没暴露过。**
+
+    问一句是为了**产生轮次 + diagnosis** ——
+    详情/状态/报告三个端点都要求"有东西可返回"。
+    """
+    sid = client.post(
+        "/api/qa/sessions", json={"material_scope": [], "student_label": "smoke"}
+    ).json()["data"]["session_id"]
+    client.post(f"/api/qa/sessions/{sid}/ask", json={"question": "为什么 TCP 建立连接要三次握手"})
+    return sid
+
+
 def test_create_session() -> None:
     resp = client.post("/api/qa/sessions", json={"material_scope": [], "student_label": "demo"})
     assert resp.status_code in (200, 201), resp.text[:200]
     data = resp.json()["data"]
     assert data["session_id"].startswith("qs_")
+    # ★ 每次都必须不同 —— 挡的是"返回写死常量"那种实现
+    other = client.post(
+        "/api/qa/sessions", json={"material_scope": [], "student_label": "demo2"}
+    ).json()["data"]["session_id"]
+    assert other != data["session_id"], "两次建会话必须拿到不同的 id"
 
 
 def test_session_detail_has_turns_and_diagnosis() -> None:
-    data = assert_envelope_ok(client.get("/api/qa/sessions/qs_9f2a1c40_001"))
+    sid = _seeded_session()
+    data = assert_envelope_ok(client.get(f"/api/qa/sessions/{sid}"))
     assert data["turns"]
     tutor_turns = [t for t in data["turns"] if t["role"] == "tutor"]
     assert tutor_turns, "会话里应有导师轮次"
@@ -692,22 +725,27 @@ def test_session_detail_has_turns_and_diagnosis() -> None:
 
 def test_session_state_exposes_socratic_machine() -> None:
     """★ 把"看不见的引导逻辑"暴露成接口 —— 让评委看得见策略的存在。"""
-    data = assert_envelope_ok(client.get("/api/qa/sessions/qs_9f2a1c40_001/state"))
+    sid = _seeded_session()
+    data = assert_envelope_ok(client.get(f"/api/qa/sessions/{sid}/state"))
     assert data["state"]
     assert data["next_action"]
     assert data["explain_threshold"] == 2, "连续 2 次答不上来就降级 —— 阈值要能被前端展示"
 
 
 def test_session_report_aggregates() -> None:
-    data = assert_envelope_ok(client.get("/api/qa/sessions/qs_9f2a1c40_001/report"))
+    sid = _seeded_session()
+    data = assert_envelope_ok(client.get(f"/api/qa/sessions/{sid}/report"))
     assert data["turn_count"] > 0
     assert 0.0 <= data["grounded_rate"] <= 1.0
     assert data["summary_md"]
 
 
 def test_delete_session() -> None:
-    data = assert_envelope_ok(client.delete("/api/qa/sessions/qs_9f2a1c40_001"))
+    sid = _seeded_session()
+    data = assert_envelope_ok(client.delete(f"/api/qa/sessions/{sid}"))
     assert data["deleted"]
+    # ★ 删完必须真的取不到 —— 挡的是"只返回一个字符串、什么都没删"那种实现
+    assert_envelope_error(client.get(f"/api/qa/sessions/{sid}"), 404, "NOT_FOUND")
 
 
 def test_qa_404_on_bad_session_id() -> None:
@@ -722,8 +760,9 @@ def test_ask_streams_sse_in_fixed_order() -> None:
 
     这几条不写测试就只是文档里的一句话；写成断言才真的守住。
     """
+    sid = _seeded_session()
     resp = client.post(
-        "/api/qa/sessions/qs_9f2a1c40_001/ask", json={"question": "这题为什么用快排不用冒泡？"}
+        f"/api/qa/sessions/{sid}/ask", json={"question": "这题为什么用快排不用冒泡？"}
     )
     assert resp.status_code == 200
     assert resp.headers["content-type"].startswith("text/event-stream")
@@ -764,5 +803,6 @@ def test_ask_streams_sse_in_fixed_order() -> None:
 
 
 def test_ask_requires_question() -> None:
-    resp = client.post("/api/qa/sessions/qs_9f2a1c40_001/ask", json={})
+    sid = _seeded_session()
+    resp = client.post(f"/api/qa/sessions/{sid}/ask", json={})
     assert resp.status_code in (400, 422), resp.text[:200]
