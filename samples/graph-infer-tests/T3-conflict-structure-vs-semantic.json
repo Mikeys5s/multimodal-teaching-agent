@@ -1,0 +1,67 @@
+{
+  "_comment": "B1-4 对抗性测试输入（结构-语义冲突检出）。构造的输入，非真实抽取产出。",
+  "_purpose": "SPEC §7.5 B1-4 要求「构造 3 组『故意让语义判定与章节顺序矛盾』的对抗性测试输入，检查是否全部被标为 needs_review，而不是静默采纳」。本文件即那 3 组 + 1 组对照。",
+  "_why_control": "只有 3 组『矛盾』是不够的：如果实现是『凡候选边一律 needs_review=1』，这三组会『全部通过』，但这个通过是假的。所以必须有第 4 组『语义与结构一致』的对照 —— 它期望**不**被标为冲突。没有对照，B1-4 就是真空满足。",
+  "fixture": "T3-conflict-structure-vs-semantic",
+  "schema_note": "structure_rank = 该知识点在教材骨架里的线性序号（chapter 优先，其次 section，最后按出现顺序）。矛盾的定义：语义判定给出的前置方向与 structure_rank 的顺序相反，或跨度过大。",
+  "cases": [
+    {
+      "id": "C1",
+      "title": "逆序前置：语义说后出现的知识点是前面的前置",
+      "conflict_kind": "inverted_prerequisite",
+      "expected": { "needs_review": true, "conflict_kind": "inverted_prerequisite", "why": "B 排在 A 之后，但语义判定说 B 是 A 的前置 —— 与章节顺序直接矛盾" },
+      "nodes": [
+        { "key": "A", "name": "IP 分组的转发流程", "structure_rank": 10, "chapter": 3, "section": "3.3" },
+        { "key": "B", "name": "子网掩码与地址聚合", "structure_rank": 25, "chapter": 3, "section": "3.3.5" }
+      ],
+      "edges": [
+        { "prereq_key": "B", "dependent_key": "A", "relation_type": "hard", "reason": "语义判定认为要先理解地址聚合才能读懂转发流程", "confidence": 0.80 }
+      ]
+    },
+    {
+      "id": "C2",
+      "title": "跨章倒挂：第 6 章的知识点被判为第 3 章知识点前置",
+      "conflict_kind": "cross_chapter_inversion",
+      "expected": { "needs_review": true, "conflict_kind": "cross_chapter_inversion", "why": "前置来自更靠后的章节（跨 ≥ 2 章），教学顺序上是硬倒挂" },
+      "nodes": [
+        { "key": "A", "name": "交换机与网桥的自学习", "structure_rank": 8, "chapter": 3, "section": "3.1" },
+        { "key": "B", "name": "TCP 拥塞控制的 AIMD", "structure_rank": 120, "chapter": 6, "section": "6.3.1" }
+      ],
+      "edges": [
+        { "prereq_key": "B", "dependent_key": "A", "relation_type": "hard", "reason": "语义判定认为拥塞控制是理解交换的基础", "confidence": 0.62 }
+      ]
+    },
+    {
+      "id": "C3",
+      "title": "同节互指：同一节内两个知识点互相声明对方为前置",
+      "conflict_kind": "mutual_in_same_section",
+      "expected": { "needs_review": true, "conflict_kind": "mutual_in_same_section", "why": "两条方向相反的语义边落在同一节内 —— 教学上不可能同时成立" },
+      "nodes": [
+        { "key": "A", "name": "可靠字节流的滑动窗口", "structure_rank": 44, "chapter": 5, "section": "5.2.4" },
+        { "key": "B", "name": "窗口通告与流量控制", "structure_rank": 45, "chapter": 5, "section": "5.2.4" }
+      ],
+      "edges": [
+        { "prereq_key": "A", "dependent_key": "B", "relation_type": "hard", "reason": "先懂滑动窗口才能懂窗口通告", "confidence": 0.78 },
+        { "prereq_key": "B", "dependent_key": "A", "relation_type": "hard", "reason": "窗口通告限定了滑动窗口的规模", "confidence": 0.71 }
+      ]
+    },
+    {
+      "id": "C0-CONTROL",
+      "title": "【对照】语义与结构一致 —— 期望**不**被标为冲突",
+      "conflict_kind": null,
+      "expected": { "needs_review": false, "conflict_kind": null, "why": "这是判据的『应该失败』样例：如果它也被标成冲突，说明实现是『全都标』，B1-4 的通过率就不成立" },
+      "nodes": [
+        { "key": "A", "name": "数据报与虚电路的区别", "structure_rank": 30, "chapter": 3, "section": "3.2" },
+        { "key": "B", "name": "IP 数据报的分片与重组", "structure_rank": 42, "chapter": 3, "section": "3.4" }
+      ],
+      "edges": [
+        { "prereq_key": "A", "dependent_key": "B", "relation_type": "hard", "reason": "先理解两种转发范式的取舍，才能理解分片为什么这样设计", "confidence": 0.85 }
+      ]
+    }
+  ],
+  "pass_criteria": {
+    "must_flag_all": ["C1", "C2", "C3"],
+    "must_not_flag": ["C0-CONTROL"],
+    "note": "四项全部满足才算 B1-4 通过（检出率 100% + 对照不误报）。只报『3/3 被标为 needs_review』不算通过 —— 那可能是『凡候选一律标』。"
+  }
+}
