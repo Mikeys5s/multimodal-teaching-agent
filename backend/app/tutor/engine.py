@@ -45,6 +45,7 @@ from app.tutor.state import (
     Decision,
     State,
     Verdict,
+    hint_level_of,
     judge_answer,
     next_state,
     should_show_downgrade_notice,
@@ -103,8 +104,23 @@ def _stuck_count(session: Session, session_id: str) -> int:
             continue
         if turn.turn_type in ("hint1", "hint2"):
             stuck += 1
-        elif turn.turn_type in ("confirm", "explain"):
+        elif turn.turn_type == "confirm":
+            # ★ **只有"答对"才清零。**
             stuck = 0
+        # ⚠️ `explain` **不清零**（2026-09-21 全链路实测发现）
+        #
+        # 我第一版把 `explain` 和 `confirm` 一起清零了 —— **那是错的**。
+        #
+        # `explain` 是「**连续 2 次答不上**」这条规则的**结果**，不是"学生答对了"。
+        # 清零之后：
+        #   · `get_state` 会显示 `consecutive_failures=0`
+        #   · **而那个数字正是"他确实卡住了"的证据**
+        #   · 而且下一轮如果学生继续答不上，计数会从 1 重新开始
+        #     —— **R3 的"连续"语义被重置了，学生会一直循环在 hint1/hint2**
+        #
+        # 实测症状（full_chain_check）：
+        #     第 1 次答不知道 -> S2_HINT1 / failures=1
+        #     第 2 次答不知道 -> S4_EXPLAIN / failures=0    ← 应该是 2
     return stuck
 
 
@@ -375,4 +391,201 @@ def next_seq(session: Session, session_id: str) -> int:
     return (turns[-1].seq + 1) if turns else 1
 
 
-__all__ = ["TurnResult", "run_turn", "next_seq", "STUCK_THRESHOLD"]
+# ---------------------------------------------------------------------------
+# 读侧：从已落库的轮次**反推**当前状态与报告
+# ---------------------------------------------------------------------------
+#
+# 这两个函数是「状态机的读」—— 放在这里而不是端点里，理由和写侧一样：
+# **状态怎么算只有一个地方说了算。**
+#
+# ⚠️ 端点上那两个 `# TODO(P3)` 原来返回**写死的**值：
+#
+#     state="S2_HINT1", hint_level=1, consecutive_failures=1,
+#     current_kp_id="kp_9f2a1c40_000_002_003"
+#
+# **一个刚建的会话（0 轮）也会返回"已经提示了 1 次"** ——
+# 而前端的"三轮进度指示器"就是读这个字段画的。
+# **它会让评委看到一个从未发生过的提示进度。**
+
+#: 导师轮类型 -> 能被反推成的状态
+_TURN_TO_STATE: dict[str, State] = {
+    "probe": State.S1_PROBE,
+    "hint1": State.S2_HINT1,
+    "hint2": State.S3_HINT2,
+    "explain": State.S4_EXPLAIN,
+    "confirm": State.CONFIRM,
+    "refuse": State.REFUSE,
+}
+
+#: 每个状态之后**下一个**该给的动作（`get_state` 的 `next_action`）。
+NEXT_ACTION: dict[State, str] = {
+    State.S1_PROBE: "等待学生作答（答不上则给 hint1）",
+    State.S2_HINT1: "hint2",
+    State.S3_HINT2: "explain",
+    State.S4_EXPLAIN: "explain",
+    State.CONFIRM: "换同章节相邻知识点巩固",
+    State.REFUSE: "请学生换一个已入库的知识点，或补充材料",
+}
+
+
+@dataclass
+class SessionState:
+    """反推出来的会话状态 —— 纯数据，便于断言。"""
+
+    state: State
+    hint_level: int
+    consecutive_failures: int
+    current_kp_id: str | None
+    next_action: str
+    explain_threshold: int
+    turn_count: int
+    has_tutor_turn: bool
+
+
+def state_of_session(session: Session, session_id: str) -> SessionState:
+    """从已落库的轮次反推：**这个会话现在在状态机的哪一步**。
+
+    `consecutive_failures` 直接复用 `_stuck_count` —— **同一个判据不写第二遍。**
+    """
+    turns = _history(session, session_id)
+    tutor_turns = [t for t in turns if t.role == "tutor"]
+
+    if not tutor_turns:
+        return SessionState(
+            state=State.S1_PROBE, hint_level=0, consecutive_failures=0,
+            current_kp_id=None, next_action=NEXT_ACTION[State.S1_PROBE],
+            explain_threshold=STUCK_THRESHOLD, turn_count=len(turns), has_tutor_turn=False,
+        )
+
+    last = tutor_turns[-1]
+    state = _TURN_TO_STATE.get(last.turn_type or "", State.S1_PROBE)
+
+    kp_id: str | None = None
+    if last.retrieved_kp_ids:
+        try:
+            ids = json.loads(last.retrieved_kp_ids)
+            kp_id = ids[0] if isinstance(ids, list) and ids else None
+        except (ValueError, TypeError):
+            kp_id = None
+
+    return SessionState(
+        state=state,
+        hint_level=hint_level_of(state),
+        consecutive_failures=_stuck_count(session, session_id),
+        current_kp_id=kp_id,
+        next_action=NEXT_ACTION[state],
+        explain_threshold=STUCK_THRESHOLD,
+        turn_count=len(turns),
+        has_tutor_turn=True,
+    )
+
+
+@dataclass
+class SessionReport:
+    """会话级的"三件产出"聚合。"""
+
+    turn_count: int
+    grounded_rate: float
+    stuck_points: list[dict[str, Any]]
+    suggested_practices: list[dict[str, Any]]
+    summary_md: str
+
+
+def report_of_session(session: Session, session_id: str) -> SessionReport:
+    """把整个会话的 `diagnosis_json` 聚合起来。
+
+    ## `grounded_rate` 的分母是**导师轮**，不是全部轮
+
+    SPEC：**「幻觉率的分母只用导师轮」** —— 学生轮没有"是否基于材料"这回事。
+    **用全部轮次算会把分母撑大一倍、把比率算好看一倍。**
+
+    ## `summary_md` 必须**基于真实数据**
+
+    原来那段写死的：
+
+        本次答疑共 8 轮，全部回答均基于教材内容（接地率 100%）。
+        卡点集中在「快速排序的分区思想」……
+
+    —— **一个刚建的会话（0 轮）也会这么写。**
+    """
+    turns = _history(session, session_id)
+    tutor_turns = [t for t in turns if t.role == "tutor"]
+
+    grounded = sum(1 for t in tutor_turns if t.grounded)
+    rate = (grounded / len(tutor_turns)) if tutor_turns else 0.0
+
+    stuck_points: list[dict[str, Any]] = []
+    practices: list[dict[str, Any]] = []
+    seen_stuck: set[str] = set()
+    seen_practice: set[str] = set()
+
+    for t in tutor_turns:
+        if not t.diagnosis_json:
+            continue
+        try:
+            d = json.loads(t.diagnosis_json)
+        except (ValueError, TypeError):
+            continue
+
+        sa = d.get("stuck_at")
+        if isinstance(sa, str) and sa and sa not in seen_stuck:
+            seen_stuck.add(sa)
+            stuck_points.append({
+                "step": sa,
+                "evidence_kp_id": d.get("root_cause_kp_id"),
+                "evidence_misconception_id": None,
+            })
+
+        task = d.get("next_practice")
+        kp = d.get("root_cause_kp_id")
+        if kp is None and t.retrieved_kp_ids:
+            try:
+                ids = json.loads(t.retrieved_kp_ids)
+                kp = ids[0] if isinstance(ids, list) and ids else None
+            except (ValueError, TypeError):
+                kp = None
+        if isinstance(task, str) and task and isinstance(kp, str) and kp not in seen_practice:
+            seen_practice.add(kp)
+            practices.append({"kp_id": kp, "task": task})
+
+    # 总结按真实数据分情况写，**不要一段固定的漂亮话**
+    n_student = len(turns) - len(tutor_turns)
+    if not tutor_turns:
+        summary = "本次会话还没有答疑记录。问一个已入库材料里的问题，我来引导你。"
+    elif rate >= 1.0:
+        summary = (
+            f"本次答疑共 {n_student} 个学生提问、{len(tutor_turns)} 轮引导，"
+            "**全部回答都基于教材内容**（接地率 100%）。"
+        )
+    else:
+        n_refuse = sum(1 for t in tutor_turns if t.turn_type == "refuse")
+        summary = (
+            f"本次答疑共 {n_student} 个学生提问、{len(tutor_turns)} 轮引导，"
+            f"接地率 {rate:.0%}（其中 {n_refuse} 轮是越界拒答 —— "
+            "**拒答轮按 0 计入，这是「宁缺毋错」原则的体现**）。"
+        )
+
+    if stuck_points:
+        summary += f"\n\n卡点集中在：{stuck_points[0]['step']}。"
+    if practices:
+        summary += f"\n\n建议练习：{practices[0]['task']}"
+
+    return SessionReport(
+        turn_count=len(turns),
+        grounded_rate=round(rate, 4),
+        stuck_points=stuck_points,
+        suggested_practices=practices,
+        summary_md=summary,
+    )
+
+
+__all__ = [
+    "NEXT_ACTION",
+    "SessionReport",
+    "SessionState",
+    "TurnResult",
+    "next_seq",
+    "report_of_session",
+    "run_turn",
+    "state_of_session",
+]

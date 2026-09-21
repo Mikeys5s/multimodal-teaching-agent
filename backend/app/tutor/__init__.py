@@ -21,7 +21,15 @@
 
 from __future__ import annotations
 
-from app.tutor.engine import TurnResult, next_seq, run_turn
+from app.tutor.engine import (
+    SessionReport,
+    SessionState,
+    TurnResult,
+    next_seq,
+    report_of_session,
+    run_turn,
+    state_of_session,
+)
 from app.tutor.state import (
     STUCK_THRESHOLD,
     Decision,
@@ -35,6 +43,8 @@ from app.tutor.state import (
 __all__ = [
     "Decision",
     "STUCK_THRESHOLD",
+    "SessionReport",
+    "SessionState",
     "State",
     "TurnResult",
     "TurnType",
@@ -42,5 +52,7 @@ __all__ = [
     "judge_answer",
     "next_seq",
     "next_state",
+    "report_of_session",
     "run_turn",
+    "state_of_session",
 ]
