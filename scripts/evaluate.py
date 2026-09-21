@@ -264,11 +264,26 @@ def main(argv: list[str] | None = None) -> int:
         print(render(report, str(settings.db_file)))
 
     if args.strict:
-        failed = [r.label for r in rows if not r.passed]
+        # ⚠️ **判据必须是 `is False`，不能是 `not r.passed`**（2026-09-21 修）
+        #
+        # `r.passed` 有三种值：`True` / `False` / **`None`（样本为 0，无从判定）**。
+        #
+        #     `not None` → `True`   ← **"没数据可判"被算成了"不达标"**
+        #
+        # 后果：**一个健康的图也会让 `--strict` 返回 1**，
+        # CI / 部署脚本会把"库里没数据"误报成"质量不合格"。
+        #
+        # 上面**显示**那段（`mark = "N/A" if r.passed is None else ...`）早就分开处理了，
+        # **但退出码这处没同步改** —— 同一件事两处判据，改了一处忘另一处。
+        # 症状就是"报告显示 N/A、退出码却说失败"，**两者自相矛盾**。
+        failed = [r.label for r in rows if r.passed is False]
+        na = [r.label for r in rows if r.passed is None]
+        if na:
+            print(f"\n⚠️ {len(na)} 项缺少样本、无法判定（**不计入失败**）：{na}", file=sys.stderr)
         if failed:
             print(f"\n❌ 验收指标未达标（{len(failed)} 项）：{failed}", file=sys.stderr)
             return 1
-        print("\n✅ 全部验收指标达标", file=sys.stderr)
+        print("\n✅ 全部可判定的验收指标达标", file=sys.stderr)
     return 0
 
 
