@@ -48,15 +48,23 @@ function AnalysisBody({ analysis }: { analysis: GapAnalysis }) {
 
       {/* 必须补的前置 */}
       <section>
-        <div className="mb-2 flex items-center gap-2 text-xs font-medium text-slate-600">
+        <div className="mb-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs font-medium text-slate-600">
           <span>必须补的硬前置</span>
           <span className="text-slate-400">（{prerequisites.length}）</span>
           <span className="text-slate-400">沿 hard 边反向可达，由近及远</span>
         </div>
+        <p className="mb-2 text-[11px] leading-relaxed text-slate-400">
+          硬前置 = 不会就学不动（约束先后）；软前置 = 有帮助、非必需。只有硬前置会被用在这个回溯里。
+        </p>
         {prerequisites.length === 0 ? (
-          <p className="text-xs text-slate-400">
-            没有硬前置 —— 这个知识点在依赖图里是可以直接学起的起点。
-          </p>
+          <div className="rounded-lg border border-amber-200 bg-amber-50/60 px-3 py-2 text-xs leading-relaxed text-amber-900">
+            <p className="font-medium">未检出硬前置 —— 但这不等于它可以直接学起。</p>
+            <p className="mt-1 text-amber-800">
+              这个回溯只沿「hard 边」走。如果当前图里还没有 hard 边（依赖边全是 AI 预抽取的软前置、待人工确认），
+              这里返回 0 只说明「无法判定」，不说明它是起点。
+              界面上别处若显示它有前置（软前置），两者并不矛盾。
+            </p>
+          </div>
         ) : (
           <ul className="space-y-2">
             {prerequisites.map((item) => (
