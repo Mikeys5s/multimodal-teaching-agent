@@ -1,0 +1,5034 @@
+[
+  {
+    "id": "kp_cf6fcaa0_000_000_000",
+    "name": "CONGESTION CONTROL",
+    "kind": "像知识点",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 18
+  },
+  {
+    "id": "kp_42b16cd4_000_000_000",
+    "name": "END-TO-END PROTOCOLS",
+    "kind": "像知识点",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 20
+  },
+  {
+    "id": "kp_ada1063f_000_000_000",
+    "name": "INTERNETWORKING",
+    "kind": "像知识点",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 15
+  },
+  {
+    "id": "kp_9f2a1c40_000_000_000",
+    "name": "第 5 章 传输层",
+    "kind": "像知识点",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 9
+  },
+  {
+    "id": "kp_cf6fcaa0_000_000_001",
+    "name": "Problem: Allocating Resources",
+    "kind": "像知识点",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 29
+  },
+  {
+    "id": "kp_42b16cd4_000_000_001",
+    "name": "Victory",
+    "kind": "过短",
+    "needs_review": true,
+    "difficulty": 3,
+    "len": 7
+  },
+  {
+    "id": "kp_ada1063f_000_000_001",
+    "name": "Problem: Not All Networks are ",
+    "kind": "像知识点",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 29
+  },
+  {
+    "id": "kp_9f2a1c40_000_000_001",
+    "name": "5.3 TCP 拥塞控制",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 3,
+    "len": 12
+  },
+  {
+    "id": "kp_cf6fcaa0_000_000_002",
+    "name": "how fast sources",
+    "kind": "像知识点",
+    "needs_review": true,
+    "difficulty": 3,
+    "len": 16
+  },
+  {
+    "id": "kp_42b16cd4_000_000_002",
+    "name": "Problem: Getting Processes to ",
+    "kind": "像知识点",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 29
+  },
+  {
+    "id": "kp_ada1063f_000_000_002",
+    "name": "The core job of a switch",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 24
+  },
+  {
+    "id": "kp_cf6fcaa0_000_000_003",
+    "name": "6.1 Issues in Resource Allocat",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 30
+  },
+  {
+    "id": "kp_42b16cd4_000_000_003",
+    "name": "Such a network",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 3,
+    "len": 14
+  },
+  {
+    "id": "kp_ada1063f_000_000_003",
+    "name": "3.1 Switching Basics",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 20
+  },
+  {
+    "id": "kp_cf6fcaa0_000_000_004",
+    "name": "6.1.1 Network Model",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 19
+  },
+  {
+    "id": "kp_42b16cd4_000_000_004",
+    "name": "5.1 Simple Demultiplexor UDP",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 28
+  },
+  {
+    "id": "kp_ada1063f_000_000_004",
+    "name": "A switch",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 8
+  },
+  {
+    "id": "kp_cf6fcaa0_000_000_005",
+    "name": "Note that congestion control",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 28
+  },
+  {
+    "id": "kp_42b16cd4_000_000_005",
+    "name": "The simplest possible transpor",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 30
+  },
+  {
+    "id": "kp_ada1063f_000_000_005",
+    "name": "One thing that",
+    "kind": "像知识点",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 14
+  },
+  {
+    "id": "kp_cf6fcaa0_000_000_006",
+    "name": "6.1. Issues in Resource Alloca",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 30
+  },
+  {
+    "id": "kp_42b16cd4_000_000_006",
+    "name": "The next issue",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 14
+  },
+  {
+    "id": "kp_ada1063f_000_000_006",
+    "name": "Another assumption that we nee",
+    "kind": "像知识点",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 30
+  },
+  {
+    "id": "kp_cf6fcaa0_000_000_007",
+    "name": "6.1.2 Taxonomy",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 14
+  },
+  {
+    "id": "kp_42b16cd4_000_000_007",
+    "name": "An alternative strategy",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 23
+  },
+  {
+    "id": "kp_ada1063f_000_000_007",
+    "name": "3.1. Switching Basics",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 21
+  },
+  {
+    "id": "kp_cf6fcaa0_000_000_008",
+    "name": "There",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 5
+  },
+  {
+    "id": "kp_42b16cd4_000_000_008",
+    "name": "5.1. Simple Demultiplexor UDP",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 29
+  },
+  {
+    "id": "kp_ada1063f_000_000_008",
+    "name": "3.1.1 Datagrams",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 15
+  },
+  {
+    "id": "kp_cf6fcaa0_000_000_009",
+    "name": "6.1. Issues in Resource Alloca",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 30
+  },
+  {
+    "id": "kp_42b16cd4_000_000_009",
+    "name": "5.2 Reliable Byte Stream TCP",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 28
+  },
+  {
+    "id": "kp_ada1063f_000_000_009",
+    "name": "The idea behind datagrams",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 25
+  },
+  {
+    "id": "kp_cf6fcaa0_000_000_010",
+    "name": "6.1.3 Evaluation Criteria",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 25
+  },
+  {
+    "id": "kp_42b16cd4_000_000_010",
+    "name": "5.2.1 End-to-End Issues",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 23
+  },
+  {
+    "id": "kp_ada1063f_000_000_010",
+    "name": "This last fact",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 14
+  },
+  {
+    "id": "kp_cf6fcaa0_000_000_011",
+    "name": "6.1. Issues in Resource Alloca",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 30
+  },
+  {
+    "id": "kp_42b16cd4_000_000_011",
+    "name": "At the heart of TCP",
+    "kind": "像知识点",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 19
+  },
+  {
+    "id": "kp_ada1063f_000_000_011",
+    "name": "3.1.2 Virtual Circuit Switchin",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 30
+  },
+  {
+    "id": "kp_cf6fcaa0_000_000_012",
+    "name": "Note that it",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 12
+  },
+  {
+    "id": "kp_42b16cd4_000_000_012",
+    "name": "5.2. Reliable Byte Stream TCP",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 29
+  },
+  {
+    "id": "kp_ada1063f_000_000_012",
+    "name": "3.1. Switching Basics",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 21
+  },
+  {
+    "id": "kp_cf6fcaa0_000_000_013",
+    "name": "The objective",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 13
+  },
+  {
+    "id": "kp_42b16cd4_000_000_013",
+    "name": "A third difference",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 18
+  },
+  {
+    "id": "kp_ada1063f_000_000_013",
+    "name": "The semantics of one such entr",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 30
+  },
+  {
+    "id": "kp_cf6fcaa0_000_000_014",
+    "name": "Since this",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 10
+  },
+  {
+    "id": "kp_42b16cd4_000_000_014",
+    "name": "The problem with this latter a",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 30
+  },
+  {
+    "id": "kp_ada1063f_000_000_014",
+    "name": "Whenever a new connection",
+    "kind": "像知识点",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 25
+  },
+  {
+    "id": "kp_cf6fcaa0_000_000_015",
+    "name": "6.1. Issues in Resource Alloca",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 30
+  },
+  {
+    "id": "kp_42b16cd4_000_000_015",
+    "name": "5.2.2 Segment Format",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 20
+  },
+  {
+    "id": "kp_ada1063f_000_000_015",
+    "name": "There",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 5
+  },
+  {
+    "id": "kp_cf6fcaa0_000_000_016",
+    "name": "6.2 Queuing Disciplines",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 23
+  },
+  {
+    "id": "kp_42b16cd4_000_000_016",
+    "name": "TCP",
+    "kind": "像知识点",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 3
+  },
+  {
+    "id": "kp_ada1063f_000_000_016",
+    "name": "3.1. Switching Basics",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 21
+  },
+  {
+    "id": "kp_cf6fcaa0_000_000_017",
+    "name": "6.2.1 FIFO",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 10
+  },
+  {
+    "id": "kp_42b16cd4_000_000_017",
+    "name": "5.2. Reliable Byte Stream TCP",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 29
+  },
+  {
+    "id": "kp_ada1063f_000_000_017",
+    "name": "There",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 3,
+    "len": 5
+  },
+  {
+    "id": "kp_cf6fcaa0_000_000_018",
+    "name": "Note that tail drop and FIFO",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 28
+  },
+  {
+    "id": "kp_42b16cd4_000_000_018",
+    "name": "5.2. Reliable Byte Stream TCP",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 29
+  },
+  {
+    "id": "kp_ada1063f_000_000_018",
+    "name": "3.1. Switching Basics",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 21
+  },
+  {
+    "id": "kp_cf6fcaa0_000_000_019",
+    "name": "A simple variation on basic FI",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 30
+  },
+  {
+    "id": "kp_42b16cd4_000_000_019",
+    "name": "5.2.3 Connection Establishment",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 30
+  },
+  {
+    "id": "kp_ada1063f_000_000_019",
+    "name": "There",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 5,
+    "len": 5
+  },
+  {
+    "id": "kp_cf6fcaa0_000_000_020",
+    "name": "One situation in which priorit",
+    "kind": "像知识点",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 30
+  },
+  {
+    "id": "kp_42b16cd4_000_000_020",
+    "name": "The idea",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 8
+  },
+  {
+    "id": "kp_ada1063f_000_000_020",
+    "name": "3.1. Switching Basics",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 21
+  },
+  {
+    "id": "kp_cf6fcaa0_000_000_021",
+    "name": "6.2.2 Fair Queuing",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 18
+  },
+  {
+    "id": "kp_42b16cd4_000_000_021",
+    "name": "TCP",
+    "kind": "像知识点",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 3
+  },
+  {
+    "id": "kp_ada1063f_000_000_021",
+    "name": "3.1.3 Source Routing",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 20
+  },
+  {
+    "id": "kp_cf6fcaa0_000_000_022",
+    "name": "The main problem with FIFO que",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 30
+  },
+  {
+    "id": "kp_42b16cd4_000_000_022",
+    "name": "There",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 3,
+    "len": 5
+  },
+  {
+    "id": "kp_ada1063f_000_000_022",
+    "name": "There",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 5
+  },
+  {
+    "id": "kp_cf6fcaa0_000_000_023",
+    "name": "6.2. Queuing Disciplines",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 24
+  },
+  {
+    "id": "kp_42b16cd4_000_000_023",
+    "name": "5.2. Reliable Byte Stream TCP",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 29
+  },
+  {
+    "id": "kp_ada1063f_000_000_023",
+    "name": "Source routes",
+    "kind": "像知识点",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 13
+  },
+  {
+    "id": "kp_cf6fcaa0_000_000_024",
+    "name": "What we really want",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 19
+  },
+  {
+    "id": "kp_42b16cd4_000_000_024",
+    "name": "There",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 5
+  },
+  {
+    "id": "kp_ada1063f_000_000_024",
+    "name": "3.1. Switching Basics",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 21
+  },
+  {
+    "id": "kp_cf6fcaa0_000_000_025",
+    "name": "6.2. Queuing Disciplines",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 24
+  },
+  {
+    "id": "kp_42b16cd4_000_000_025",
+    "name": "5.2. Reliable Byte Stream TCP",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 29
+  },
+  {
+    "id": "kp_ada1063f_000_000_025",
+    "name": "3.3 Internet IP",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 15
+  },
+  {
+    "id": "kp_cf6fcaa0_000_000_026",
+    "name": "There",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 5
+  },
+  {
+    "id": "kp_42b16cd4_000_000_026",
+    "name": "5.2.4 Sliding Window Revisited",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 30
+  },
+  {
+    "id": "kp_ada1063f_000_000_026",
+    "name": "3.3.1 What Is an Internetwork?",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 30
+  },
+  {
+    "id": "kp_cf6fcaa0_000_000_027",
+    "name": "The second thing to notice",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 26
+  },
+  {
+    "id": "kp_42b16cd4_000_000_027",
+    "name": "Most of the above discussion",
+    "kind": "像知识点",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 28
+  },
+  {
+    "id": "kp_ada1063f_000_000_027",
+    "name": "3.3. Internet IP",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 16
+  },
+  {
+    "id": "kp_cf6fcaa0_000_000_028",
+    "name": "Because FQ",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 10
+  },
+  {
+    "id": "kp_42b16cd4_000_000_028",
+    "name": "5.2. Reliable Byte Stream TCP",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 29
+  },
+  {
+    "id": "kp_ada1063f_000_000_028",
+    "name": "The Internet Protocol",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 21
+  },
+  {
+    "id": "kp_cf6fcaa0_000_000_029",
+    "name": "6.3 TCP Congestion Control",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 26
+  },
+  {
+    "id": "kp_42b16cd4_000_000_029",
+    "name": "All the while this",
+    "kind": "像知识点",
+    "needs_review": true,
+    "difficulty": 3,
+    "len": 18
+  },
+  {
+    "id": "kp_ada1063f_000_000_029",
+    "name": "The rest of this and the next ",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 29
+  },
+  {
+    "id": "kp_cf6fcaa0_000_000_030",
+    "name": "6.3.1 Additive Increase/Multip",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 30
+  },
+  {
+    "id": "kp_42b16cd4_000_000_030",
+    "name": "There",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 3,
+    "len": 5
+  },
+  {
+    "id": "kp_ada1063f_000_000_030",
+    "name": "The good news",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 3,
+    "len": 13
+  },
+  {
+    "id": "kp_cf6fcaa0_000_000_031",
+    "name": "6.3. TCP Congestion Control",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 27
+  },
+  {
+    "id": "kp_42b16cd4_000_000_031",
+    "name": "Note that these 1-byte message",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 30
+  },
+  {
+    "id": "kp_ada1063f_000_000_031",
+    "name": "3.3.2 Service Model",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 19
+  },
+  {
+    "id": "kp_cf6fcaa0_000_000_032",
+    "name": "Although CongestionWindow",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 25
+  },
+  {
+    "id": "kp_42b16cd4_000_000_032",
+    "name": "5.2. Reliable Byte Stream TCP",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 29
+  },
+  {
+    "id": "kp_ada1063f_000_000_032",
+    "name": "3.3. Internet IP",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 16
+  },
+  {
+    "id": "kp_cf6fcaa0_000_000_033",
+    "name": "6.3. TCP Congestion Control",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 27
+  },
+  {
+    "id": "kp_42b16cd4_000_000_033",
+    "name": "5.2.5 Triggering Transmission",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 29
+  },
+  {
+    "id": "kp_ada1063f_000_000_033",
+    "name": "The IP datagram",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 15
+  },
+  {
+    "id": "kp_cf6fcaa0_000_000_034",
+    "name": "6.3.2 Slow Start",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 16
+  },
+  {
+    "id": "kp_42b16cd4_000_000_034",
+    "name": "Note that the silly window syn",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 30
+  },
+  {
+    "id": "kp_ada1063f_000_000_034",
+    "name": "3.3. Internet IP",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 16
+  },
+  {
+    "id": "kp_cf6fcaa0_000_000_035",
+    "name": "There",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 5
+  },
+  {
+    "id": "kp_42b16cd4_000_000_035",
+    "name": "5.2. Reliable Byte Stream TCP",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 29
+  },
+  {
+    "id": "kp_ada1063f_000_000_035",
+    "name": "The Checksum",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 12
+  },
+  {
+    "id": "kp_cf6fcaa0_000_000_036",
+    "name": "6.3. TCP Congestion Control",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 27
+  },
+  {
+    "id": "kp_42b16cd4_000_000_036",
+    "name": "send a full segment else if th",
+    "kind": "像知识点",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 30
+  },
+  {
+    "id": "kp_ada1063f_000_000_036",
+    "name": "The central idea here",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 3,
+    "len": 21
+  },
+  {
+    "id": "kp_cf6fcaa0_000_000_037",
+    "name": "The second situation in which ",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 29
+  },
+  {
+    "id": "kp_42b16cd4_000_000_037",
+    "name": "5.2.6 Adaptive Retransmission",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 29
+  },
+  {
+    "id": "kp_ada1063f_000_000_037",
+    "name": "3.3. Internet IP",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 16
+  },
+  {
+    "id": "kp_cf6fcaa0_000_000_038",
+    "name": "Although the source",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 19
+  },
+  {
+    "id": "kp_42b16cd4_000_000_038",
+    "name": "The idea",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 5,
+    "len": 8
+  },
+  {
+    "id": "kp_ada1063f_000_000_038",
+    "name": "Observe that the fragmentation",
+    "kind": "像知识点",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 30
+  },
+  {
+    "id": "kp_cf6fcaa0_000_000_039",
+    "name": "There",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 5
+  },
+  {
+    "id": "kp_42b16cd4_000_000_039",
+    "name": "The parameter alpha",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 5,
+    "len": 19
+  },
+  {
+    "id": "kp_ada1063f_000_000_039",
+    "name": "IP reassembly",
+    "kind": "像知识点",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 13
+  },
+  {
+    "id": "kp_cf6fcaa0_000_000_040",
+    "name": "which time the congestion wind",
+    "kind": "像知识点",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 30
+  },
+  {
+    "id": "kp_42b16cd4_000_000_040",
+    "name": "5.2. Reliable Byte Stream TCP",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 29
+  },
+  {
+    "id": "kp_ada1063f_000_000_040",
+    "name": "3.3.3 Global Addresses",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 22
+  },
+  {
+    "id": "kp_cf6fcaa0_000_000_041",
+    "name": "There",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 5
+  },
+  {
+    "id": "kp_42b16cd4_000_000_041",
+    "name": "where delta and delta",
+    "kind": "像知识点",
+    "needs_review": true,
+    "difficulty": 3,
+    "len": 21
+  },
+  {
+    "id": "kp_ada1063f_000_000_041",
+    "name": "Ethernet addresses",
+    "kind": "像知识点",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 18
+  },
+  {
+    "id": "kp_cf6fcaa0_000_000_042",
+    "name": "3. Slow",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 7
+  },
+  {
+    "id": "kp_42b16cd4_000_000_042",
+    "name": "There",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 5
+  },
+  {
+    "id": "kp_ada1063f_000_000_042",
+    "name": "3.3. Internet IP",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 16
+  },
+  {
+    "id": "kp_cf6fcaa0_000_000_043",
+    "name": "4. CongestionWindow then grows",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 30
+  },
+  {
+    "id": "kp_42b16cd4_000_000_043",
+    "name": "5.2. Reliable Byte Stream TCP",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 29
+  },
+  {
+    "id": "kp_ada1063f_000_000_043",
+    "name": "The class of an IP address",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 26
+  },
+  {
+    "id": "kp_cf6fcaa0_000_000_044",
+    "name": "The same pattern",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 3,
+    "len": 16
+  },
+  {
+    "id": "kp_42b16cd4_000_000_044",
+    "name": "The second point of note",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 24
+  },
+  {
+    "id": "kp_ada1063f_000_000_044",
+    "name": "3.3.4 Datagram Forwarding in I",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 30
+  },
+  {
+    "id": "kp_cf6fcaa0_000_000_045",
+    "name": "6.3. TCP Congestion Control",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 27
+  },
+  {
+    "id": "kp_42b16cd4_000_000_045",
+    "name": "There",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 5
+  },
+  {
+    "id": "kp_ada1063f_000_000_045",
+    "name": "If the node",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 11
+  },
+  {
+    "id": "kp_cf6fcaa0_000_000_046",
+    "name": "6.3.3 Fast Retransmit and Fast",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 30
+  },
+  {
+    "id": "kp_42b16cd4_000_000_046",
+    "name": "5.2.7 Record Boundaries",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 23
+  },
+  {
+    "id": "kp_ada1063f_000_000_046",
+    "name": "3.3. Internet IP",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 16
+  },
+  {
+    "id": "kp_cf6fcaa0_000_000_047",
+    "name": "The idea of fast retransmit",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 27
+  },
+  {
+    "id": "kp_42b16cd4_000_000_047",
+    "name": "Since TCP",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 9
+  },
+  {
+    "id": "kp_ada1063f_000_000_047",
+    "name": "Note that it",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 12
+  },
+  {
+    "id": "kp_cf6fcaa0_000_000_048",
+    "name": "6.3. TCP Congestion Control",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 27
+  },
+  {
+    "id": "kp_42b16cd4_000_000_048",
+    "name": "Even though TCP",
+    "kind": "像知识点",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 15
+  },
+  {
+    "id": "kp_ada1063f_000_000_048",
+    "name": "The forwarding table used by R",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 30
+  },
+  {
+    "id": "kp_cf6fcaa0_000_000_049",
+    "name": "6.3.4 TCP CUBIC",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 15
+  },
+  {
+    "id": "kp_42b16cd4_000_000_049",
+    "name": "5.2.8 TCP Extensions",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 20
+  },
+  {
+    "id": "kp_ada1063f_000_000_049",
+    "name": "3.3.5 Subnetting and Classless",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 30
+  },
+  {
+    "id": "kp_cf6fcaa0_000_000_050",
+    "name": "The second important aspect of",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 30
+  },
+  {
+    "id": "kp_42b16cd4_000_000_050",
+    "name": "5.2. Reliable Byte Stream TCP",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 29
+  },
+  {
+    "id": "kp_ada1063f_000_000_050",
+    "name": "3.3. Internet IP",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 16
+  },
+  {
+    "id": "kp_cf6fcaa0_001_001_051",
+    "name": "6.1 Issues in Resource Allocat",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 30
+  },
+  {
+    "id": "kp_42b16cd4_000_000_051",
+    "name": "5.2.9 Performance",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 17
+  },
+  {
+    "id": "kp_ada1063f_000_000_051",
+    "name": "What subnetting means to a hos",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 30
+  },
+  {
+    "id": "kp_cf6fcaa0_001_001_052",
+    "name": "6.1.1 Network Model",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 19
+  },
+  {
+    "id": "kp_42b16cd4_000_000_052",
+    "name": "The throughput test",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 5,
+    "len": 19
+  },
+  {
+    "id": "kp_ada1063f_000_000_052",
+    "name": "3.3. Internet IP",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 16
+  },
+  {
+    "id": "kp_cf6fcaa0_001_001_053",
+    "name": "Note that congestion control",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 28
+  },
+  {
+    "id": "kp_42b16cd4_000_000_053",
+    "name": "5.2. Reliable Byte Stream TCP",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 29
+  },
+  {
+    "id": "kp_ada1063f_000_000_053",
+    "name": "if NextHop",
+    "kind": "像知识点",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 10
+  },
+  {
+    "id": "kp_cf6fcaa0_001_001_054",
+    "name": "6.1. Issues in Resource Alloca",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 30
+  },
+  {
+    "id": "kp_42b16cd4_000_000_054",
+    "name": "5.2.10 Alternative Design Choi",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 30
+  },
+  {
+    "id": "kp_ada1063f_000_000_054",
+    "name": "An important consequence of su",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 30
+  },
+  {
+    "id": "kp_cf6fcaa0_001_001_055",
+    "name": "6.1.2 Taxonomy",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 14
+  },
+  {
+    "id": "kp_42b16cd4_000_000_055",
+    "name": "5.2. Reliable Byte Stream TCP",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 29
+  },
+  {
+    "id": "kp_ada1063f_000_000_055",
+    "name": "3.3. Internet IP",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 16
+  },
+  {
+    "id": "kp_cf6fcaa0_001_001_056",
+    "name": "There",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 5
+  },
+  {
+    "id": "kp_42b16cd4_000_000_056",
+    "name": "The idea of Multipath TCP",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 5,
+    "len": 25
+  },
+  {
+    "id": "kp_ada1063f_000_000_056",
+    "name": "3.3.6 Address Translation ARP",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 29
+  },
+  {
+    "id": "kp_cf6fcaa0_001_001_057",
+    "name": "6.1. Issues in Resource Alloca",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 30
+  },
+  {
+    "id": "kp_42b16cd4_000_000_057",
+    "name": "If network latency",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 18
+  },
+  {
+    "id": "kp_ada1063f_000_000_057",
+    "name": "3.3. Internet IP",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 16
+  },
+  {
+    "id": "kp_cf6fcaa0_001_001_058",
+    "name": "6.1.3 Evaluation Criteria",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 25
+  },
+  {
+    "id": "kp_42b16cd4_000_000_058",
+    "name": "QUIC",
+    "kind": "过短",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 4
+  },
+  {
+    "id": "kp_ada1063f_000_000_058",
+    "name": "3.3.7 Host Conﬁguration DHCP",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 28
+  },
+  {
+    "id": "kp_cf6fcaa0_001_001_059",
+    "name": "6.1. Issues in Resource Alloca",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 30
+  },
+  {
+    "id": "kp_42b16cd4_000_000_059",
+    "name": "5.2. Reliable Byte Stream TCP",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 29
+  },
+  {
+    "id": "kp_ada1063f_000_000_059",
+    "name": "Ethernet addresses",
+    "kind": "像知识点",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 18
+  },
+  {
+    "id": "kp_cf6fcaa0_001_001_060",
+    "name": "Note that it",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 12
+  },
+  {
+    "id": "kp_42b16cd4_001_001_060",
+    "name": "5.1 Simple Demultiplexor UDP",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 28
+  },
+  {
+    "id": "kp_ada1063f_000_000_060",
+    "name": "Since the goal of DHCP",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 22
+  },
+  {
+    "id": "kp_cf6fcaa0_001_001_061",
+    "name": "The objective",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 13
+  },
+  {
+    "id": "kp_42b16cd4_001_001_061",
+    "name": "The simplest possible transpor",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 30
+  },
+  {
+    "id": "kp_ada1063f_000_000_061",
+    "name": "3.3. Internet IP",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 16
+  },
+  {
+    "id": "kp_cf6fcaa0_001_001_062",
+    "name": "Since this",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 10
+  },
+  {
+    "id": "kp_42b16cd4_001_001_062",
+    "name": "The next issue",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 14
+  },
+  {
+    "id": "kp_ada1063f_000_000_062",
+    "name": "DHCP",
+    "kind": "过短",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 4
+  },
+  {
+    "id": "kp_cf6fcaa0_001_001_063",
+    "name": "6.1. Issues in Resource Alloca",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 30
+  },
+  {
+    "id": "kp_42b16cd4_001_001_063",
+    "name": "An alternative strategy",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 23
+  },
+  {
+    "id": "kp_ada1063f_000_000_063",
+    "name": "3.3.8 Error Reporting ICMP",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 26
+  },
+  {
+    "id": "kp_cf6fcaa0_001_001_064",
+    "name": "6.2 Queuing Disciplines",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 23
+  },
+  {
+    "id": "kp_42b16cd4_001_001_064",
+    "name": "5.1. Simple Demultiplexor UDP",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 29
+  },
+  {
+    "id": "kp_ada1063f_000_000_064",
+    "name": "The next issue",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 14
+  },
+  {
+    "id": "kp_cf6fcaa0_001_001_065",
+    "name": "6.2.1 FIFO",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 10
+  },
+  {
+    "id": "kp_42b16cd4_001_001_065",
+    "name": "5.2 Reliable Byte Stream TCP",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 28
+  },
+  {
+    "id": "kp_ada1063f_000_000_065",
+    "name": "3.3. Internet IP",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 16
+  },
+  {
+    "id": "kp_cf6fcaa0_001_001_066",
+    "name": "Note that tail drop and FIFO",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 28
+  },
+  {
+    "id": "kp_42b16cd4_001_001_066",
+    "name": "5.2.1 End-to-End Issues",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 23
+  },
+  {
+    "id": "kp_ada1063f_000_000_066",
+    "name": "3.3.9 Virtual Networks and Tun",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 30
+  },
+  {
+    "id": "kp_cf6fcaa0_001_001_067",
+    "name": "A simple variation on basic FI",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 30
+  },
+  {
+    "id": "kp_42b16cd4_001_001_067",
+    "name": "At the heart of TCP",
+    "kind": "像知识点",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 19
+  },
+  {
+    "id": "kp_ada1063f_000_000_067",
+    "name": "The term VPN",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 12
+  },
+  {
+    "id": "kp_cf6fcaa0_001_001_068",
+    "name": "One situation in which priorit",
+    "kind": "像知识点",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 30
+  },
+  {
+    "id": "kp_42b16cd4_001_001_068",
+    "name": "5.2. Reliable Byte Stream TCP",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 29
+  },
+  {
+    "id": "kp_ada1063f_000_000_068",
+    "name": "3.3. Internet IP",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 16
+  },
+  {
+    "id": "kp_cf6fcaa0_001_001_069",
+    "name": "6.2.2 Fair Queuing",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 18
+  },
+  {
+    "id": "kp_42b16cd4_001_001_069",
+    "name": "A third difference",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 18
+  },
+  {
+    "id": "kp_ada1063f_000_000_069",
+    "name": "While R2",
+    "kind": "过短",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 8
+  },
+  {
+    "id": "kp_cf6fcaa0_001_001_070",
+    "name": "The main problem with FIFO que",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 30
+  },
+  {
+    "id": "kp_42b16cd4_001_001_070",
+    "name": "The problem with this latter a",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 30
+  },
+  {
+    "id": "kp_ada1063f_000_000_070",
+    "name": "3.4 Routing",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 11
+  },
+  {
+    "id": "kp_cf6fcaa0_001_001_071",
+    "name": "6.2. Queuing Disciplines",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 24
+  },
+  {
+    "id": "kp_42b16cd4_001_001_071",
+    "name": "5.2.2 Segment Format",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 20
+  },
+  {
+    "id": "kp_ada1063f_000_000_071",
+    "name": "3.4. Routing",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 12
+  },
+  {
+    "id": "kp_cf6fcaa0_001_001_072",
+    "name": "What we really want",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 19
+  },
+  {
+    "id": "kp_42b16cd4_001_001_072",
+    "name": "TCP",
+    "kind": "像知识点",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 3
+  },
+  {
+    "id": "kp_ada1063f_000_000_072",
+    "name": "3.4.1 Network as a Graph",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 24
+  },
+  {
+    "id": "kp_cf6fcaa0_001_001_073",
+    "name": "6.2. Queuing Disciplines",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 24
+  },
+  {
+    "id": "kp_42b16cd4_001_001_073",
+    "name": "5.2. Reliable Byte Stream TCP",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 29
+  },
+  {
+    "id": "kp_ada1063f_000_000_073",
+    "name": "The basic problem of routing",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 28
+  },
+  {
+    "id": "kp_cf6fcaa0_001_001_074",
+    "name": "There",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 5
+  },
+  {
+    "id": "kp_42b16cd4_001_001_074",
+    "name": "5.2. Reliable Byte Stream TCP",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 29
+  },
+  {
+    "id": "kp_ada1063f_000_000_074",
+    "name": "3.4.2 Distance-Vector RIP",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 25
+  },
+  {
+    "id": "kp_cf6fcaa0_001_001_075",
+    "name": "The second thing to notice",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 26
+  },
+  {
+    "id": "kp_42b16cd4_001_001_075",
+    "name": "5.2.3 Connection Establishment",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 30
+  },
+  {
+    "id": "kp_ada1063f_000_000_075",
+    "name": "3.4. Routing",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 12
+  },
+  {
+    "id": "kp_cf6fcaa0_001_001_076",
+    "name": "Because FQ",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 10
+  },
+  {
+    "id": "kp_42b16cd4_001_001_076",
+    "name": "The idea",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 8
+  },
+  {
+    "id": "kp_ada1063f_000_000_076",
+    "name": "The next step in distance-vect",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 30
+  },
+  {
+    "id": "kp_cf6fcaa0_001_001_077",
+    "name": "6.3 TCP Congestion Control",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 26
+  },
+  {
+    "id": "kp_42b16cd4_001_001_077",
+    "name": "TCP",
+    "kind": "像知识点",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 3
+  },
+  {
+    "id": "kp_ada1063f_000_000_077",
+    "name": "There",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 5
+  },
+  {
+    "id": "kp_cf6fcaa0_001_001_078",
+    "name": "6.3.1 Additive Increase/Multip",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 30
+  },
+  {
+    "id": "kp_42b16cd4_001_001_078",
+    "name": "There",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 3,
+    "len": 5
+  },
+  {
+    "id": "kp_ada1063f_000_000_078",
+    "name": "3.4. Routing",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 12
+  },
+  {
+    "id": "kp_cf6fcaa0_001_001_079",
+    "name": "6.3. TCP Congestion Control",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 27
+  },
+  {
+    "id": "kp_42b16cd4_001_001_079",
+    "name": "5.2. Reliable Byte Stream TCP",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 29
+  },
+  {
+    "id": "kp_ada1063f_000_000_079",
+    "name": "There",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 5
+  },
+  {
+    "id": "kp_cf6fcaa0_001_001_080",
+    "name": "Although CongestionWindow",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 25
+  },
+  {
+    "id": "kp_42b16cd4_001_001_080",
+    "name": "There",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 5
+  },
+  {
+    "id": "kp_ada1063f_000_000_080",
+    "name": "The code that implements this ",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 29
+  },
+  {
+    "id": "kp_cf6fcaa0_001_001_081",
+    "name": "6.3. TCP Congestion Control",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 27
+  },
+  {
+    "id": "kp_42b16cd4_001_001_081",
+    "name": "5.2. Reliable Byte Stream TCP",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 29
+  },
+  {
+    "id": "kp_ada1063f_000_000_081",
+    "name": "3.4. Routing",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 12
+  },
+  {
+    "id": "kp_cf6fcaa0_001_001_082",
+    "name": "6.3.2 Slow Start",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 16
+  },
+  {
+    "id": "kp_42b16cd4_001_001_082",
+    "name": "5.2.4 Sliding Window Revisited",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 30
+  },
+  {
+    "id": "kp_ada1063f_000_000_082",
+    "name": "RIP",
+    "kind": "过短",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 3
+  },
+  {
+    "id": "kp_cf6fcaa0_001_001_083",
+    "name": "There",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 5
+  },
+  {
+    "id": "kp_42b16cd4_001_001_083",
+    "name": "Most of the above discussion",
+    "kind": "像知识点",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 28
+  },
+  {
+    "id": "kp_ada1063f_000_000_083",
+    "name": "3.4. Routing",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 12
+  },
+  {
+    "id": "kp_cf6fcaa0_001_001_084",
+    "name": "6.3. TCP Congestion Control",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 27
+  },
+  {
+    "id": "kp_42b16cd4_001_001_084",
+    "name": "5.2. Reliable Byte Stream TCP",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 29
+  },
+  {
+    "id": "kp_ada1063f_000_000_084",
+    "name": "3.4.3 Link State OSPF",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 21
+  },
+  {
+    "id": "kp_cf6fcaa0_001_001_085",
+    "name": "The second situation in which ",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 29
+  },
+  {
+    "id": "kp_42b16cd4_001_001_085",
+    "name": "All the while this",
+    "kind": "像知识点",
+    "needs_review": true,
+    "difficulty": 3,
+    "len": 18
+  },
+  {
+    "id": "kp_ada1063f_000_000_085",
+    "name": "Link-state routing",
+    "kind": "像知识点",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 18
+  },
+  {
+    "id": "kp_cf6fcaa0_001_001_086",
+    "name": "Although the source",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 19
+  },
+  {
+    "id": "kp_42b16cd4_001_001_086",
+    "name": "There",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 3,
+    "len": 5
+  },
+  {
+    "id": "kp_ada1063f_000_000_086",
+    "name": "3.4. Routing",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 12
+  },
+  {
+    "id": "kp_cf6fcaa0_001_001_087",
+    "name": "There",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 5
+  },
+  {
+    "id": "kp_42b16cd4_001_001_087",
+    "name": "Note that these 1-byte message",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 30
+  },
+  {
+    "id": "kp_ada1063f_000_000_087",
+    "name": "One easy way to reduce overhea",
+    "kind": "像知识点",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 30
+  },
+  {
+    "id": "kp_cf6fcaa0_001_001_088",
+    "name": "which time the congestion wind",
+    "kind": "像知识点",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 30
+  },
+  {
+    "id": "kp_42b16cd4_001_001_088",
+    "name": "5.2. Reliable Byte Stream TCP",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 29
+  },
+  {
+    "id": "kp_ada1063f_000_000_088",
+    "name": "To make sure that old informat",
+    "kind": "像知识点",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 30
+  },
+  {
+    "id": "kp_cf6fcaa0_001_001_089",
+    "name": "3. Slow",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 7
+  },
+  {
+    "id": "kp_42b16cd4_001_001_089",
+    "name": "5.2.5 Triggering Transmission",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 29
+  },
+  {
+    "id": "kp_ada1063f_000_000_089",
+    "name": "3.4. Routing",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 12
+  },
+  {
+    "id": "kp_cf6fcaa0_001_001_090",
+    "name": "4. CongestionWindow then grows",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 30
+  },
+  {
+    "id": "kp_42b16cd4_001_001_090",
+    "name": "Note that the silly window syn",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 30
+  },
+  {
+    "id": "kp_ada1063f_000_000_090",
+    "name": "Since D",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 3,
+    "len": 7
+  },
+  {
+    "id": "kp_cf6fcaa0_001_001_091",
+    "name": "The same pattern",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 3,
+    "len": 16
+  },
+  {
+    "id": "kp_42b16cd4_001_001_091",
+    "name": "5.2. Reliable Byte Stream TCP",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 29
+  },
+  {
+    "id": "kp_ada1063f_000_000_091",
+    "name": "Cost to reach B through C",
+    "kind": "像知识点",
+    "needs_review": true,
+    "difficulty": 3,
+    "len": 25
+  },
+  {
+    "id": "kp_cf6fcaa0_001_001_092",
+    "name": "6.3. TCP Congestion Control",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 27
+  },
+  {
+    "id": "kp_42b16cd4_001_001_092",
+    "name": "send a full segment else if th",
+    "kind": "像知识点",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 30
+  },
+  {
+    "id": "kp_ada1063f_000_000_092",
+    "name": "Distance-vector and link-state",
+    "kind": "像知识点",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 30
+  },
+  {
+    "id": "kp_cf6fcaa0_001_001_093",
+    "name": "6.3.3 Fast Retransmit and Fast",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 30
+  },
+  {
+    "id": "kp_42b16cd4_001_001_093",
+    "name": "5.2.6 Adaptive Retransmission",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 29
+  },
+  {
+    "id": "kp_ada1063f_000_000_093",
+    "name": "There",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 5
+  },
+  {
+    "id": "kp_cf6fcaa0_001_001_094",
+    "name": "The idea of fast retransmit",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 27
+  },
+  {
+    "id": "kp_42b16cd4_001_001_094",
+    "name": "The idea",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 5,
+    "len": 8
+  },
+  {
+    "id": "kp_ada1063f_000_000_094",
+    "name": "3.4. Routing",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 12
+  },
+  {
+    "id": "kp_cf6fcaa0_001_001_095",
+    "name": "6.3. TCP Congestion Control",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 27
+  },
+  {
+    "id": "kp_42b16cd4_001_001_095",
+    "name": "The parameter alpha",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 5,
+    "len": 19
+  },
+  {
+    "id": "kp_ada1063f_000_000_095",
+    "name": "The LS sequence number",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 5,
+    "len": 22
+  },
+  {
+    "id": "kp_cf6fcaa0_001_001_096",
+    "name": "6.3.4 TCP CUBIC",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 15
+  },
+  {
+    "id": "kp_42b16cd4_001_001_096",
+    "name": "5.2. Reliable Byte Stream TCP",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 29
+  },
+  {
+    "id": "kp_ada1063f_000_000_096",
+    "name": "The TOS information",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 19
+  },
+  {
+    "id": "kp_cf6fcaa0_002_002_097",
+    "name": "6.1.1 Network Model",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 19
+  },
+  {
+    "id": "kp_42b16cd4_001_001_097",
+    "name": "where delta and delta",
+    "kind": "像知识点",
+    "needs_review": true,
+    "difficulty": 3,
+    "len": 21
+  },
+  {
+    "id": "kp_ada1063f_000_000_097",
+    "name": "3.4.4 Metrics",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 13
+  },
+  {
+    "id": "kp_cf6fcaa0_002_002_098",
+    "name": "Note that congestion control",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 28
+  },
+  {
+    "id": "kp_42b16cd4_001_001_098",
+    "name": "There",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 5
+  },
+  {
+    "id": "kp_ada1063f_000_000_098",
+    "name": "3.4. Routing",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 12
+  },
+  {
+    "id": "kp_cf6fcaa0_002_002_099",
+    "name": "6.1. Issues in Resource Alloca",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 30
+  },
+  {
+    "id": "kp_42b16cd4_001_001_099",
+    "name": "5.2. Reliable Byte Stream TCP",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 29
+  },
+  {
+    "id": "kp_ada1063f_000_000_099",
+    "name": "All of these factors mean that",
+    "kind": "像知识点",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 30
+  },
+  {
+    "id": "kp_cf6fcaa0_002_002_100",
+    "name": "6.1.2 Taxonomy",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 14
+  },
+  {
+    "id": "kp_42b16cd4_001_001_100",
+    "name": "The second point of note",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 24
+  },
+  {
+    "id": "kp_ada1063f_001_001_100",
+    "name": "3.1 Switching Basics",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 20
+  },
+  {
+    "id": "kp_cf6fcaa0_002_002_101",
+    "name": "There",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 5
+  },
+  {
+    "id": "kp_42b16cd4_001_001_101",
+    "name": "There",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 5
+  },
+  {
+    "id": "kp_ada1063f_001_001_101",
+    "name": "A switch",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 8
+  },
+  {
+    "id": "kp_cf6fcaa0_002_002_102",
+    "name": "6.1. Issues in Resource Alloca",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 30
+  },
+  {
+    "id": "kp_42b16cd4_001_001_102",
+    "name": "5.2.7 Record Boundaries",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 23
+  },
+  {
+    "id": "kp_ada1063f_001_001_102",
+    "name": "One thing that",
+    "kind": "像知识点",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 14
+  },
+  {
+    "id": "kp_cf6fcaa0_002_002_103",
+    "name": "6.1.3 Evaluation Criteria",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 25
+  },
+  {
+    "id": "kp_42b16cd4_001_001_103",
+    "name": "Since TCP",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 9
+  },
+  {
+    "id": "kp_ada1063f_001_001_103",
+    "name": "Another assumption that we nee",
+    "kind": "像知识点",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 30
+  },
+  {
+    "id": "kp_cf6fcaa0_002_002_104",
+    "name": "6.1. Issues in Resource Alloca",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 30
+  },
+  {
+    "id": "kp_42b16cd4_001_001_104",
+    "name": "Even though TCP",
+    "kind": "像知识点",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 15
+  },
+  {
+    "id": "kp_ada1063f_001_001_104",
+    "name": "3.1. Switching Basics",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 21
+  },
+  {
+    "id": "kp_cf6fcaa0_002_002_105",
+    "name": "Note that it",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 12
+  },
+  {
+    "id": "kp_42b16cd4_001_001_105",
+    "name": "5.2.8 TCP Extensions",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 20
+  },
+  {
+    "id": "kp_ada1063f_001_001_105",
+    "name": "3.1.1 Datagrams",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 15
+  },
+  {
+    "id": "kp_cf6fcaa0_002_002_106",
+    "name": "The objective",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 13
+  },
+  {
+    "id": "kp_42b16cd4_001_001_106",
+    "name": "5.2. Reliable Byte Stream TCP",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 29
+  },
+  {
+    "id": "kp_ada1063f_001_001_106",
+    "name": "The idea behind datagrams",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 25
+  },
+  {
+    "id": "kp_cf6fcaa0_002_002_107",
+    "name": "Since this",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 10
+  },
+  {
+    "id": "kp_42b16cd4_001_001_107",
+    "name": "5.2.9 Performance",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 17
+  },
+  {
+    "id": "kp_ada1063f_001_001_107",
+    "name": "This last fact",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 14
+  },
+  {
+    "id": "kp_cf6fcaa0_002_002_108",
+    "name": "6.2 Queuing Disciplines",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 23
+  },
+  {
+    "id": "kp_42b16cd4_001_001_108",
+    "name": "The throughput test",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 5,
+    "len": 19
+  },
+  {
+    "id": "kp_ada1063f_001_001_108",
+    "name": "3.1.2 Virtual Circuit Switchin",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 30
+  },
+  {
+    "id": "kp_cf6fcaa0_002_002_109",
+    "name": "6.2.1 FIFO",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 10
+  },
+  {
+    "id": "kp_42b16cd4_001_001_109",
+    "name": "5.2. Reliable Byte Stream TCP",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 29
+  },
+  {
+    "id": "kp_ada1063f_001_001_109",
+    "name": "3.1. Switching Basics",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 21
+  },
+  {
+    "id": "kp_cf6fcaa0_002_002_110",
+    "name": "Note that tail drop and FIFO",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 28
+  },
+  {
+    "id": "kp_42b16cd4_001_001_110",
+    "name": "5.2.10 Alternative Design Choi",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 30
+  },
+  {
+    "id": "kp_ada1063f_001_001_110",
+    "name": "The semantics of one such entr",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 30
+  },
+  {
+    "id": "kp_cf6fcaa0_002_002_111",
+    "name": "A simple variation on basic FI",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 30
+  },
+  {
+    "id": "kp_42b16cd4_001_001_111",
+    "name": "5.2. Reliable Byte Stream TCP",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 29
+  },
+  {
+    "id": "kp_ada1063f_001_001_111",
+    "name": "Whenever a new connection",
+    "kind": "像知识点",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 25
+  },
+  {
+    "id": "kp_cf6fcaa0_002_002_112",
+    "name": "One situation in which priorit",
+    "kind": "像知识点",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 30
+  },
+  {
+    "id": "kp_42b16cd4_001_001_112",
+    "name": "The idea of Multipath TCP",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 5,
+    "len": 25
+  },
+  {
+    "id": "kp_ada1063f_001_001_112",
+    "name": "There",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 5
+  },
+  {
+    "id": "kp_cf6fcaa0_002_002_113",
+    "name": "6.2.2 Fair Queuing",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 18
+  },
+  {
+    "id": "kp_42b16cd4_001_001_113",
+    "name": "If network latency",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 18
+  },
+  {
+    "id": "kp_ada1063f_001_001_113",
+    "name": "3.1. Switching Basics",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 21
+  },
+  {
+    "id": "kp_cf6fcaa0_002_002_114",
+    "name": "The main problem with FIFO que",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 30
+  },
+  {
+    "id": "kp_42b16cd4_001_001_114",
+    "name": "QUIC",
+    "kind": "过短",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 4
+  },
+  {
+    "id": "kp_ada1063f_001_001_114",
+    "name": "There",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 3,
+    "len": 5
+  },
+  {
+    "id": "kp_cf6fcaa0_002_002_115",
+    "name": "6.2. Queuing Disciplines",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 24
+  },
+  {
+    "id": "kp_42b16cd4_001_001_115",
+    "name": "5.2. Reliable Byte Stream TCP",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 29
+  },
+  {
+    "id": "kp_ada1063f_001_001_115",
+    "name": "3.1. Switching Basics",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 21
+  },
+  {
+    "id": "kp_cf6fcaa0_002_002_116",
+    "name": "What we really want",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 19
+  },
+  {
+    "id": "kp_42b16cd4_002_002_116",
+    "name": "5.2.1 End-to-End Issues",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 23
+  },
+  {
+    "id": "kp_ada1063f_001_001_116",
+    "name": "There",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 5,
+    "len": 5
+  },
+  {
+    "id": "kp_cf6fcaa0_002_002_117",
+    "name": "There",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 5
+  },
+  {
+    "id": "kp_42b16cd4_002_002_117",
+    "name": "At the heart of TCP",
+    "kind": "像知识点",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 19
+  },
+  {
+    "id": "kp_ada1063f_001_001_117",
+    "name": "3.1. Switching Basics",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 21
+  },
+  {
+    "id": "kp_cf6fcaa0_002_002_118",
+    "name": "The second thing to notice",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 26
+  },
+  {
+    "id": "kp_42b16cd4_002_002_118",
+    "name": "5.2. Reliable Byte Stream TCP",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 29
+  },
+  {
+    "id": "kp_ada1063f_001_001_118",
+    "name": "3.1.3 Source Routing",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 20
+  },
+  {
+    "id": "kp_cf6fcaa0_002_002_119",
+    "name": "Because FQ",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 10
+  },
+  {
+    "id": "kp_42b16cd4_002_002_119",
+    "name": "A third difference",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 18
+  },
+  {
+    "id": "kp_ada1063f_001_001_119",
+    "name": "There",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 5
+  },
+  {
+    "id": "kp_cf6fcaa0_002_002_120",
+    "name": "6.3 TCP Congestion Control",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 26
+  },
+  {
+    "id": "kp_42b16cd4_002_002_120",
+    "name": "The problem with this latter a",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 30
+  },
+  {
+    "id": "kp_ada1063f_001_001_120",
+    "name": "Source routes",
+    "kind": "像知识点",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 13
+  },
+  {
+    "id": "kp_cf6fcaa0_002_002_121",
+    "name": "6.3.1 Additive Increase/Multip",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 30
+  },
+  {
+    "id": "kp_42b16cd4_002_002_121",
+    "name": "5.2.2 Segment Format",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 20
+  },
+  {
+    "id": "kp_ada1063f_001_001_121",
+    "name": "3.1. Switching Basics",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 21
+  },
+  {
+    "id": "kp_cf6fcaa0_003_003_122",
+    "name": "6.3. TCP Congestion Control",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 27
+  },
+  {
+    "id": "kp_42b16cd4_002_002_122",
+    "name": "TCP",
+    "kind": "像知识点",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 3
+  },
+  {
+    "id": "kp_ada1063f_001_001_122",
+    "name": "3.3 Internet IP",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 15
+  },
+  {
+    "id": "kp_cf6fcaa0_003_003_123",
+    "name": "Although CongestionWindow",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 25
+  },
+  {
+    "id": "kp_42b16cd4_002_002_123",
+    "name": "5.2. Reliable Byte Stream TCP",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 29
+  },
+  {
+    "id": "kp_ada1063f_001_001_123",
+    "name": "3.3.1 What Is an Internetwork?",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 30
+  },
+  {
+    "id": "kp_cf6fcaa0_003_003_124",
+    "name": "6.3.2 Slow Start",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 16
+  },
+  {
+    "id": "kp_42b16cd4_002_002_124",
+    "name": "5.2.3 Connection Establishment",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 30
+  },
+  {
+    "id": "kp_ada1063f_001_001_124",
+    "name": "3.3. Internet IP",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 16
+  },
+  {
+    "id": "kp_cf6fcaa0_003_003_125",
+    "name": "There",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 5
+  },
+  {
+    "id": "kp_42b16cd4_002_002_125",
+    "name": "The idea",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 8
+  },
+  {
+    "id": "kp_ada1063f_001_001_125",
+    "name": "The Internet Protocol",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 21
+  },
+  {
+    "id": "kp_cf6fcaa0_003_003_126",
+    "name": "The second situation in which ",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 29
+  },
+  {
+    "id": "kp_42b16cd4_002_002_126",
+    "name": "TCP",
+    "kind": "像知识点",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 3
+  },
+  {
+    "id": "kp_ada1063f_001_001_126",
+    "name": "The rest of this and the next ",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 29
+  },
+  {
+    "id": "kp_cf6fcaa0_003_003_127",
+    "name": "Although the source",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 19
+  },
+  {
+    "id": "kp_42b16cd4_002_002_127",
+    "name": "There",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 3,
+    "len": 5
+  },
+  {
+    "id": "kp_ada1063f_001_001_127",
+    "name": "The good news",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 3,
+    "len": 13
+  },
+  {
+    "id": "kp_cf6fcaa0_003_003_128",
+    "name": "which time the congestion wind",
+    "kind": "像知识点",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 30
+  },
+  {
+    "id": "kp_42b16cd4_002_002_128",
+    "name": "5.2.4 Sliding Window Revisited",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 30
+  },
+  {
+    "id": "kp_ada1063f_001_001_128",
+    "name": "3.3.2 Service Model",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 19
+  },
+  {
+    "id": "kp_cf6fcaa0_003_003_129",
+    "name": "3. Slow",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 7
+  },
+  {
+    "id": "kp_42b16cd4_002_002_129",
+    "name": "Most of the above discussion",
+    "kind": "像知识点",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 28
+  },
+  {
+    "id": "kp_ada1063f_001_001_129",
+    "name": "3.3. Internet IP",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 16
+  },
+  {
+    "id": "kp_cf6fcaa0_003_003_130",
+    "name": "4. CongestionWindow then grows",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 30
+  },
+  {
+    "id": "kp_42b16cd4_002_002_130",
+    "name": "All the while this",
+    "kind": "像知识点",
+    "needs_review": true,
+    "difficulty": 3,
+    "len": 18
+  },
+  {
+    "id": "kp_ada1063f_001_001_130",
+    "name": "The IP datagram",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 15
+  },
+  {
+    "id": "kp_cf6fcaa0_003_003_131",
+    "name": "The same pattern",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 3,
+    "len": 16
+  },
+  {
+    "id": "kp_42b16cd4_002_002_131",
+    "name": "Note that these 1-byte message",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 30
+  },
+  {
+    "id": "kp_ada1063f_001_001_131",
+    "name": "3.3. Internet IP",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 16
+  },
+  {
+    "id": "kp_cf6fcaa0_003_003_132",
+    "name": "6.3.3 Fast Retransmit and Fast",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 30
+  },
+  {
+    "id": "kp_42b16cd4_002_002_132",
+    "name": "5.2.5 Triggering Transmission",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 29
+  },
+  {
+    "id": "kp_ada1063f_001_001_132",
+    "name": "The Checksum",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 12
+  },
+  {
+    "id": "kp_cf6fcaa0_003_003_133",
+    "name": "The idea of fast retransmit",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 27
+  },
+  {
+    "id": "kp_42b16cd4_002_002_133",
+    "name": "Note that the silly window syn",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 30
+  },
+  {
+    "id": "kp_ada1063f_001_001_133",
+    "name": "The central idea here",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 3,
+    "len": 21
+  },
+  {
+    "id": "kp_cf6fcaa0_003_003_134",
+    "name": "6.3.4 TCP CUBIC",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 15
+  },
+  {
+    "id": "kp_42b16cd4_002_002_134",
+    "name": "5.2. Reliable Byte Stream TCP",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 29
+  },
+  {
+    "id": "kp_ada1063f_001_001_134",
+    "name": "3.3. Internet IP",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 16
+  },
+  {
+    "id": "kp_cf6fcaa0_003_003_135",
+    "name": "The second important aspect of",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 30
+  },
+  {
+    "id": "kp_42b16cd4_002_002_135",
+    "name": "send a full segment else if th",
+    "kind": "像知识点",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 30
+  },
+  {
+    "id": "kp_ada1063f_001_001_135",
+    "name": "Observe that the fragmentation",
+    "kind": "像知识点",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 30
+  },
+  {
+    "id": "kp_42b16cd4_002_002_136",
+    "name": "5.2.6 Adaptive Retransmission",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 29
+  },
+  {
+    "id": "kp_ada1063f_001_001_136",
+    "name": "IP reassembly",
+    "kind": "像知识点",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 13
+  },
+  {
+    "id": "kp_42b16cd4_002_002_137",
+    "name": "The idea",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 5,
+    "len": 8
+  },
+  {
+    "id": "kp_ada1063f_001_001_137",
+    "name": "3.3.3 Global Addresses",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 22
+  },
+  {
+    "id": "kp_42b16cd4_002_002_138",
+    "name": "The parameter alpha",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 5,
+    "len": 19
+  },
+  {
+    "id": "kp_ada1063f_001_001_138",
+    "name": "Ethernet addresses",
+    "kind": "像知识点",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 18
+  },
+  {
+    "id": "kp_42b16cd4_002_002_139",
+    "name": "5.2. Reliable Byte Stream TCP",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 29
+  },
+  {
+    "id": "kp_ada1063f_001_001_139",
+    "name": "3.3. Internet IP",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 16
+  },
+  {
+    "id": "kp_42b16cd4_002_002_140",
+    "name": "where delta and delta",
+    "kind": "像知识点",
+    "needs_review": true,
+    "difficulty": 3,
+    "len": 21
+  },
+  {
+    "id": "kp_ada1063f_001_001_140",
+    "name": "The class of an IP address",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 26
+  },
+  {
+    "id": "kp_42b16cd4_002_002_141",
+    "name": "There",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 5
+  },
+  {
+    "id": "kp_ada1063f_001_001_141",
+    "name": "3.3.4 Datagram Forwarding in I",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 30
+  },
+  {
+    "id": "kp_42b16cd4_002_002_142",
+    "name": "The second point of note",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 24
+  },
+  {
+    "id": "kp_ada1063f_001_001_142",
+    "name": "If the node",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 11
+  },
+  {
+    "id": "kp_42b16cd4_002_002_143",
+    "name": "5.2.7 Record Boundaries",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 23
+  },
+  {
+    "id": "kp_ada1063f_001_001_143",
+    "name": "3.3. Internet IP",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 16
+  },
+  {
+    "id": "kp_42b16cd4_002_002_144",
+    "name": "Since TCP",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 9
+  },
+  {
+    "id": "kp_ada1063f_001_001_144",
+    "name": "Note that it",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 12
+  },
+  {
+    "id": "kp_42b16cd4_002_002_145",
+    "name": "Even though TCP",
+    "kind": "像知识点",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 15
+  },
+  {
+    "id": "kp_ada1063f_001_001_145",
+    "name": "The forwarding table used by R",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 30
+  },
+  {
+    "id": "kp_42b16cd4_002_002_146",
+    "name": "5.2.8 TCP Extensions",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 20
+  },
+  {
+    "id": "kp_ada1063f_001_001_146",
+    "name": "3.3.5 Subnetting and Classless",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 30
+  },
+  {
+    "id": "kp_42b16cd4_002_002_147",
+    "name": "5.2. Reliable Byte Stream TCP",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 29
+  },
+  {
+    "id": "kp_ada1063f_001_001_147",
+    "name": "3.3. Internet IP",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 16
+  },
+  {
+    "id": "kp_42b16cd4_002_002_148",
+    "name": "5.2.9 Performance",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 17
+  },
+  {
+    "id": "kp_ada1063f_001_001_148",
+    "name": "What subnetting means to a hos",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 30
+  },
+  {
+    "id": "kp_42b16cd4_002_002_149",
+    "name": "The throughput test",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 5,
+    "len": 19
+  },
+  {
+    "id": "kp_ada1063f_001_001_149",
+    "name": "3.3. Internet IP",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 16
+  },
+  {
+    "id": "kp_42b16cd4_002_002_150",
+    "name": "5.2.10 Alternative Design Choi",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 30
+  },
+  {
+    "id": "kp_ada1063f_001_001_150",
+    "name": "if NextHop",
+    "kind": "像知识点",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 10
+  },
+  {
+    "id": "kp_42b16cd4_002_002_151",
+    "name": "5.2. Reliable Byte Stream TCP",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 29
+  },
+  {
+    "id": "kp_ada1063f_001_001_151",
+    "name": "An important consequence of su",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 30
+  },
+  {
+    "id": "kp_42b16cd4_003_003_152",
+    "name": "5.2. Reliable Byte Stream TCP",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 29
+  },
+  {
+    "id": "kp_ada1063f_001_001_152",
+    "name": "3.3. Internet IP",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 16
+  },
+  {
+    "id": "kp_42b16cd4_003_003_153",
+    "name": "A third difference",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 18
+  },
+  {
+    "id": "kp_ada1063f_001_001_153",
+    "name": "3.3.6 Address Translation ARP",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 29
+  },
+  {
+    "id": "kp_42b16cd4_003_003_154",
+    "name": "The problem with this latter a",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 30
+  },
+  {
+    "id": "kp_ada1063f_001_001_154",
+    "name": "3.3. Internet IP",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 16
+  },
+  {
+    "id": "kp_42b16cd4_003_003_155",
+    "name": "5.2.2 Segment Format",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 20
+  },
+  {
+    "id": "kp_ada1063f_001_001_155",
+    "name": "3.3.7 Host Conﬁguration DHCP",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 28
+  },
+  {
+    "id": "kp_42b16cd4_003_003_156",
+    "name": "TCP",
+    "kind": "像知识点",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 3
+  },
+  {
+    "id": "kp_ada1063f_001_001_156",
+    "name": "Ethernet addresses",
+    "kind": "像知识点",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 18
+  },
+  {
+    "id": "kp_42b16cd4_003_003_157",
+    "name": "5.2.3 Connection Establishment",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 30
+  },
+  {
+    "id": "kp_ada1063f_001_001_157",
+    "name": "Since the goal of DHCP",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 22
+  },
+  {
+    "id": "kp_42b16cd4_003_003_158",
+    "name": "The idea",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 8
+  },
+  {
+    "id": "kp_ada1063f_001_001_158",
+    "name": "3.3. Internet IP",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 16
+  },
+  {
+    "id": "kp_42b16cd4_003_003_159",
+    "name": "There",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 3,
+    "len": 5
+  },
+  {
+    "id": "kp_ada1063f_001_001_159",
+    "name": "DHCP",
+    "kind": "过短",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 4
+  },
+  {
+    "id": "kp_42b16cd4_003_003_160",
+    "name": "5.2.4 Sliding Window Revisited",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 30
+  },
+  {
+    "id": "kp_ada1063f_001_001_160",
+    "name": "3.3.8 Error Reporting ICMP",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 26
+  },
+  {
+    "id": "kp_42b16cd4_003_003_161",
+    "name": "Most of the above discussion",
+    "kind": "像知识点",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 28
+  },
+  {
+    "id": "kp_ada1063f_001_001_161",
+    "name": "The next issue",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 14
+  },
+  {
+    "id": "kp_42b16cd4_003_003_162",
+    "name": "All the while this",
+    "kind": "像知识点",
+    "needs_review": true,
+    "difficulty": 3,
+    "len": 18
+  },
+  {
+    "id": "kp_ada1063f_001_001_162",
+    "name": "3.3. Internet IP",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 16
+  },
+  {
+    "id": "kp_42b16cd4_003_003_163",
+    "name": "Note that these 1-byte message",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 30
+  },
+  {
+    "id": "kp_ada1063f_001_001_163",
+    "name": "3.3.9 Virtual Networks and Tun",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 30
+  },
+  {
+    "id": "kp_42b16cd4_003_003_164",
+    "name": "5.2.5 Triggering Transmission",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 29
+  },
+  {
+    "id": "kp_ada1063f_001_001_164",
+    "name": "The term VPN",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 12
+  },
+  {
+    "id": "kp_42b16cd4_003_003_165",
+    "name": "Note that the silly window syn",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 30
+  },
+  {
+    "id": "kp_ada1063f_001_001_165",
+    "name": "3.3. Internet IP",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 16
+  },
+  {
+    "id": "kp_42b16cd4_003_003_166",
+    "name": "send a full segment else if th",
+    "kind": "像知识点",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 30
+  },
+  {
+    "id": "kp_ada1063f_001_001_166",
+    "name": "While R2",
+    "kind": "过短",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 8
+  },
+  {
+    "id": "kp_42b16cd4_003_003_167",
+    "name": "5.2.6 Adaptive Retransmission",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 29
+  },
+  {
+    "id": "kp_ada1063f_001_001_167",
+    "name": "3.4 Routing",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 11
+  },
+  {
+    "id": "kp_42b16cd4_003_003_168",
+    "name": "The parameter alpha",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 5,
+    "len": 19
+  },
+  {
+    "id": "kp_ada1063f_001_001_168",
+    "name": "3.4. Routing",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 12
+  },
+  {
+    "id": "kp_42b16cd4_003_003_169",
+    "name": "where delta and delta",
+    "kind": "像知识点",
+    "needs_review": true,
+    "difficulty": 3,
+    "len": 21
+  },
+  {
+    "id": "kp_ada1063f_001_001_169",
+    "name": "3.4.1 Network as a Graph",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 24
+  },
+  {
+    "id": "kp_42b16cd4_003_003_170",
+    "name": "The second point of note",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 24
+  },
+  {
+    "id": "kp_ada1063f_001_001_170",
+    "name": "The basic problem of routing",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 28
+  },
+  {
+    "id": "kp_42b16cd4_003_003_171",
+    "name": "5.2.7 Record Boundaries",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 23
+  },
+  {
+    "id": "kp_ada1063f_001_001_171",
+    "name": "3.4.2 Distance-Vector RIP",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 25
+  },
+  {
+    "id": "kp_42b16cd4_003_003_172",
+    "name": "Since TCP",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 9
+  },
+  {
+    "id": "kp_ada1063f_001_001_172",
+    "name": "3.4. Routing",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 12
+  },
+  {
+    "id": "kp_42b16cd4_003_003_173",
+    "name": "Even though TCP",
+    "kind": "像知识点",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 15
+  },
+  {
+    "id": "kp_ada1063f_001_001_173",
+    "name": "The next step in distance-vect",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 30
+  },
+  {
+    "id": "kp_42b16cd4_003_003_174",
+    "name": "5.2.8 TCP Extensions",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 20
+  },
+  {
+    "id": "kp_ada1063f_001_001_174",
+    "name": "There",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 5
+  },
+  {
+    "id": "kp_42b16cd4_003_003_175",
+    "name": "5.2.9 Performance",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 17
+  },
+  {
+    "id": "kp_ada1063f_001_001_175",
+    "name": "3.4. Routing",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 12
+  },
+  {
+    "id": "kp_42b16cd4_003_003_176",
+    "name": "The throughput test",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 5,
+    "len": 19
+  },
+  {
+    "id": "kp_ada1063f_001_001_176",
+    "name": "There",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 5
+  },
+  {
+    "id": "kp_42b16cd4_003_003_177",
+    "name": "5.2.10 Alternative Design Choi",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 30
+  },
+  {
+    "id": "kp_ada1063f_001_001_177",
+    "name": "The code that implements this ",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 29
+  },
+  {
+    "id": "kp_42b16cd4_003_003_178",
+    "name": "The idea of Multipath TCP",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 5,
+    "len": 25
+  },
+  {
+    "id": "kp_ada1063f_001_001_178",
+    "name": "3.4. Routing",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 12
+  },
+  {
+    "id": "kp_42b16cd4_003_003_179",
+    "name": "If network latency",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 18
+  },
+  {
+    "id": "kp_ada1063f_001_001_179",
+    "name": "RIP",
+    "kind": "过短",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 3
+  },
+  {
+    "id": "kp_42b16cd4_003_003_180",
+    "name": "QUIC",
+    "kind": "过短",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 4
+  },
+  {
+    "id": "kp_ada1063f_001_001_180",
+    "name": "3.4. Routing",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 12
+  },
+  {
+    "id": "kp_ada1063f_001_001_181",
+    "name": "3.4.3 Link State OSPF",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 21
+  },
+  {
+    "id": "kp_ada1063f_001_001_182",
+    "name": "Link-state routing",
+    "kind": "像知识点",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 18
+  },
+  {
+    "id": "kp_ada1063f_001_001_183",
+    "name": "3.4. Routing",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 12
+  },
+  {
+    "id": "kp_ada1063f_001_001_184",
+    "name": "One easy way to reduce overhea",
+    "kind": "像知识点",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 30
+  },
+  {
+    "id": "kp_ada1063f_001_001_185",
+    "name": "To make sure that old informat",
+    "kind": "像知识点",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 30
+  },
+  {
+    "id": "kp_ada1063f_001_001_186",
+    "name": "3.4. Routing",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 12
+  },
+  {
+    "id": "kp_ada1063f_001_001_187",
+    "name": "Since D",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 3,
+    "len": 7
+  },
+  {
+    "id": "kp_ada1063f_001_001_188",
+    "name": "Cost to reach B through C",
+    "kind": "像知识点",
+    "needs_review": true,
+    "difficulty": 3,
+    "len": 25
+  },
+  {
+    "id": "kp_ada1063f_001_001_189",
+    "name": "Distance-vector and link-state",
+    "kind": "像知识点",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 30
+  },
+  {
+    "id": "kp_ada1063f_001_001_190",
+    "name": "There",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 5
+  },
+  {
+    "id": "kp_ada1063f_001_001_191",
+    "name": "3.4. Routing",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 12
+  },
+  {
+    "id": "kp_ada1063f_001_001_192",
+    "name": "The LS sequence number",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 5,
+    "len": 22
+  },
+  {
+    "id": "kp_ada1063f_001_001_193",
+    "name": "The TOS information",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 19
+  },
+  {
+    "id": "kp_ada1063f_001_001_194",
+    "name": "3.4.4 Metrics",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 13
+  },
+  {
+    "id": "kp_ada1063f_002_002_195",
+    "name": "3.1. Switching Basics",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 21
+  },
+  {
+    "id": "kp_ada1063f_002_002_196",
+    "name": "The semantics of one such entr",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 30
+  },
+  {
+    "id": "kp_ada1063f_002_002_197",
+    "name": "Whenever a new connection",
+    "kind": "像知识点",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 25
+  },
+  {
+    "id": "kp_ada1063f_002_002_198",
+    "name": "There",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 5
+  },
+  {
+    "id": "kp_ada1063f_002_002_199",
+    "name": "3.1.3 Source Routing",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 20
+  },
+  {
+    "id": "kp_ada1063f_002_002_200",
+    "name": "Source routes",
+    "kind": "像知识点",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 13
+  },
+  {
+    "id": "kp_ada1063f_002_002_201",
+    "name": "3.3 Internet IP",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 15
+  },
+  {
+    "id": "kp_ada1063f_002_002_202",
+    "name": "3.3.1 What Is an Internetwork?",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 30
+  },
+  {
+    "id": "kp_ada1063f_002_002_203",
+    "name": "3.3. Internet IP",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 16
+  },
+  {
+    "id": "kp_ada1063f_002_002_204",
+    "name": "The Internet Protocol",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 21
+  },
+  {
+    "id": "kp_ada1063f_002_002_205",
+    "name": "The rest of this and the next ",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 29
+  },
+  {
+    "id": "kp_ada1063f_002_002_206",
+    "name": "The good news",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 3,
+    "len": 13
+  },
+  {
+    "id": "kp_ada1063f_002_002_207",
+    "name": "3.3.2 Service Model",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 19
+  },
+  {
+    "id": "kp_ada1063f_002_002_208",
+    "name": "3.3. Internet IP",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 16
+  },
+  {
+    "id": "kp_ada1063f_002_002_209",
+    "name": "The IP datagram",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 15
+  },
+  {
+    "id": "kp_ada1063f_002_002_210",
+    "name": "The Checksum",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 12
+  },
+  {
+    "id": "kp_ada1063f_002_002_211",
+    "name": "The central idea here",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 3,
+    "len": 21
+  },
+  {
+    "id": "kp_ada1063f_002_002_212",
+    "name": "Observe that the fragmentation",
+    "kind": "像知识点",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 30
+  },
+  {
+    "id": "kp_ada1063f_002_002_213",
+    "name": "IP reassembly",
+    "kind": "像知识点",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 13
+  },
+  {
+    "id": "kp_ada1063f_002_002_214",
+    "name": "3.3.3 Global Addresses",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 22
+  },
+  {
+    "id": "kp_ada1063f_002_002_215",
+    "name": "Ethernet addresses",
+    "kind": "像知识点",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 18
+  },
+  {
+    "id": "kp_ada1063f_002_002_216",
+    "name": "3.3. Internet IP",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 16
+  },
+  {
+    "id": "kp_ada1063f_002_002_217",
+    "name": "The class of an IP address",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 26
+  },
+  {
+    "id": "kp_ada1063f_002_002_218",
+    "name": "3.3.4 Datagram Forwarding in I",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 30
+  },
+  {
+    "id": "kp_ada1063f_002_002_219",
+    "name": "If the node",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 11
+  },
+  {
+    "id": "kp_ada1063f_002_002_220",
+    "name": "3.3. Internet IP",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 16
+  },
+  {
+    "id": "kp_ada1063f_002_002_221",
+    "name": "Note that it",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 12
+  },
+  {
+    "id": "kp_ada1063f_002_002_222",
+    "name": "The forwarding table used by R",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 30
+  },
+  {
+    "id": "kp_ada1063f_002_002_223",
+    "name": "3.3.5 Subnetting and Classless",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 30
+  },
+  {
+    "id": "kp_ada1063f_002_002_224",
+    "name": "3.3. Internet IP",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 16
+  },
+  {
+    "id": "kp_ada1063f_002_002_225",
+    "name": "What subnetting means to a hos",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 30
+  },
+  {
+    "id": "kp_ada1063f_002_002_226",
+    "name": "if NextHop",
+    "kind": "像知识点",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 10
+  },
+  {
+    "id": "kp_ada1063f_002_002_227",
+    "name": "An important consequence of su",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 30
+  },
+  {
+    "id": "kp_ada1063f_002_002_228",
+    "name": "3.3.6 Address Translation ARP",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 29
+  },
+  {
+    "id": "kp_ada1063f_002_002_229",
+    "name": "3.3.7 Host Conﬁguration DHCP",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 28
+  },
+  {
+    "id": "kp_ada1063f_002_002_230",
+    "name": "Ethernet addresses",
+    "kind": "像知识点",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 18
+  },
+  {
+    "id": "kp_ada1063f_002_002_231",
+    "name": "Since the goal of DHCP",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 22
+  },
+  {
+    "id": "kp_ada1063f_002_002_232",
+    "name": "DHCP",
+    "kind": "过短",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 4
+  },
+  {
+    "id": "kp_ada1063f_002_002_233",
+    "name": "3.3.8 Error Reporting ICMP",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 26
+  },
+  {
+    "id": "kp_ada1063f_002_002_234",
+    "name": "The next issue",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 14
+  },
+  {
+    "id": "kp_ada1063f_002_002_235",
+    "name": "3.3. Internet IP",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 16
+  },
+  {
+    "id": "kp_ada1063f_002_002_236",
+    "name": "3.3.9 Virtual Networks and Tun",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 30
+  },
+  {
+    "id": "kp_ada1063f_002_002_237",
+    "name": "The term VPN",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 12
+  },
+  {
+    "id": "kp_ada1063f_002_002_238",
+    "name": "While R2",
+    "kind": "过短",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 8
+  },
+  {
+    "id": "kp_ada1063f_002_002_239",
+    "name": "3.4 Routing",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 11
+  },
+  {
+    "id": "kp_ada1063f_002_002_240",
+    "name": "3.4. Routing",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 12
+  },
+  {
+    "id": "kp_ada1063f_002_002_241",
+    "name": "3.4.1 Network as a Graph",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 24
+  },
+  {
+    "id": "kp_ada1063f_002_002_242",
+    "name": "The basic problem of routing",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 28
+  },
+  {
+    "id": "kp_ada1063f_002_002_243",
+    "name": "3.4.2 Distance-Vector RIP",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 25
+  },
+  {
+    "id": "kp_ada1063f_002_002_244",
+    "name": "3.4. Routing",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 12
+  },
+  {
+    "id": "kp_ada1063f_002_002_245",
+    "name": "The next step in distance-vect",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 30
+  },
+  {
+    "id": "kp_ada1063f_002_002_246",
+    "name": "There",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 5
+  },
+  {
+    "id": "kp_ada1063f_002_002_247",
+    "name": "The code that implements this ",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 29
+  },
+  {
+    "id": "kp_ada1063f_002_002_248",
+    "name": "RIP",
+    "kind": "过短",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 3
+  },
+  {
+    "id": "kp_ada1063f_002_002_249",
+    "name": "3.4.3 Link State OSPF",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 21
+  },
+  {
+    "id": "kp_ada1063f_002_002_250",
+    "name": "Link-state routing",
+    "kind": "像知识点",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 18
+  },
+  {
+    "id": "kp_ada1063f_002_002_251",
+    "name": "One easy way to reduce overhea",
+    "kind": "像知识点",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 30
+  },
+  {
+    "id": "kp_ada1063f_002_002_252",
+    "name": "To make sure that old informat",
+    "kind": "像知识点",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 30
+  },
+  {
+    "id": "kp_ada1063f_002_002_253",
+    "name": "Since D",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 3,
+    "len": 7
+  },
+  {
+    "id": "kp_ada1063f_002_002_254",
+    "name": "Cost to reach B through C",
+    "kind": "像知识点",
+    "needs_review": true,
+    "difficulty": 3,
+    "len": 25
+  },
+  {
+    "id": "kp_ada1063f_002_002_255",
+    "name": "Distance-vector and link-state",
+    "kind": "像知识点",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 30
+  },
+  {
+    "id": "kp_ada1063f_002_002_256",
+    "name": "The LS sequence number",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 5,
+    "len": 22
+  },
+  {
+    "id": "kp_ada1063f_002_002_257",
+    "name": "The TOS information",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 19
+  },
+  {
+    "id": "kp_ada1063f_002_002_258",
+    "name": "3.4.4 Metrics",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 13
+  },
+  {
+    "id": "kp_ada1063f_002_002_259",
+    "name": "3.4. Routing",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 12
+  },
+  {
+    "id": "kp_ada1063f_003_003_260",
+    "name": "3.3. Internet IP",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 16
+  },
+  {
+    "id": "kp_ada1063f_003_003_261",
+    "name": "The Internet Protocol",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 21
+  },
+  {
+    "id": "kp_ada1063f_003_003_262",
+    "name": "The rest of this and the next ",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 29
+  },
+  {
+    "id": "kp_ada1063f_003_003_263",
+    "name": "The good news",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 3,
+    "len": 13
+  },
+  {
+    "id": "kp_ada1063f_003_003_264",
+    "name": "3.3.2 Service Model",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 19
+  },
+  {
+    "id": "kp_ada1063f_003_003_265",
+    "name": "The IP datagram",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 15
+  },
+  {
+    "id": "kp_ada1063f_003_003_266",
+    "name": "The Checksum",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 12
+  },
+  {
+    "id": "kp_ada1063f_003_003_267",
+    "name": "The central idea here",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 3,
+    "len": 21
+  },
+  {
+    "id": "kp_ada1063f_003_003_268",
+    "name": "Observe that the fragmentation",
+    "kind": "像知识点",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 30
+  },
+  {
+    "id": "kp_ada1063f_003_003_269",
+    "name": "IP reassembly",
+    "kind": "像知识点",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 13
+  },
+  {
+    "id": "kp_ada1063f_003_003_270",
+    "name": "3.3.3 Global Addresses",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 22
+  },
+  {
+    "id": "kp_ada1063f_003_003_271",
+    "name": "Ethernet addresses",
+    "kind": "像知识点",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 18
+  },
+  {
+    "id": "kp_ada1063f_003_003_272",
+    "name": "The class of an IP address",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 26
+  },
+  {
+    "id": "kp_ada1063f_003_003_273",
+    "name": "3.3.4 Datagram Forwarding in I",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 30
+  },
+  {
+    "id": "kp_ada1063f_003_003_274",
+    "name": "If the node",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 11
+  },
+  {
+    "id": "kp_ada1063f_003_003_275",
+    "name": "Note that it",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 12
+  },
+  {
+    "id": "kp_ada1063f_003_003_276",
+    "name": "The forwarding table used by R",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 30
+  },
+  {
+    "id": "kp_ada1063f_003_003_277",
+    "name": "3.3.5 Subnetting and Classless",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 30
+  },
+  {
+    "id": "kp_ada1063f_003_003_278",
+    "name": "What subnetting means to a hos",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 30
+  },
+  {
+    "id": "kp_ada1063f_003_003_279",
+    "name": "if NextHop",
+    "kind": "像知识点",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 10
+  },
+  {
+    "id": "kp_ada1063f_003_003_280",
+    "name": "An important consequence of su",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 30
+  },
+  {
+    "id": "kp_ada1063f_003_003_281",
+    "name": "3.3.6 Address Translation ARP",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 29
+  },
+  {
+    "id": "kp_ada1063f_003_003_282",
+    "name": "3.3.7 Host Conﬁguration DHCP",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 28
+  },
+  {
+    "id": "kp_ada1063f_003_003_283",
+    "name": "Since the goal of DHCP",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 22
+  },
+  {
+    "id": "kp_ada1063f_003_003_284",
+    "name": "DHCP",
+    "kind": "过短",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 4
+  },
+  {
+    "id": "kp_ada1063f_003_003_285",
+    "name": "3.3.8 Error Reporting ICMP",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 26
+  },
+  {
+    "id": "kp_ada1063f_003_003_286",
+    "name": "The next issue",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 14
+  },
+  {
+    "id": "kp_ada1063f_003_003_287",
+    "name": "3.3.9 Virtual Networks and Tun",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 30
+  },
+  {
+    "id": "kp_ada1063f_003_003_288",
+    "name": "The term VPN",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 12
+  },
+  {
+    "id": "kp_ada1063f_003_003_289",
+    "name": "While R2",
+    "kind": "过短",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 8
+  },
+  {
+    "id": "kp_ada1063f_003_003_290",
+    "name": "3.4 Routing",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 11
+  },
+  {
+    "id": "kp_ada1063f_003_003_291",
+    "name": "3.4. Routing",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 12
+  },
+  {
+    "id": "kp_ada1063f_003_003_292",
+    "name": "3.4.1 Network as a Graph",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 24
+  },
+  {
+    "id": "kp_ada1063f_003_003_293",
+    "name": "The basic problem of routing",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 28
+  },
+  {
+    "id": "kp_ada1063f_003_003_294",
+    "name": "3.4.2 Distance-Vector RIP",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 25
+  },
+  {
+    "id": "kp_ada1063f_003_003_295",
+    "name": "The next step in distance-vect",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 30
+  },
+  {
+    "id": "kp_ada1063f_003_003_296",
+    "name": "There",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 5
+  },
+  {
+    "id": "kp_ada1063f_003_003_297",
+    "name": "The code that implements this ",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 29
+  },
+  {
+    "id": "kp_ada1063f_003_003_298",
+    "name": "RIP",
+    "kind": "过短",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 3
+  },
+  {
+    "id": "kp_ada1063f_003_003_299",
+    "name": "3.4.3 Link State OSPF",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 21
+  },
+  {
+    "id": "kp_ada1063f_003_003_300",
+    "name": "Link-state routing",
+    "kind": "像知识点",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 18
+  },
+  {
+    "id": "kp_ada1063f_003_003_301",
+    "name": "One easy way to reduce overhea",
+    "kind": "像知识点",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 30
+  },
+  {
+    "id": "kp_ada1063f_003_003_302",
+    "name": "To make sure that old informat",
+    "kind": "像知识点",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 30
+  },
+  {
+    "id": "kp_ada1063f_003_003_303",
+    "name": "Since D",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 3,
+    "len": 7
+  },
+  {
+    "id": "kp_ada1063f_003_003_304",
+    "name": "Cost to reach B through C",
+    "kind": "像知识点",
+    "needs_review": true,
+    "difficulty": 3,
+    "len": 25
+  },
+  {
+    "id": "kp_ada1063f_003_003_305",
+    "name": "Distance-vector and link-state",
+    "kind": "像知识点",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 30
+  },
+  {
+    "id": "kp_ada1063f_003_003_306",
+    "name": "The LS sequence number",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 5,
+    "len": 22
+  },
+  {
+    "id": "kp_ada1063f_003_003_307",
+    "name": "The TOS information",
+    "kind": "像句子片段",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 19
+  },
+  {
+    "id": "kp_ada1063f_003_003_308",
+    "name": "3.4.4 Metrics",
+    "kind": "章节标题",
+    "needs_review": true,
+    "difficulty": 2,
+    "len": 13
+  },
+  {
+    "id": "kp_ada1063f_003_003_309",
+    "name": "All of these factors mean that",
+    "kind": "像知识点",
+    "needs_review": true,
+    "difficulty": 4,
+    "len": 30
+  }
+]
