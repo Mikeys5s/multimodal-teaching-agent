@@ -1,0 +1,136 @@
+{
+  "_说明": "hard 边候选清单 —— 由 P2 从 629 条抽取结果中去重（→167 条唯一内容）后，人工读原文挑出。",
+  "_判据": "B 那段话里，如果不知道 A，读得通吗？读不通 → A 是 B 的 hard 前置。",
+  "_为什么不是自动判": "现有 structural.py 用 _HARD_HINTS（证明/推导/算法/拥塞/握手…）按'文本难度'判，而 hard 是关于知识依赖的。判错会让学生去补一个其实不需要的前置。",
+  "_source_note": "构建期人工确认：语义判定「真前置」；9/22 为录制补齐 hard 通道",
+  "edges": [
+    {
+      "prereq_kp_id": "kp_ada1063f_000_000_009",
+      "kp_id": "kp_ada1063f_000_000_033",
+      "relation_type": "hard",
+      "reason": "IP 数据报是「数据报」这一抽象的具体实例：不明白「每个分组自带完整目的地址、无需预先建立通路」，就无法理解 IP 首部里为什么必须有目的地址字段。",
+      "evidence_quote": "The IP datagram is fundamental to the Internet Protocol. Recall an earlier section that a datagram is a type of packet that happens to be sent in a connectionless manner over a network.",
+      "confidence": 0.9
+    },
+    {
+      "prereq_kp_id": "kp_ada1063f_000_000_033",
+      "kp_id": "kp_ada1063f_000_000_035",
+      "relation_type": "hard",
+      "reason": "校验和的计算范围就是「IP 首部」：不知道首部有哪些字段、多长，就算不出校验和，也看不懂「首部被篡改时校验和会不匹配」这句结论。",
+      "evidence_quote": "The Checksum is calculated by considering the entire IP header as a sequence of 16-bit words, adding them up using ones' complement arithmetic, and taking the ones' complement of the result.",
+      "confidence": 0.9
+    },
+    {
+      "prereq_kp_id": "kp_ada1063f_000_000_036",
+      "kp_id": "kp_ada1063f_000_000_039",
+      "relation_type": "hard",
+      "reason": "分片的存在原因就是 MTU（每种网络有最大传输单元）：不知道 MTU 这个约束，就不明白为什么一个数据报会被拆成多个片段、以及重组为什么必要。",
+      "evidence_quote": "The central idea here is that every network type has a maximum transmission unit (MTU) … / IP reassembly is far from a simple process. For example, if a single fragment is lost, the receiver will still attempt to reassemble the datagram …",
+      "confidence": 0.85
+    },
+    {
+      "prereq_kp_id": "kp_ada1063f_000_000_043",
+      "kp_id": "kp_ada1063f_000_000_051",
+      "relation_type": "hard",
+      "reason": "子网掩码是与 IP 地址做按位与运算的：不知道 IP 地址的分类与位结构，就无法理解掩码在「与什么按位与」、以及它为什么能划出子网。",
+      "evidence_quote": "What subnetting means to a host is that it is now configured with both an IP address and a subnet mask for the subnet to which it is attached. … The bitwise AND of these two numbers defines …",
+      "confidence": 0.9
+    },
+    {
+      "prereq_kp_id": "kp_ada1063f_000_000_073",
+      "kp_id": "kp_ada1063f_000_000_076",
+      "relation_type": "hard",
+      "reason": "距离向量是「路由的基本问题=求最低开销路径」的一种分布式解法：不知道要解的是什么问题，就看不懂「把自己的距离表发给邻居、再相加比较」这套机制为什么能收敛到最短路。",
+      "evidence_quote": "The basic problem of routing is to find the lowest-cost path between any two nodes, where the cost of a path equals the sum of the costs of all the edges … / The next step in distance-vector routing is that every node sends a message to its directly connected neighbors containing its personal list of distances.",
+      "confidence": 0.9
+    },
+    {
+      "prereq_kp_id": "kp_ada1063f_000_000_073",
+      "kp_id": "kp_ada1063f_000_000_085",
+      "relation_type": "hard",
+      "reason": "链路状态与距离向量是同一个「最低开销路径」问题的两类解法：不先知道问题本身，就无法理解它为什么要「每个节点都拿到全网拓扑再各自算」。",
+      "evidence_quote": "Link-state routing is the second major class of intradomain routing protocol. The starting assumptions for link-state routing are rather similar to those for distance-vector routing.",
+      "confidence": 0.85
+    },
+    {
+      "prereq_kp_id": "kp_ada1063f_000_000_076",
+      "kp_id": "kp_ada1063f_000_000_082",
+      "relation_type": "hard",
+      "reason": "RIP 是距离向量的一个具体实现：它的「每 30 秒广播一次自己的距离表」这一行为，只有在知道距离向量算法之后才读得懂。",
+      "evidence_quote": "RIP is in fact a fairly straightforward implementation of distance-vector routing. Routers running RIP send their advertisements every 30 seconds …",
+      "confidence": 0.95
+    },
+    {
+      "prereq_kp_id": "kp_ada1063f_000_000_085",
+      "kp_id": "kp_ada1063f_000_000_092",
+      "relation_type": "hard",
+      "reason": "「距离向量 vs 链路状态」是一篇对比论述：不先分别知道两者各自是什么，这段对比里的「each node talks only to its neighbors」这类描述就没有落脚点。",
+      "evidence_quote": "Distance-vector and link-state are both distributed routing algorithms, but they adopt different strategies. In distance-vector, each node talks only to its directly connected neighbors … In link-state, each node talks to all other nodes …",
+      "confidence": 0.9
+    },
+    {
+      "prereq_kp_id": "kp_ada1063f_000_000_088",
+      "kp_id": "kp_ada1063f_000_000_095",
+      "relation_type": "hard",
+      "reason": "LS 序号是链路状态协议里「用序号判新旧」这一机制的具体字段：不懂 LSP 为什么需要序号，就不知道这个字段为什么要 64 位且不期望回绕。",
+      "evidence_quote": "To make sure that old information is replaced by newer information, LSPs carry sequence numbers. … / The LS sequence number is used exactly as described above to detect old or duplicate LSAs.",
+      "confidence": 0.85
+    },
+    {
+      "prereq_kp_id": "kp_42b16cd4_000_000_016",
+      "kp_id": "kp_42b16cd4_000_000_011",
+      "relation_type": "hard",
+      "reason": "TCP 的滑动窗口作用在「字节流」上而不是报文上：不知道 TCP 是面向字节的，就看不懂窗口为什么按字节计数、以及序号为什么是字节序号。",
+      "evidence_quote": "At the heart of TCP is the sliding window algorithm. / TCP is a byte-oriented protocol, which means that the sender writes bytes into a TCP connection and the receiver reads bytes out of the TCP connection.",
+      "confidence": 0.9
+    },
+    {
+      "prereq_kp_id": "kp_42b16cd4_000_000_011",
+      "kp_id": "kp_42b16cd4_000_000_013",
+      "relation_type": "hard",
+      "reason": "「乱序能被处理」这件事靠的就是滑动窗口里的序号：不知道滑动窗口如何用序号重排，这段「轻微乱序不成问题」的结论就没有依据。",
+      "evidence_quote": "Packets that are slightly out of order do not cause a problem since the sliding window algorithm can reorder packets correctly using the sequence number.",
+      "confidence": 0.9
+    },
+    {
+      "prereq_kp_id": "kp_42b16cd4_000_000_016",
+      "kp_id": "kp_42b16cd4_000_000_020",
+      "relation_type": "hard",
+      "reason": "三次握手协商的是「字节流的初始序号」：不知道 TCP 把连接看作一条字节流，就不知道双方为什么要先约一个起始序号。",
+      "evidence_quote": "The idea is that two parties want to agree on a set of parameters, which, in the case of opening a TCP connection, are the starting sequence numbers the two sides plan to use for their respective byte streams.",
+      "confidence": 0.9
+    },
+    {
+      "prereq_kp_id": "kp_42b16cd4_000_000_038",
+      "kp_id": "kp_42b16cd4_000_000_039",
+      "relation_type": "hard",
+      "reason": "alpha 这个参数的作用对象就是 EstimatedRTT：不知道 RTT 估计是怎么算的，就无法理解「alpha 用来平滑估计值」以及取值大小各自牺牲了什么。",
+      "evidence_quote": "The parameter alpha is selected to smooth the EstimatedRTT. A small alpha tracks changes in the RTT but is perhaps too heavily influenced by temporary fluctuations.",
+      "confidence": 0.9
+    },
+    {
+      "prereq_kp_id": "kp_42b16cd4_000_000_016",
+      "kp_id": "kp_42b16cd4_000_000_047",
+      "relation_type": "hard",
+      "reason": "「写进去的字节数和读出来的不等」是字节流语义的直接推论：不知道 TCP 不保留记录边界，就无法理解应用层为什么必须自己划界。",
+      "evidence_quote": "Since TCP is a byte-stream protocol, the number of bytes written by the sender are not necessarily the same as the number of bytes read by the receiver.",
+      "confidence": 0.85
+    },
+    {
+      "prereq_kp_id": "kp_42b16cd4_000_000_057",
+      "kp_id": "kp_42b16cd4_000_000_058",
+      "relation_type": "hard",
+      "reason": "QUIC 的设计动机就是「TCP + TLS 的握手往返太多，高延迟下用户可感」：不知道这个延迟代价，就看不懂 QUIC 在优化什么。",
+      "evidence_quote": "If network latency is high—in the hundreds of milliseconds—then a few RTTs can quickly add up to a visible annoyance for an end user. … The designers of QUIC recognized that …",
+      "confidence": 0.95
+    },
+    {
+      "prereq_kp_id": "kp_42b16cd4_000_000_016",
+      "kp_id": "kp_42b16cd4_000_000_056",
+      "relation_type": "hard",
+      "reason": "Multipath TCP 是 TCP 的扩展：它的「一条连接跨多条路径」只有在理解 TCP 的字节流与连接语义之后才有意义。",
+      "evidence_quote": "The idea of Multipath TCP is to steer packets over multiple paths through the Internet, for example, by using two different IP addresses for one of the end-points.",
+      "confidence": 0.85
+    }
+  ]
+}
