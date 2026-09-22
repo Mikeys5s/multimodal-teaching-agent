@@ -1,0 +1,2812 @@
+{
+  "_说明": "629 条按正文指纹归组。**这不是施工图，是决策材料** —— 去重排在 9/24 冻结之后。",
+  "_保留规则建议": "组内 id 最小者（批次最早的 _000_000）",
+  "total_entries": 629,
+  "group_count": 167,
+  "groups": [
+    {
+      "keep_id": "kp_42b16cd4_000_000_012",
+      "keep_batch": "000_000",
+      "name": "5.2. Reliable Byte Stream TCP",
+      "section": "232",
+      "body_len": 31,
+      "dupe_count": 34,
+      "dupe_ids": [
+        "kp_42b16cd4_000_000_017",
+        "kp_42b16cd4_000_000_018",
+        "kp_42b16cd4_000_000_023",
+        "kp_42b16cd4_000_000_025",
+        "kp_42b16cd4_000_000_028",
+        "kp_42b16cd4_000_000_032",
+        "kp_42b16cd4_000_000_035",
+        "kp_42b16cd4_000_000_040",
+        "kp_42b16cd4_000_000_043",
+        "kp_42b16cd4_000_000_050",
+        "kp_42b16cd4_000_000_053",
+        "kp_42b16cd4_000_000_055",
+        "kp_42b16cd4_000_000_059",
+        "kp_42b16cd4_001_001_068",
+        "kp_42b16cd4_001_001_073",
+        "kp_42b16cd4_001_001_074",
+        "kp_42b16cd4_001_001_079",
+        "kp_42b16cd4_001_001_081",
+        "kp_42b16cd4_001_001_084",
+        "kp_42b16cd4_001_001_088",
+        "kp_42b16cd4_001_001_091",
+        "kp_42b16cd4_001_001_096",
+        "kp_42b16cd4_001_001_099",
+        "kp_42b16cd4_001_001_106",
+        "kp_42b16cd4_001_001_109",
+        "kp_42b16cd4_001_001_111",
+        "kp_42b16cd4_001_001_115",
+        "kp_42b16cd4_002_002_118",
+        "kp_42b16cd4_002_002_123",
+        "kp_42b16cd4_002_002_134",
+        "kp_42b16cd4_002_002_139",
+        "kp_42b16cd4_002_002_147",
+        "kp_42b16cd4_002_002_151",
+        "kp_42b16cd4_003_003_152"
+      ],
+      "dupe_batches": [
+        "000_000",
+        "001_001",
+        "002_002",
+        "003_003"
+      ]
+    },
+    {
+      "keep_id": "kp_ada1063f_000_000_027",
+      "keep_batch": "000_000",
+      "name": "3.3. Internet IP",
+      "section": "115",
+      "body_len": 18,
+      "dupe_count": 32,
+      "dupe_ids": [
+        "kp_ada1063f_000_000_032",
+        "kp_ada1063f_000_000_034",
+        "kp_ada1063f_000_000_037",
+        "kp_ada1063f_000_000_042",
+        "kp_ada1063f_000_000_046",
+        "kp_ada1063f_000_000_050",
+        "kp_ada1063f_000_000_052",
+        "kp_ada1063f_000_000_055",
+        "kp_ada1063f_000_000_057",
+        "kp_ada1063f_000_000_061",
+        "kp_ada1063f_000_000_065",
+        "kp_ada1063f_000_000_068",
+        "kp_ada1063f_001_001_124",
+        "kp_ada1063f_001_001_129",
+        "kp_ada1063f_001_001_131",
+        "kp_ada1063f_001_001_134",
+        "kp_ada1063f_001_001_139",
+        "kp_ada1063f_001_001_143",
+        "kp_ada1063f_001_001_147",
+        "kp_ada1063f_001_001_149",
+        "kp_ada1063f_001_001_152",
+        "kp_ada1063f_001_001_154",
+        "kp_ada1063f_001_001_158",
+        "kp_ada1063f_001_001_162",
+        "kp_ada1063f_001_001_165",
+        "kp_ada1063f_002_002_203",
+        "kp_ada1063f_002_002_208",
+        "kp_ada1063f_002_002_216",
+        "kp_ada1063f_002_002_220",
+        "kp_ada1063f_002_002_224",
+        "kp_ada1063f_002_002_235",
+        "kp_ada1063f_003_003_260"
+      ],
+      "dupe_batches": [
+        "000_000",
+        "001_001",
+        "002_002",
+        "003_003"
+      ]
+    },
+    {
+      "keep_id": "kp_ada1063f_000_000_071",
+      "keep_batch": "000_000",
+      "name": "3.4. Routing",
+      "section": "150",
+      "body_len": 0,
+      "dupe_count": 20,
+      "dupe_ids": [
+        "kp_ada1063f_000_000_075",
+        "kp_ada1063f_000_000_078",
+        "kp_ada1063f_000_000_081",
+        "kp_ada1063f_000_000_083",
+        "kp_ada1063f_000_000_086",
+        "kp_ada1063f_000_000_089",
+        "kp_ada1063f_000_000_094",
+        "kp_ada1063f_000_000_098",
+        "kp_ada1063f_001_001_168",
+        "kp_ada1063f_001_001_172",
+        "kp_ada1063f_001_001_175",
+        "kp_ada1063f_001_001_178",
+        "kp_ada1063f_001_001_180",
+        "kp_ada1063f_001_001_183",
+        "kp_ada1063f_001_001_186",
+        "kp_ada1063f_001_001_191",
+        "kp_ada1063f_002_002_240",
+        "kp_ada1063f_002_002_244",
+        "kp_ada1063f_002_002_259",
+        "kp_ada1063f_003_003_291"
+      ],
+      "dupe_batches": [
+        "000_000",
+        "001_001",
+        "002_002",
+        "003_003"
+      ]
+    },
+    {
+      "keep_id": "kp_ada1063f_000_000_007",
+      "keep_batch": "000_000",
+      "name": "3.1. Switching Basics",
+      "section": "104",
+      "body_len": 0,
+      "dupe_count": 12,
+      "dupe_ids": [
+        "kp_ada1063f_000_000_012",
+        "kp_ada1063f_000_000_016",
+        "kp_ada1063f_000_000_018",
+        "kp_ada1063f_000_000_020",
+        "kp_ada1063f_000_000_024",
+        "kp_ada1063f_001_001_104",
+        "kp_ada1063f_001_001_109",
+        "kp_ada1063f_001_001_113",
+        "kp_ada1063f_001_001_115",
+        "kp_ada1063f_001_001_117",
+        "kp_ada1063f_001_001_121",
+        "kp_ada1063f_002_002_195"
+      ],
+      "dupe_batches": [
+        "000_000",
+        "001_001",
+        "002_002"
+      ]
+    },
+    {
+      "keep_id": "kp_cf6fcaa0_000_000_006",
+      "keep_batch": "000_000",
+      "name": "6.1. Issues in Resource Alloca",
+      "section": "288",
+      "body_len": 34,
+      "dupe_count": 10,
+      "dupe_ids": [
+        "kp_cf6fcaa0_000_000_009",
+        "kp_cf6fcaa0_000_000_011",
+        "kp_cf6fcaa0_000_000_015",
+        "kp_cf6fcaa0_001_001_054",
+        "kp_cf6fcaa0_001_001_057",
+        "kp_cf6fcaa0_001_001_059",
+        "kp_cf6fcaa0_001_001_063",
+        "kp_cf6fcaa0_002_002_099",
+        "kp_cf6fcaa0_002_002_102",
+        "kp_cf6fcaa0_002_002_104"
+      ],
+      "dupe_batches": [
+        "000_000",
+        "001_001",
+        "002_002"
+      ]
+    },
+    {
+      "keep_id": "kp_cf6fcaa0_000_000_031",
+      "keep_batch": "000_000",
+      "name": "6.3. TCP Congestion Control",
+      "section": "300",
+      "body_len": 0,
+      "dupe_count": 10,
+      "dupe_ids": [
+        "kp_cf6fcaa0_000_000_033",
+        "kp_cf6fcaa0_000_000_036",
+        "kp_cf6fcaa0_000_000_045",
+        "kp_cf6fcaa0_000_000_048",
+        "kp_cf6fcaa0_001_001_079",
+        "kp_cf6fcaa0_001_001_081",
+        "kp_cf6fcaa0_001_001_084",
+        "kp_cf6fcaa0_001_001_092",
+        "kp_cf6fcaa0_001_001_095",
+        "kp_cf6fcaa0_003_003_122"
+      ],
+      "dupe_batches": [
+        "000_000",
+        "001_001",
+        "003_003"
+      ]
+    },
+    {
+      "keep_id": "kp_cf6fcaa0_000_000_023",
+      "keep_batch": "000_000",
+      "name": "6.2. Queuing Disciplines",
+      "section": "296",
+      "body_len": 0,
+      "dupe_count": 4,
+      "dupe_ids": [
+        "kp_cf6fcaa0_000_000_025",
+        "kp_cf6fcaa0_001_001_071",
+        "kp_cf6fcaa0_001_001_073",
+        "kp_cf6fcaa0_002_002_115"
+      ],
+      "dupe_batches": [
+        "000_000",
+        "001_001",
+        "002_002"
+      ]
+    },
+    {
+      "keep_id": "kp_42b16cd4_000_000_013",
+      "keep_batch": "000_000",
+      "name": "A third difference",
+      "section": "233",
+      "body_len": 500,
+      "dupe_count": 3,
+      "dupe_ids": [
+        "kp_42b16cd4_001_001_069",
+        "kp_42b16cd4_002_002_119",
+        "kp_42b16cd4_003_003_153"
+      ],
+      "dupe_batches": [
+        "001_001",
+        "002_002",
+        "003_003"
+      ]
+    },
+    {
+      "keep_id": "kp_42b16cd4_000_000_014",
+      "keep_batch": "000_000",
+      "name": "The problem with this latter a",
+      "section": "234",
+      "body_len": 500,
+      "dupe_count": 3,
+      "dupe_ids": [
+        "kp_42b16cd4_001_001_070",
+        "kp_42b16cd4_002_002_120",
+        "kp_42b16cd4_003_003_154"
+      ],
+      "dupe_batches": [
+        "001_001",
+        "002_002",
+        "003_003"
+      ]
+    },
+    {
+      "keep_id": "kp_42b16cd4_000_000_015",
+      "keep_batch": "000_000",
+      "name": "5.2.2 Segment Format",
+      "section": "234",
+      "body_len": 0,
+      "dupe_count": 3,
+      "dupe_ids": [
+        "kp_42b16cd4_001_001_071",
+        "kp_42b16cd4_002_002_121",
+        "kp_42b16cd4_003_003_155"
+      ],
+      "dupe_batches": [
+        "001_001",
+        "002_002",
+        "003_003"
+      ]
+    },
+    {
+      "keep_id": "kp_42b16cd4_000_000_016",
+      "keep_batch": "000_000",
+      "name": "TCP",
+      "section": "234",
+      "body_len": 500,
+      "dupe_count": 3,
+      "dupe_ids": [
+        "kp_42b16cd4_001_001_072",
+        "kp_42b16cd4_002_002_122",
+        "kp_42b16cd4_003_003_156"
+      ],
+      "dupe_batches": [
+        "001_001",
+        "002_002",
+        "003_003"
+      ]
+    },
+    {
+      "keep_id": "kp_42b16cd4_000_000_019",
+      "keep_batch": "000_000",
+      "name": "5.2.3 Connection Establishment",
+      "section": "237",
+      "body_len": 46,
+      "dupe_count": 3,
+      "dupe_ids": [
+        "kp_42b16cd4_001_001_075",
+        "kp_42b16cd4_002_002_124",
+        "kp_42b16cd4_003_003_157"
+      ],
+      "dupe_batches": [
+        "001_001",
+        "002_002",
+        "003_003"
+      ]
+    },
+    {
+      "keep_id": "kp_42b16cd4_000_000_020",
+      "keep_batch": "000_000",
+      "name": "The idea",
+      "section": "237",
+      "body_len": 500,
+      "dupe_count": 3,
+      "dupe_ids": [
+        "kp_42b16cd4_001_001_076",
+        "kp_42b16cd4_002_002_125",
+        "kp_42b16cd4_003_003_158"
+      ],
+      "dupe_batches": [
+        "001_001",
+        "002_002",
+        "003_003"
+      ]
+    },
+    {
+      "keep_id": "kp_42b16cd4_000_000_022",
+      "keep_batch": "000_000",
+      "name": "There",
+      "section": "238",
+      "body_len": 112,
+      "dupe_count": 3,
+      "dupe_ids": [
+        "kp_42b16cd4_001_001_078",
+        "kp_42b16cd4_002_002_127",
+        "kp_42b16cd4_003_003_159"
+      ],
+      "dupe_batches": [
+        "001_001",
+        "002_002",
+        "003_003"
+      ]
+    },
+    {
+      "keep_id": "kp_42b16cd4_000_000_026",
+      "keep_batch": "000_000",
+      "name": "5.2.4 Sliding Window Revisited",
+      "section": "241",
+      "body_len": 0,
+      "dupe_count": 3,
+      "dupe_ids": [
+        "kp_42b16cd4_001_001_082",
+        "kp_42b16cd4_002_002_128",
+        "kp_42b16cd4_003_003_160"
+      ],
+      "dupe_batches": [
+        "001_001",
+        "002_002",
+        "003_003"
+      ]
+    },
+    {
+      "keep_id": "kp_42b16cd4_000_000_027",
+      "keep_batch": "000_000",
+      "name": "Most of the above discussion",
+      "section": "242",
+      "body_len": 471,
+      "dupe_count": 3,
+      "dupe_ids": [
+        "kp_42b16cd4_001_001_083",
+        "kp_42b16cd4_002_002_129",
+        "kp_42b16cd4_003_003_161"
+      ],
+      "dupe_batches": [
+        "001_001",
+        "002_002",
+        "003_003"
+      ]
+    },
+    {
+      "keep_id": "kp_42b16cd4_000_000_029",
+      "keep_batch": "000_000",
+      "name": "All the while this",
+      "section": "243",
+      "body_len": 142,
+      "dupe_count": 3,
+      "dupe_ids": [
+        "kp_42b16cd4_001_001_085",
+        "kp_42b16cd4_002_002_130",
+        "kp_42b16cd4_003_003_162"
+      ],
+      "dupe_batches": [
+        "001_001",
+        "002_002",
+        "003_003"
+      ]
+    },
+    {
+      "keep_id": "kp_42b16cd4_000_000_031",
+      "keep_batch": "000_000",
+      "name": "Note that these 1-byte message",
+      "section": "244",
+      "body_len": 291,
+      "dupe_count": 3,
+      "dupe_ids": [
+        "kp_42b16cd4_001_001_087",
+        "kp_42b16cd4_002_002_131",
+        "kp_42b16cd4_003_003_163"
+      ],
+      "dupe_batches": [
+        "001_001",
+        "002_002",
+        "003_003"
+      ]
+    },
+    {
+      "keep_id": "kp_42b16cd4_000_000_033",
+      "keep_batch": "000_000",
+      "name": "5.2.5 Triggering Transmission",
+      "section": "246",
+      "body_len": 0,
+      "dupe_count": 3,
+      "dupe_ids": [
+        "kp_42b16cd4_001_001_089",
+        "kp_42b16cd4_002_002_132",
+        "kp_42b16cd4_003_003_164"
+      ],
+      "dupe_batches": [
+        "001_001",
+        "002_002",
+        "003_003"
+      ]
+    },
+    {
+      "keep_id": "kp_42b16cd4_000_000_034",
+      "keep_batch": "000_000",
+      "name": "Note that the silly window syn",
+      "section": "246",
+      "body_len": 500,
+      "dupe_count": 3,
+      "dupe_ids": [
+        "kp_42b16cd4_001_001_090",
+        "kp_42b16cd4_002_002_133",
+        "kp_42b16cd4_003_003_165"
+      ],
+      "dupe_batches": [
+        "001_001",
+        "002_002",
+        "003_003"
+      ]
+    },
+    {
+      "keep_id": "kp_42b16cd4_000_000_036",
+      "keep_batch": "000_000",
+      "name": "send a full segment else if th",
+      "section": "247",
+      "body_len": 59,
+      "dupe_count": 3,
+      "dupe_ids": [
+        "kp_42b16cd4_001_001_092",
+        "kp_42b16cd4_002_002_135",
+        "kp_42b16cd4_003_003_166"
+      ],
+      "dupe_batches": [
+        "001_001",
+        "002_002",
+        "003_003"
+      ]
+    },
+    {
+      "keep_id": "kp_42b16cd4_000_000_037",
+      "keep_batch": "000_000",
+      "name": "5.2.6 Adaptive Retransmission",
+      "section": "248",
+      "body_len": 0,
+      "dupe_count": 3,
+      "dupe_ids": [
+        "kp_42b16cd4_001_001_093",
+        "kp_42b16cd4_002_002_136",
+        "kp_42b16cd4_003_003_167"
+      ],
+      "dupe_batches": [
+        "001_001",
+        "002_002",
+        "003_003"
+      ]
+    },
+    {
+      "keep_id": "kp_42b16cd4_000_000_039",
+      "keep_batch": "000_000",
+      "name": "The parameter alpha",
+      "section": "248",
+      "body_len": 429,
+      "dupe_count": 3,
+      "dupe_ids": [
+        "kp_42b16cd4_001_001_095",
+        "kp_42b16cd4_002_002_138",
+        "kp_42b16cd4_003_003_168"
+      ],
+      "dupe_batches": [
+        "001_001",
+        "002_002",
+        "003_003"
+      ]
+    },
+    {
+      "keep_id": "kp_42b16cd4_000_000_041",
+      "keep_batch": "000_000",
+      "name": "where delta and delta",
+      "section": "250",
+      "body_len": 124,
+      "dupe_count": 3,
+      "dupe_ids": [
+        "kp_42b16cd4_001_001_097",
+        "kp_42b16cd4_002_002_140",
+        "kp_42b16cd4_003_003_169"
+      ],
+      "dupe_batches": [
+        "001_001",
+        "002_002",
+        "003_003"
+      ]
+    },
+    {
+      "keep_id": "kp_42b16cd4_000_000_044",
+      "keep_batch": "000_000",
+      "name": "The second point of note",
+      "section": "251",
+      "body_len": 500,
+      "dupe_count": 3,
+      "dupe_ids": [
+        "kp_42b16cd4_001_001_100",
+        "kp_42b16cd4_002_002_142",
+        "kp_42b16cd4_003_003_170"
+      ],
+      "dupe_batches": [
+        "001_001",
+        "002_002",
+        "003_003"
+      ]
+    },
+    {
+      "keep_id": "kp_42b16cd4_000_000_046",
+      "keep_batch": "000_000",
+      "name": "5.2.7 Record Boundaries",
+      "section": "251",
+      "body_len": 0,
+      "dupe_count": 3,
+      "dupe_ids": [
+        "kp_42b16cd4_001_001_102",
+        "kp_42b16cd4_002_002_143",
+        "kp_42b16cd4_003_003_171"
+      ],
+      "dupe_batches": [
+        "001_001",
+        "002_002",
+        "003_003"
+      ]
+    },
+    {
+      "keep_id": "kp_42b16cd4_000_000_047",
+      "keep_batch": "000_000",
+      "name": "Since TCP",
+      "section": "251",
+      "body_len": 500,
+      "dupe_count": 3,
+      "dupe_ids": [
+        "kp_42b16cd4_001_001_103",
+        "kp_42b16cd4_002_002_144",
+        "kp_42b16cd4_003_003_172"
+      ],
+      "dupe_batches": [
+        "001_001",
+        "002_002",
+        "003_003"
+      ]
+    },
+    {
+      "keep_id": "kp_42b16cd4_000_000_048",
+      "keep_batch": "000_000",
+      "name": "Even though TCP",
+      "section": "251",
+      "body_len": 474,
+      "dupe_count": 3,
+      "dupe_ids": [
+        "kp_42b16cd4_001_001_104",
+        "kp_42b16cd4_002_002_145",
+        "kp_42b16cd4_003_003_173"
+      ],
+      "dupe_batches": [
+        "001_001",
+        "002_002",
+        "003_003"
+      ]
+    },
+    {
+      "keep_id": "kp_42b16cd4_000_000_049",
+      "keep_batch": "000_000",
+      "name": "5.2.8 TCP Extensions",
+      "section": "252",
+      "body_len": 0,
+      "dupe_count": 3,
+      "dupe_ids": [
+        "kp_42b16cd4_001_001_105",
+        "kp_42b16cd4_002_002_146",
+        "kp_42b16cd4_003_003_174"
+      ],
+      "dupe_batches": [
+        "001_001",
+        "002_002",
+        "003_003"
+      ]
+    },
+    {
+      "keep_id": "kp_42b16cd4_000_000_051",
+      "keep_batch": "000_000",
+      "name": "5.2.9 Performance",
+      "section": "253",
+      "body_len": 0,
+      "dupe_count": 3,
+      "dupe_ids": [
+        "kp_42b16cd4_001_001_107",
+        "kp_42b16cd4_002_002_148",
+        "kp_42b16cd4_003_003_175"
+      ],
+      "dupe_batches": [
+        "001_001",
+        "002_002",
+        "003_003"
+      ]
+    },
+    {
+      "keep_id": "kp_42b16cd4_000_000_052",
+      "keep_batch": "000_000",
+      "name": "The throughput test",
+      "section": "254",
+      "body_len": 500,
+      "dupe_count": 3,
+      "dupe_ids": [
+        "kp_42b16cd4_001_001_108",
+        "kp_42b16cd4_002_002_149",
+        "kp_42b16cd4_003_003_176"
+      ],
+      "dupe_batches": [
+        "001_001",
+        "002_002",
+        "003_003"
+      ]
+    },
+    {
+      "keep_id": "kp_42b16cd4_000_000_054",
+      "keep_batch": "000_000",
+      "name": "5.2.10 Alternative Design Choi",
+      "section": "256",
+      "body_len": 46,
+      "dupe_count": 3,
+      "dupe_ids": [
+        "kp_42b16cd4_001_001_110",
+        "kp_42b16cd4_002_002_150",
+        "kp_42b16cd4_003_003_177"
+      ],
+      "dupe_batches": [
+        "001_001",
+        "002_002",
+        "003_003"
+      ]
+    },
+    {
+      "keep_id": "kp_ada1063f_000_000_028",
+      "keep_batch": "000_000",
+      "name": "The Internet Protocol",
+      "section": "125",
+      "body_len": 500,
+      "dupe_count": 3,
+      "dupe_ids": [
+        "kp_ada1063f_001_001_125",
+        "kp_ada1063f_002_002_204",
+        "kp_ada1063f_003_003_261"
+      ],
+      "dupe_batches": [
+        "001_001",
+        "002_002",
+        "003_003"
+      ]
+    },
+    {
+      "keep_id": "kp_ada1063f_000_000_029",
+      "keep_batch": "000_000",
+      "name": "The rest of this and the next ",
+      "section": "126",
+      "body_len": 477,
+      "dupe_count": 3,
+      "dupe_ids": [
+        "kp_ada1063f_001_001_126",
+        "kp_ada1063f_002_002_205",
+        "kp_ada1063f_003_003_262"
+      ],
+      "dupe_batches": [
+        "001_001",
+        "002_002",
+        "003_003"
+      ]
+    },
+    {
+      "keep_id": "kp_ada1063f_000_000_030",
+      "keep_batch": "000_000",
+      "name": "The good news",
+      "section": "126",
+      "body_len": 164,
+      "dupe_count": 3,
+      "dupe_ids": [
+        "kp_ada1063f_001_001_127",
+        "kp_ada1063f_002_002_206",
+        "kp_ada1063f_003_003_263"
+      ],
+      "dupe_batches": [
+        "001_001",
+        "002_002",
+        "003_003"
+      ]
+    },
+    {
+      "keep_id": "kp_ada1063f_000_000_031",
+      "keep_batch": "000_000",
+      "name": "3.3.2 Service Model",
+      "section": "126",
+      "body_len": 0,
+      "dupe_count": 3,
+      "dupe_ids": [
+        "kp_ada1063f_001_001_128",
+        "kp_ada1063f_002_002_207",
+        "kp_ada1063f_003_003_264"
+      ],
+      "dupe_batches": [
+        "001_001",
+        "002_002",
+        "003_003"
+      ]
+    },
+    {
+      "keep_id": "kp_ada1063f_000_000_033",
+      "keep_batch": "000_000",
+      "name": "The IP datagram",
+      "section": "127",
+      "body_len": 500,
+      "dupe_count": 3,
+      "dupe_ids": [
+        "kp_ada1063f_001_001_130",
+        "kp_ada1063f_002_002_209",
+        "kp_ada1063f_003_003_265"
+      ],
+      "dupe_batches": [
+        "001_001",
+        "002_002",
+        "003_003"
+      ]
+    },
+    {
+      "keep_id": "kp_ada1063f_000_000_035",
+      "keep_batch": "000_000",
+      "name": "The Checksum",
+      "section": "129",
+      "body_len": 500,
+      "dupe_count": 3,
+      "dupe_ids": [
+        "kp_ada1063f_001_001_132",
+        "kp_ada1063f_002_002_210",
+        "kp_ada1063f_003_003_266"
+      ],
+      "dupe_batches": [
+        "001_001",
+        "002_002",
+        "003_003"
+      ]
+    },
+    {
+      "keep_id": "kp_ada1063f_000_000_036",
+      "keep_batch": "000_000",
+      "name": "The central idea here",
+      "section": "129",
+      "body_len": 100,
+      "dupe_count": 3,
+      "dupe_ids": [
+        "kp_ada1063f_001_001_133",
+        "kp_ada1063f_002_002_211",
+        "kp_ada1063f_003_003_267"
+      ],
+      "dupe_batches": [
+        "001_001",
+        "002_002",
+        "003_003"
+      ]
+    },
+    {
+      "keep_id": "kp_ada1063f_000_000_038",
+      "keep_batch": "000_000",
+      "name": "Observe that the fragmentation",
+      "section": "132",
+      "body_len": 385,
+      "dupe_count": 3,
+      "dupe_ids": [
+        "kp_ada1063f_001_001_135",
+        "kp_ada1063f_002_002_212",
+        "kp_ada1063f_003_003_268"
+      ],
+      "dupe_batches": [
+        "001_001",
+        "002_002",
+        "003_003"
+      ]
+    },
+    {
+      "keep_id": "kp_ada1063f_000_000_039",
+      "keep_batch": "000_000",
+      "name": "IP reassembly",
+      "section": "132",
+      "body_len": 362,
+      "dupe_count": 3,
+      "dupe_ids": [
+        "kp_ada1063f_001_001_136",
+        "kp_ada1063f_002_002_213",
+        "kp_ada1063f_003_003_269"
+      ],
+      "dupe_batches": [
+        "001_001",
+        "002_002",
+        "003_003"
+      ]
+    },
+    {
+      "keep_id": "kp_ada1063f_000_000_040",
+      "keep_batch": "000_000",
+      "name": "3.3.3 Global Addresses",
+      "section": "132",
+      "body_len": 0,
+      "dupe_count": 3,
+      "dupe_ids": [
+        "kp_ada1063f_001_001_137",
+        "kp_ada1063f_002_002_214",
+        "kp_ada1063f_003_003_270"
+      ],
+      "dupe_batches": [
+        "001_001",
+        "002_002",
+        "003_003"
+      ]
+    },
+    {
+      "keep_id": "kp_ada1063f_000_000_041",
+      "keep_batch": "000_000",
+      "name": "Ethernet addresses",
+      "section": "132",
+      "body_len": 500,
+      "dupe_count": 3,
+      "dupe_ids": [
+        "kp_ada1063f_001_001_138",
+        "kp_ada1063f_002_002_215",
+        "kp_ada1063f_003_003_271"
+      ],
+      "dupe_batches": [
+        "001_001",
+        "002_002",
+        "003_003"
+      ]
+    },
+    {
+      "keep_id": "kp_ada1063f_000_000_043",
+      "keep_batch": "000_000",
+      "name": "The class of an IP address",
+      "section": "133",
+      "body_len": 500,
+      "dupe_count": 3,
+      "dupe_ids": [
+        "kp_ada1063f_001_001_140",
+        "kp_ada1063f_002_002_217",
+        "kp_ada1063f_003_003_272"
+      ],
+      "dupe_batches": [
+        "001_001",
+        "002_002",
+        "003_003"
+      ]
+    },
+    {
+      "keep_id": "kp_ada1063f_000_000_044",
+      "keep_batch": "000_000",
+      "name": "3.3.4 Datagram Forwarding in I",
+      "section": "134",
+      "body_len": 31,
+      "dupe_count": 3,
+      "dupe_ids": [
+        "kp_ada1063f_001_001_141",
+        "kp_ada1063f_002_002_218",
+        "kp_ada1063f_003_003_273"
+      ],
+      "dupe_batches": [
+        "001_001",
+        "002_002",
+        "003_003"
+      ]
+    },
+    {
+      "keep_id": "kp_ada1063f_000_000_045",
+      "keep_batch": "000_000",
+      "name": "If the node",
+      "section": "134",
+      "body_len": 500,
+      "dupe_count": 3,
+      "dupe_ids": [
+        "kp_ada1063f_001_001_142",
+        "kp_ada1063f_002_002_219",
+        "kp_ada1063f_003_003_274"
+      ],
+      "dupe_batches": [
+        "001_001",
+        "002_002",
+        "003_003"
+      ]
+    },
+    {
+      "keep_id": "kp_ada1063f_000_000_047",
+      "keep_batch": "000_000",
+      "name": "Note that it",
+      "section": "135",
+      "body_len": 335,
+      "dupe_count": 3,
+      "dupe_ids": [
+        "kp_ada1063f_001_001_144",
+        "kp_ada1063f_002_002_221",
+        "kp_ada1063f_003_003_275"
+      ],
+      "dupe_batches": [
+        "001_001",
+        "002_002",
+        "003_003"
+      ]
+    },
+    {
+      "keep_id": "kp_ada1063f_000_000_048",
+      "keep_batch": "000_000",
+      "name": "The forwarding table used by R",
+      "section": "136",
+      "body_len": 320,
+      "dupe_count": 3,
+      "dupe_ids": [
+        "kp_ada1063f_001_001_145",
+        "kp_ada1063f_002_002_222",
+        "kp_ada1063f_003_003_276"
+      ],
+      "dupe_batches": [
+        "001_001",
+        "002_002",
+        "003_003"
+      ]
+    },
+    {
+      "keep_id": "kp_ada1063f_000_000_049",
+      "keep_batch": "000_000",
+      "name": "3.3.5 Subnetting and Classless",
+      "section": "136",
+      "body_len": 41,
+      "dupe_count": 3,
+      "dupe_ids": [
+        "kp_ada1063f_001_001_146",
+        "kp_ada1063f_002_002_223",
+        "kp_ada1063f_003_003_277"
+      ],
+      "dupe_batches": [
+        "001_001",
+        "002_002",
+        "003_003"
+      ]
+    },
+    {
+      "keep_id": "kp_ada1063f_000_000_051",
+      "keep_batch": "000_000",
+      "name": "What subnetting means to a hos",
+      "section": "137",
+      "body_len": 500,
+      "dupe_count": 3,
+      "dupe_ids": [
+        "kp_ada1063f_001_001_148",
+        "kp_ada1063f_002_002_225",
+        "kp_ada1063f_003_003_278"
+      ],
+      "dupe_batches": [
+        "001_001",
+        "002_002",
+        "003_003"
+      ]
+    },
+    {
+      "keep_id": "kp_ada1063f_000_000_053",
+      "keep_batch": "000_000",
+      "name": "if NextHop",
+      "section": "139",
+      "body_len": 26,
+      "dupe_count": 3,
+      "dupe_ids": [
+        "kp_ada1063f_001_001_150",
+        "kp_ada1063f_002_002_226",
+        "kp_ada1063f_003_003_279"
+      ],
+      "dupe_batches": [
+        "001_001",
+        "002_002",
+        "003_003"
+      ]
+    },
+    {
+      "keep_id": "kp_ada1063f_000_000_054",
+      "keep_batch": "000_000",
+      "name": "An important consequence of su",
+      "section": "139",
+      "body_len": 500,
+      "dupe_count": 3,
+      "dupe_ids": [
+        "kp_ada1063f_001_001_151",
+        "kp_ada1063f_002_002_227",
+        "kp_ada1063f_003_003_280"
+      ],
+      "dupe_batches": [
+        "001_001",
+        "002_002",
+        "003_003"
+      ]
+    },
+    {
+      "keep_id": "kp_ada1063f_000_000_056",
+      "keep_batch": "000_000",
+      "name": "3.3.6 Address Translation ARP",
+      "section": "141",
+      "body_len": 31,
+      "dupe_count": 3,
+      "dupe_ids": [
+        "kp_ada1063f_001_001_153",
+        "kp_ada1063f_002_002_228",
+        "kp_ada1063f_003_003_281"
+      ],
+      "dupe_batches": [
+        "001_001",
+        "002_002",
+        "003_003"
+      ]
+    },
+    {
+      "keep_id": "kp_ada1063f_000_000_058",
+      "keep_batch": "000_000",
+      "name": "3.3.7 Host Conﬁguration DHCP",
+      "section": "143",
+      "body_len": 30,
+      "dupe_count": 3,
+      "dupe_ids": [
+        "kp_ada1063f_001_001_155",
+        "kp_ada1063f_002_002_229",
+        "kp_ada1063f_003_003_282"
+      ],
+      "dupe_batches": [
+        "001_001",
+        "002_002",
+        "003_003"
+      ]
+    },
+    {
+      "keep_id": "kp_ada1063f_000_000_060",
+      "keep_batch": "000_000",
+      "name": "Since the goal of DHCP",
+      "section": "144",
+      "body_len": 273,
+      "dupe_count": 3,
+      "dupe_ids": [
+        "kp_ada1063f_001_001_157",
+        "kp_ada1063f_002_002_231",
+        "kp_ada1063f_003_003_283"
+      ],
+      "dupe_batches": [
+        "001_001",
+        "002_002",
+        "003_003"
+      ]
+    },
+    {
+      "keep_id": "kp_ada1063f_000_000_062",
+      "keep_batch": "000_000",
+      "name": "DHCP",
+      "section": "145",
+      "body_len": 481,
+      "dupe_count": 3,
+      "dupe_ids": [
+        "kp_ada1063f_001_001_159",
+        "kp_ada1063f_002_002_232",
+        "kp_ada1063f_003_003_284"
+      ],
+      "dupe_batches": [
+        "001_001",
+        "002_002",
+        "003_003"
+      ]
+    },
+    {
+      "keep_id": "kp_ada1063f_000_000_063",
+      "keep_batch": "000_000",
+      "name": "3.3.8 Error Reporting ICMP",
+      "section": "146",
+      "body_len": 28,
+      "dupe_count": 3,
+      "dupe_ids": [
+        "kp_ada1063f_001_001_160",
+        "kp_ada1063f_002_002_233",
+        "kp_ada1063f_003_003_285"
+      ],
+      "dupe_batches": [
+        "001_001",
+        "002_002",
+        "003_003"
+      ]
+    },
+    {
+      "keep_id": "kp_ada1063f_000_000_064",
+      "keep_batch": "000_000",
+      "name": "The next issue",
+      "section": "146",
+      "body_len": 500,
+      "dupe_count": 3,
+      "dupe_ids": [
+        "kp_ada1063f_001_001_161",
+        "kp_ada1063f_002_002_234",
+        "kp_ada1063f_003_003_286"
+      ],
+      "dupe_batches": [
+        "001_001",
+        "002_002",
+        "003_003"
+      ]
+    },
+    {
+      "keep_id": "kp_ada1063f_000_000_066",
+      "keep_batch": "000_000",
+      "name": "3.3.9 Virtual Networks and Tun",
+      "section": "147",
+      "body_len": 34,
+      "dupe_count": 3,
+      "dupe_ids": [
+        "kp_ada1063f_001_001_163",
+        "kp_ada1063f_002_002_236",
+        "kp_ada1063f_003_003_287"
+      ],
+      "dupe_batches": [
+        "001_001",
+        "002_002",
+        "003_003"
+      ]
+    },
+    {
+      "keep_id": "kp_ada1063f_000_000_067",
+      "keep_batch": "000_000",
+      "name": "The term VPN",
+      "section": "147",
+      "body_len": 500,
+      "dupe_count": 3,
+      "dupe_ids": [
+        "kp_ada1063f_001_001_164",
+        "kp_ada1063f_002_002_237",
+        "kp_ada1063f_003_003_288"
+      ],
+      "dupe_batches": [
+        "001_001",
+        "002_002",
+        "003_003"
+      ]
+    },
+    {
+      "keep_id": "kp_ada1063f_000_000_069",
+      "keep_batch": "000_000",
+      "name": "While R2",
+      "section": "149",
+      "body_len": 304,
+      "dupe_count": 3,
+      "dupe_ids": [
+        "kp_ada1063f_001_001_166",
+        "kp_ada1063f_002_002_238",
+        "kp_ada1063f_003_003_289"
+      ],
+      "dupe_batches": [
+        "001_001",
+        "002_002",
+        "003_003"
+      ]
+    },
+    {
+      "keep_id": "kp_ada1063f_000_000_070",
+      "keep_batch": "000_000",
+      "name": "3.4 Routing",
+      "section": "150",
+      "body_len": 0,
+      "dupe_count": 3,
+      "dupe_ids": [
+        "kp_ada1063f_001_001_167",
+        "kp_ada1063f_002_002_239",
+        "kp_ada1063f_003_003_290"
+      ],
+      "dupe_batches": [
+        "001_001",
+        "002_002",
+        "003_003"
+      ]
+    },
+    {
+      "keep_id": "kp_ada1063f_000_000_072",
+      "keep_batch": "000_000",
+      "name": "3.4.1 Network as a Graph",
+      "section": "151",
+      "body_len": 0,
+      "dupe_count": 3,
+      "dupe_ids": [
+        "kp_ada1063f_001_001_169",
+        "kp_ada1063f_002_002_241",
+        "kp_ada1063f_003_003_292"
+      ],
+      "dupe_batches": [
+        "001_001",
+        "002_002",
+        "003_003"
+      ]
+    },
+    {
+      "keep_id": "kp_ada1063f_000_000_073",
+      "keep_batch": "000_000",
+      "name": "The basic problem of routing",
+      "section": "151",
+      "body_len": 393,
+      "dupe_count": 3,
+      "dupe_ids": [
+        "kp_ada1063f_001_001_170",
+        "kp_ada1063f_002_002_242",
+        "kp_ada1063f_003_003_293"
+      ],
+      "dupe_batches": [
+        "001_001",
+        "002_002",
+        "003_003"
+      ]
+    },
+    {
+      "keep_id": "kp_ada1063f_000_000_074",
+      "keep_batch": "000_000",
+      "name": "3.4.2 Distance-Vector RIP",
+      "section": "152",
+      "body_len": 27,
+      "dupe_count": 3,
+      "dupe_ids": [
+        "kp_ada1063f_001_001_171",
+        "kp_ada1063f_002_002_243",
+        "kp_ada1063f_003_003_294"
+      ],
+      "dupe_batches": [
+        "001_001",
+        "002_002",
+        "003_003"
+      ]
+    },
+    {
+      "keep_id": "kp_ada1063f_000_000_076",
+      "keep_batch": "000_000",
+      "name": "The next step in distance-vect",
+      "section": "154",
+      "body_len": 500,
+      "dupe_count": 3,
+      "dupe_ids": [
+        "kp_ada1063f_001_001_173",
+        "kp_ada1063f_002_002_245",
+        "kp_ada1063f_003_003_295"
+      ],
+      "dupe_batches": [
+        "001_001",
+        "002_002",
+        "003_003"
+      ]
+    },
+    {
+      "keep_id": "kp_ada1063f_000_000_077",
+      "keep_batch": "000_000",
+      "name": "There",
+      "section": "154",
+      "body_len": 500,
+      "dupe_count": 3,
+      "dupe_ids": [
+        "kp_ada1063f_001_001_174",
+        "kp_ada1063f_002_002_246",
+        "kp_ada1063f_003_003_296"
+      ],
+      "dupe_batches": [
+        "001_001",
+        "002_002",
+        "003_003"
+      ]
+    },
+    {
+      "keep_id": "kp_ada1063f_000_000_080",
+      "keep_batch": "000_000",
+      "name": "The code that implements this ",
+      "section": "156",
+      "body_len": 251,
+      "dupe_count": 3,
+      "dupe_ids": [
+        "kp_ada1063f_001_001_177",
+        "kp_ada1063f_002_002_247",
+        "kp_ada1063f_003_003_297"
+      ],
+      "dupe_batches": [
+        "001_001",
+        "002_002",
+        "003_003"
+      ]
+    },
+    {
+      "keep_id": "kp_ada1063f_000_000_082",
+      "keep_batch": "000_000",
+      "name": "RIP",
+      "section": "157",
+      "body_len": 321,
+      "dupe_count": 3,
+      "dupe_ids": [
+        "kp_ada1063f_001_001_179",
+        "kp_ada1063f_002_002_248",
+        "kp_ada1063f_003_003_298"
+      ],
+      "dupe_batches": [
+        "001_001",
+        "002_002",
+        "003_003"
+      ]
+    },
+    {
+      "keep_id": "kp_ada1063f_000_000_084",
+      "keep_batch": "000_000",
+      "name": "3.4.3 Link State OSPF",
+      "section": "159",
+      "body_len": 23,
+      "dupe_count": 3,
+      "dupe_ids": [
+        "kp_ada1063f_001_001_181",
+        "kp_ada1063f_002_002_249",
+        "kp_ada1063f_003_003_299"
+      ],
+      "dupe_batches": [
+        "001_001",
+        "002_002",
+        "003_003"
+      ]
+    },
+    {
+      "keep_id": "kp_ada1063f_000_000_085",
+      "keep_batch": "000_000",
+      "name": "Link-state routing",
+      "section": "159",
+      "body_len": 500,
+      "dupe_count": 3,
+      "dupe_ids": [
+        "kp_ada1063f_001_001_182",
+        "kp_ada1063f_002_002_250",
+        "kp_ada1063f_003_003_300"
+      ],
+      "dupe_batches": [
+        "001_001",
+        "002_002",
+        "003_003"
+      ]
+    },
+    {
+      "keep_id": "kp_ada1063f_000_000_087",
+      "keep_batch": "000_000",
+      "name": "One easy way to reduce overhea",
+      "section": "161",
+      "body_len": 368,
+      "dupe_count": 3,
+      "dupe_ids": [
+        "kp_ada1063f_001_001_184",
+        "kp_ada1063f_002_002_251",
+        "kp_ada1063f_003_003_301"
+      ],
+      "dupe_batches": [
+        "001_001",
+        "002_002",
+        "003_003"
+      ]
+    },
+    {
+      "keep_id": "kp_ada1063f_000_000_088",
+      "keep_batch": "000_000",
+      "name": "To make sure that old informat",
+      "section": "161",
+      "body_len": 499,
+      "dupe_count": 3,
+      "dupe_ids": [
+        "kp_ada1063f_001_001_185",
+        "kp_ada1063f_002_002_252",
+        "kp_ada1063f_003_003_302"
+      ],
+      "dupe_batches": [
+        "001_001",
+        "002_002",
+        "003_003"
+      ]
+    },
+    {
+      "keep_id": "kp_ada1063f_000_000_090",
+      "keep_batch": "000_000",
+      "name": "Since D",
+      "section": "1",
+      "body_len": 69,
+      "dupe_count": 3,
+      "dupe_ids": [
+        "kp_ada1063f_001_001_187",
+        "kp_ada1063f_002_002_253",
+        "kp_ada1063f_003_003_303"
+      ],
+      "dupe_batches": [
+        "001_001",
+        "002_002",
+        "003_003"
+      ]
+    },
+    {
+      "keep_id": "kp_ada1063f_000_000_091",
+      "keep_batch": "000_000",
+      "name": "Cost to reach B through C",
+      "section": "4",
+      "body_len": 101,
+      "dupe_count": 3,
+      "dupe_ids": [
+        "kp_ada1063f_001_001_188",
+        "kp_ada1063f_002_002_254",
+        "kp_ada1063f_003_003_304"
+      ],
+      "dupe_batches": [
+        "001_001",
+        "002_002",
+        "003_003"
+      ]
+    },
+    {
+      "keep_id": "kp_ada1063f_000_000_092",
+      "keep_batch": "000_000",
+      "name": "Distance-vector and link-state",
+      "section": "7",
+      "body_len": 500,
+      "dupe_count": 3,
+      "dupe_ids": [
+        "kp_ada1063f_001_001_189",
+        "kp_ada1063f_002_002_255",
+        "kp_ada1063f_003_003_305"
+      ],
+      "dupe_batches": [
+        "001_001",
+        "002_002",
+        "003_003"
+      ]
+    },
+    {
+      "keep_id": "kp_ada1063f_000_000_095",
+      "keep_batch": "000_000",
+      "name": "The LS sequence number",
+      "section": "165",
+      "body_len": 408,
+      "dupe_count": 3,
+      "dupe_ids": [
+        "kp_ada1063f_001_001_192",
+        "kp_ada1063f_002_002_256",
+        "kp_ada1063f_003_003_306"
+      ],
+      "dupe_batches": [
+        "001_001",
+        "002_002",
+        "003_003"
+      ]
+    },
+    {
+      "keep_id": "kp_ada1063f_000_000_096",
+      "keep_batch": "000_000",
+      "name": "The TOS information",
+      "section": "166",
+      "body_len": 499,
+      "dupe_count": 3,
+      "dupe_ids": [
+        "kp_ada1063f_001_001_193",
+        "kp_ada1063f_002_002_257",
+        "kp_ada1063f_003_003_307"
+      ],
+      "dupe_batches": [
+        "001_001",
+        "002_002",
+        "003_003"
+      ]
+    },
+    {
+      "keep_id": "kp_ada1063f_000_000_097",
+      "keep_batch": "000_000",
+      "name": "3.4.4 Metrics",
+      "section": "166",
+      "body_len": 0,
+      "dupe_count": 3,
+      "dupe_ids": [
+        "kp_ada1063f_001_001_194",
+        "kp_ada1063f_002_002_258",
+        "kp_ada1063f_003_003_308"
+      ],
+      "dupe_batches": [
+        "001_001",
+        "002_002",
+        "003_003"
+      ]
+    },
+    {
+      "keep_id": "kp_42b16cd4_000_000_010",
+      "keep_batch": "000_000",
+      "name": "5.2.1 End-to-End Issues",
+      "section": "232",
+      "body_len": 0,
+      "dupe_count": 2,
+      "dupe_ids": [
+        "kp_42b16cd4_001_001_066",
+        "kp_42b16cd4_002_002_116"
+      ],
+      "dupe_batches": [
+        "001_001",
+        "002_002"
+      ]
+    },
+    {
+      "keep_id": "kp_42b16cd4_000_000_011",
+      "keep_batch": "000_000",
+      "name": "At the heart of TCP",
+      "section": "232",
+      "body_len": 421,
+      "dupe_count": 2,
+      "dupe_ids": [
+        "kp_42b16cd4_001_001_067",
+        "kp_42b16cd4_002_002_117"
+      ],
+      "dupe_batches": [
+        "001_001",
+        "002_002"
+      ]
+    },
+    {
+      "keep_id": "kp_42b16cd4_000_000_021",
+      "keep_batch": "000_000",
+      "name": "TCP",
+      "section": "238",
+      "body_len": 428,
+      "dupe_count": 2,
+      "dupe_ids": [
+        "kp_42b16cd4_001_001_077",
+        "kp_42b16cd4_002_002_126"
+      ],
+      "dupe_batches": [
+        "001_001",
+        "002_002"
+      ]
+    },
+    {
+      "keep_id": "kp_42b16cd4_000_000_038",
+      "keep_batch": "000_000",
+      "name": "The idea",
+      "section": "248",
+      "body_len": 428,
+      "dupe_count": 2,
+      "dupe_ids": [
+        "kp_42b16cd4_001_001_094",
+        "kp_42b16cd4_002_002_137"
+      ],
+      "dupe_batches": [
+        "001_001",
+        "002_002"
+      ]
+    },
+    {
+      "keep_id": "kp_42b16cd4_000_000_042",
+      "keep_batch": "000_000",
+      "name": "There",
+      "section": "250",
+      "body_len": 500,
+      "dupe_count": 2,
+      "dupe_ids": [
+        "kp_42b16cd4_001_001_098",
+        "kp_42b16cd4_002_002_141"
+      ],
+      "dupe_batches": [
+        "001_001",
+        "002_002"
+      ]
+    },
+    {
+      "keep_id": "kp_42b16cd4_000_000_056",
+      "keep_batch": "000_000",
+      "name": "The idea of Multipath TCP",
+      "section": "258",
+      "body_len": 499,
+      "dupe_count": 2,
+      "dupe_ids": [
+        "kp_42b16cd4_001_001_112",
+        "kp_42b16cd4_003_003_178"
+      ],
+      "dupe_batches": [
+        "001_001",
+        "003_003"
+      ]
+    },
+    {
+      "keep_id": "kp_42b16cd4_000_000_057",
+      "keep_batch": "000_000",
+      "name": "If network latency",
+      "section": "258",
+      "body_len": 500,
+      "dupe_count": 2,
+      "dupe_ids": [
+        "kp_42b16cd4_001_001_113",
+        "kp_42b16cd4_003_003_179"
+      ],
+      "dupe_batches": [
+        "001_001",
+        "003_003"
+      ]
+    },
+    {
+      "keep_id": "kp_42b16cd4_000_000_058",
+      "keep_batch": "000_000",
+      "name": "QUIC",
+      "section": "258",
+      "body_len": 308,
+      "dupe_count": 2,
+      "dupe_ids": [
+        "kp_42b16cd4_001_001_114",
+        "kp_42b16cd4_003_003_180"
+      ],
+      "dupe_batches": [
+        "001_001",
+        "003_003"
+      ]
+    },
+    {
+      "keep_id": "kp_ada1063f_000_000_013",
+      "keep_batch": "000_000",
+      "name": "The semantics of one such entr",
+      "section": "107",
+      "body_len": 312,
+      "dupe_count": 2,
+      "dupe_ids": [
+        "kp_ada1063f_001_001_110",
+        "kp_ada1063f_002_002_196"
+      ],
+      "dupe_batches": [
+        "001_001",
+        "002_002"
+      ]
+    },
+    {
+      "keep_id": "kp_ada1063f_000_000_014",
+      "keep_batch": "000_000",
+      "name": "Whenever a new connection",
+      "section": "107",
+      "body_len": 258,
+      "dupe_count": 2,
+      "dupe_ids": [
+        "kp_ada1063f_001_001_111",
+        "kp_ada1063f_002_002_197"
+      ],
+      "dupe_batches": [
+        "001_001",
+        "002_002"
+      ]
+    },
+    {
+      "keep_id": "kp_ada1063f_000_000_015",
+      "keep_batch": "000_000",
+      "name": "There",
+      "section": "107",
+      "body_len": 499,
+      "dupe_count": 2,
+      "dupe_ids": [
+        "kp_ada1063f_001_001_112",
+        "kp_ada1063f_002_002_198"
+      ],
+      "dupe_batches": [
+        "001_001",
+        "002_002"
+      ]
+    },
+    {
+      "keep_id": "kp_ada1063f_000_000_021",
+      "keep_batch": "000_000",
+      "name": "3.1.3 Source Routing",
+      "section": "113",
+      "body_len": 0,
+      "dupe_count": 2,
+      "dupe_ids": [
+        "kp_ada1063f_001_001_118",
+        "kp_ada1063f_002_002_199"
+      ],
+      "dupe_batches": [
+        "001_001",
+        "002_002"
+      ]
+    },
+    {
+      "keep_id": "kp_ada1063f_000_000_023",
+      "keep_batch": "000_000",
+      "name": "Source routes",
+      "section": "114",
+      "body_len": 500,
+      "dupe_count": 2,
+      "dupe_ids": [
+        "kp_ada1063f_001_001_120",
+        "kp_ada1063f_002_002_200"
+      ],
+      "dupe_batches": [
+        "001_001",
+        "002_002"
+      ]
+    },
+    {
+      "keep_id": "kp_ada1063f_000_000_025",
+      "keep_batch": "000_000",
+      "name": "3.3 Internet IP",
+      "section": "115",
+      "body_len": 17,
+      "dupe_count": 2,
+      "dupe_ids": [
+        "kp_ada1063f_001_001_122",
+        "kp_ada1063f_002_002_201"
+      ],
+      "dupe_batches": [
+        "001_001",
+        "002_002"
+      ]
+    },
+    {
+      "keep_id": "kp_ada1063f_000_000_026",
+      "keep_batch": "000_000",
+      "name": "3.3.1 What Is an Internetwork?",
+      "section": "115",
+      "body_len": 0,
+      "dupe_count": 2,
+      "dupe_ids": [
+        "kp_ada1063f_001_001_123",
+        "kp_ada1063f_002_002_202"
+      ],
+      "dupe_batches": [
+        "001_001",
+        "002_002"
+      ]
+    },
+    {
+      "keep_id": "kp_ada1063f_000_000_059",
+      "keep_batch": "000_000",
+      "name": "Ethernet addresses",
+      "section": "143",
+      "body_len": 397,
+      "dupe_count": 2,
+      "dupe_ids": [
+        "kp_ada1063f_001_001_156",
+        "kp_ada1063f_002_002_230"
+      ],
+      "dupe_batches": [
+        "001_001",
+        "002_002"
+      ]
+    },
+    {
+      "keep_id": "kp_cf6fcaa0_000_000_004",
+      "keep_batch": "000_000",
+      "name": "6.1.1 Network Model",
+      "section": "287",
+      "body_len": 0,
+      "dupe_count": 2,
+      "dupe_ids": [
+        "kp_cf6fcaa0_001_001_052",
+        "kp_cf6fcaa0_002_002_097"
+      ],
+      "dupe_batches": [
+        "001_001",
+        "002_002"
+      ]
+    },
+    {
+      "keep_id": "kp_cf6fcaa0_000_000_005",
+      "keep_batch": "000_000",
+      "name": "Note that congestion control",
+      "section": "288",
+      "body_len": 500,
+      "dupe_count": 2,
+      "dupe_ids": [
+        "kp_cf6fcaa0_001_001_053",
+        "kp_cf6fcaa0_002_002_098"
+      ],
+      "dupe_batches": [
+        "001_001",
+        "002_002"
+      ]
+    },
+    {
+      "keep_id": "kp_cf6fcaa0_000_000_007",
+      "keep_batch": "000_000",
+      "name": "6.1.2 Taxonomy",
+      "section": "290",
+      "body_len": 0,
+      "dupe_count": 2,
+      "dupe_ids": [
+        "kp_cf6fcaa0_001_001_055",
+        "kp_cf6fcaa0_002_002_100"
+      ],
+      "dupe_batches": [
+        "001_001",
+        "002_002"
+      ]
+    },
+    {
+      "keep_id": "kp_cf6fcaa0_000_000_008",
+      "keep_batch": "000_000",
+      "name": "There",
+      "section": "290",
+      "body_len": 315,
+      "dupe_count": 2,
+      "dupe_ids": [
+        "kp_cf6fcaa0_001_001_056",
+        "kp_cf6fcaa0_002_002_101"
+      ],
+      "dupe_batches": [
+        "001_001",
+        "002_002"
+      ]
+    },
+    {
+      "keep_id": "kp_cf6fcaa0_000_000_010",
+      "keep_batch": "000_000",
+      "name": "6.1.3 Evaluation Criteria",
+      "section": "292",
+      "body_len": 0,
+      "dupe_count": 2,
+      "dupe_ids": [
+        "kp_cf6fcaa0_001_001_058",
+        "kp_cf6fcaa0_002_002_103"
+      ],
+      "dupe_batches": [
+        "001_001",
+        "002_002"
+      ]
+    },
+    {
+      "keep_id": "kp_cf6fcaa0_000_000_012",
+      "keep_batch": "000_000",
+      "name": "Note that it",
+      "section": "293",
+      "body_len": 500,
+      "dupe_count": 2,
+      "dupe_ids": [
+        "kp_cf6fcaa0_001_001_060",
+        "kp_cf6fcaa0_002_002_105"
+      ],
+      "dupe_batches": [
+        "001_001",
+        "002_002"
+      ]
+    },
+    {
+      "keep_id": "kp_cf6fcaa0_000_000_013",
+      "keep_batch": "000_000",
+      "name": "The objective",
+      "section": "293",
+      "body_len": 500,
+      "dupe_count": 2,
+      "dupe_ids": [
+        "kp_cf6fcaa0_001_001_061",
+        "kp_cf6fcaa0_002_002_106"
+      ],
+      "dupe_batches": [
+        "001_001",
+        "002_002"
+      ]
+    },
+    {
+      "keep_id": "kp_cf6fcaa0_000_000_014",
+      "keep_batch": "000_000",
+      "name": "Since this",
+      "section": "293",
+      "body_len": 251,
+      "dupe_count": 2,
+      "dupe_ids": [
+        "kp_cf6fcaa0_001_001_062",
+        "kp_cf6fcaa0_002_002_107"
+      ],
+      "dupe_batches": [
+        "001_001",
+        "002_002"
+      ]
+    },
+    {
+      "keep_id": "kp_cf6fcaa0_000_000_016",
+      "keep_batch": "000_000",
+      "name": "6.2 Queuing Disciplines",
+      "section": "295",
+      "body_len": 0,
+      "dupe_count": 2,
+      "dupe_ids": [
+        "kp_cf6fcaa0_001_001_064",
+        "kp_cf6fcaa0_002_002_108"
+      ],
+      "dupe_batches": [
+        "001_001",
+        "002_002"
+      ]
+    },
+    {
+      "keep_id": "kp_cf6fcaa0_000_000_017",
+      "keep_batch": "000_000",
+      "name": "6.2.1 FIFO",
+      "section": "295",
+      "body_len": 0,
+      "dupe_count": 2,
+      "dupe_ids": [
+        "kp_cf6fcaa0_001_001_065",
+        "kp_cf6fcaa0_002_002_109"
+      ],
+      "dupe_batches": [
+        "001_001",
+        "002_002"
+      ]
+    },
+    {
+      "keep_id": "kp_cf6fcaa0_000_000_018",
+      "keep_batch": "000_000",
+      "name": "Note that tail drop and FIFO",
+      "section": "295",
+      "body_len": 499,
+      "dupe_count": 2,
+      "dupe_ids": [
+        "kp_cf6fcaa0_001_001_066",
+        "kp_cf6fcaa0_002_002_110"
+      ],
+      "dupe_batches": [
+        "001_001",
+        "002_002"
+      ]
+    },
+    {
+      "keep_id": "kp_cf6fcaa0_000_000_019",
+      "keep_batch": "000_000",
+      "name": "A simple variation on basic FI",
+      "section": "295",
+      "body_len": 500,
+      "dupe_count": 2,
+      "dupe_ids": [
+        "kp_cf6fcaa0_001_001_067",
+        "kp_cf6fcaa0_002_002_111"
+      ],
+      "dupe_batches": [
+        "001_001",
+        "002_002"
+      ]
+    },
+    {
+      "keep_id": "kp_cf6fcaa0_000_000_020",
+      "keep_batch": "000_000",
+      "name": "One situation in which priorit",
+      "section": "296",
+      "body_len": 441,
+      "dupe_count": 2,
+      "dupe_ids": [
+        "kp_cf6fcaa0_001_001_068",
+        "kp_cf6fcaa0_002_002_112"
+      ],
+      "dupe_batches": [
+        "001_001",
+        "002_002"
+      ]
+    },
+    {
+      "keep_id": "kp_cf6fcaa0_000_000_021",
+      "keep_batch": "000_000",
+      "name": "6.2.2 Fair Queuing",
+      "section": "296",
+      "body_len": 0,
+      "dupe_count": 2,
+      "dupe_ids": [
+        "kp_cf6fcaa0_001_001_069",
+        "kp_cf6fcaa0_002_002_113"
+      ],
+      "dupe_batches": [
+        "001_001",
+        "002_002"
+      ]
+    },
+    {
+      "keep_id": "kp_cf6fcaa0_000_000_022",
+      "keep_batch": "000_000",
+      "name": "The main problem with FIFO que",
+      "section": "296",
+      "body_len": 499,
+      "dupe_count": 2,
+      "dupe_ids": [
+        "kp_cf6fcaa0_001_001_070",
+        "kp_cf6fcaa0_002_002_114"
+      ],
+      "dupe_batches": [
+        "001_001",
+        "002_002"
+      ]
+    },
+    {
+      "keep_id": "kp_cf6fcaa0_000_000_024",
+      "keep_batch": "000_000",
+      "name": "What we really want",
+      "section": "297",
+      "body_len": 324,
+      "dupe_count": 2,
+      "dupe_ids": [
+        "kp_cf6fcaa0_001_001_072",
+        "kp_cf6fcaa0_002_002_116"
+      ],
+      "dupe_batches": [
+        "001_001",
+        "002_002"
+      ]
+    },
+    {
+      "keep_id": "kp_cf6fcaa0_000_000_026",
+      "keep_batch": "000_000",
+      "name": "There",
+      "section": "299",
+      "body_len": 499,
+      "dupe_count": 2,
+      "dupe_ids": [
+        "kp_cf6fcaa0_001_001_074",
+        "kp_cf6fcaa0_002_002_117"
+      ],
+      "dupe_batches": [
+        "001_001",
+        "002_002"
+      ]
+    },
+    {
+      "keep_id": "kp_cf6fcaa0_000_000_027",
+      "keep_batch": "000_000",
+      "name": "The second thing to notice",
+      "section": "299",
+      "body_len": 500,
+      "dupe_count": 2,
+      "dupe_ids": [
+        "kp_cf6fcaa0_001_001_075",
+        "kp_cf6fcaa0_002_002_118"
+      ],
+      "dupe_batches": [
+        "001_001",
+        "002_002"
+      ]
+    },
+    {
+      "keep_id": "kp_cf6fcaa0_000_000_028",
+      "keep_batch": "000_000",
+      "name": "Because FQ",
+      "section": "299",
+      "body_len": 500,
+      "dupe_count": 2,
+      "dupe_ids": [
+        "kp_cf6fcaa0_001_001_076",
+        "kp_cf6fcaa0_002_002_119"
+      ],
+      "dupe_batches": [
+        "001_001",
+        "002_002"
+      ]
+    },
+    {
+      "keep_id": "kp_cf6fcaa0_000_000_029",
+      "keep_batch": "000_000",
+      "name": "6.3 TCP Congestion Control",
+      "section": "300",
+      "body_len": 0,
+      "dupe_count": 2,
+      "dupe_ids": [
+        "kp_cf6fcaa0_001_001_077",
+        "kp_cf6fcaa0_002_002_120"
+      ],
+      "dupe_batches": [
+        "001_001",
+        "002_002"
+      ]
+    },
+    {
+      "keep_id": "kp_cf6fcaa0_000_000_030",
+      "keep_batch": "000_000",
+      "name": "6.3.1 Additive Increase/Multip",
+      "section": "300",
+      "body_len": 47,
+      "dupe_count": 2,
+      "dupe_ids": [
+        "kp_cf6fcaa0_001_001_078",
+        "kp_cf6fcaa0_002_002_121"
+      ],
+      "dupe_batches": [
+        "001_001",
+        "002_002"
+      ]
+    },
+    {
+      "keep_id": "kp_cf6fcaa0_000_000_032",
+      "keep_batch": "000_000",
+      "name": "Although CongestionWindow",
+      "section": "301",
+      "body_len": 500,
+      "dupe_count": 2,
+      "dupe_ids": [
+        "kp_cf6fcaa0_001_001_080",
+        "kp_cf6fcaa0_003_003_123"
+      ],
+      "dupe_batches": [
+        "001_001",
+        "003_003"
+      ]
+    },
+    {
+      "keep_id": "kp_cf6fcaa0_000_000_034",
+      "keep_batch": "000_000",
+      "name": "6.3.2 Slow Start",
+      "section": "303",
+      "body_len": 0,
+      "dupe_count": 2,
+      "dupe_ids": [
+        "kp_cf6fcaa0_001_001_082",
+        "kp_cf6fcaa0_003_003_124"
+      ],
+      "dupe_batches": [
+        "001_001",
+        "003_003"
+      ]
+    },
+    {
+      "keep_id": "kp_cf6fcaa0_000_000_035",
+      "keep_batch": "000_000",
+      "name": "There",
+      "section": "303",
+      "body_len": 429,
+      "dupe_count": 2,
+      "dupe_ids": [
+        "kp_cf6fcaa0_001_001_083",
+        "kp_cf6fcaa0_003_003_125"
+      ],
+      "dupe_batches": [
+        "001_001",
+        "003_003"
+      ]
+    },
+    {
+      "keep_id": "kp_cf6fcaa0_000_000_037",
+      "keep_batch": "000_000",
+      "name": "The second situation in which ",
+      "section": "305",
+      "body_len": 500,
+      "dupe_count": 2,
+      "dupe_ids": [
+        "kp_cf6fcaa0_001_001_085",
+        "kp_cf6fcaa0_003_003_126"
+      ],
+      "dupe_batches": [
+        "001_001",
+        "003_003"
+      ]
+    },
+    {
+      "keep_id": "kp_cf6fcaa0_000_000_038",
+      "keep_batch": "000_000",
+      "name": "Although the source",
+      "section": "305",
+      "body_len": 500,
+      "dupe_count": 2,
+      "dupe_ids": [
+        "kp_cf6fcaa0_001_001_086",
+        "kp_cf6fcaa0_003_003_127"
+      ],
+      "dupe_batches": [
+        "001_001",
+        "003_003"
+      ]
+    },
+    {
+      "keep_id": "kp_cf6fcaa0_000_000_040",
+      "keep_batch": "000_000",
+      "name": "which time the congestion wind",
+      "section": "306",
+      "body_len": 249,
+      "dupe_count": 2,
+      "dupe_ids": [
+        "kp_cf6fcaa0_001_001_088",
+        "kp_cf6fcaa0_003_003_128"
+      ],
+      "dupe_batches": [
+        "001_001",
+        "003_003"
+      ]
+    },
+    {
+      "keep_id": "kp_cf6fcaa0_000_000_042",
+      "keep_batch": "000_000",
+      "name": "3. Slow",
+      "section": "Slow",
+      "body_len": 0,
+      "dupe_count": 2,
+      "dupe_ids": [
+        "kp_cf6fcaa0_001_001_089",
+        "kp_cf6fcaa0_003_003_129"
+      ],
+      "dupe_batches": [
+        "001_001",
+        "003_003"
+      ]
+    },
+    {
+      "keep_id": "kp_cf6fcaa0_000_000_043",
+      "keep_batch": "000_000",
+      "name": "4. CongestionWindow then grows",
+      "section": "CongestionWindow then grows linearly.",
+      "body_len": 40,
+      "dupe_count": 2,
+      "dupe_ids": [
+        "kp_cf6fcaa0_001_001_090",
+        "kp_cf6fcaa0_003_003_130"
+      ],
+      "dupe_batches": [
+        "001_001",
+        "003_003"
+      ]
+    },
+    {
+      "keep_id": "kp_cf6fcaa0_000_000_044",
+      "keep_batch": "000_000",
+      "name": "The same pattern",
+      "section": "CongestionWindow then grows linearly.",
+      "body_len": 77,
+      "dupe_count": 2,
+      "dupe_ids": [
+        "kp_cf6fcaa0_001_001_091",
+        "kp_cf6fcaa0_003_003_131"
+      ],
+      "dupe_batches": [
+        "001_001",
+        "003_003"
+      ]
+    },
+    {
+      "keep_id": "kp_cf6fcaa0_000_000_046",
+      "keep_batch": "000_000",
+      "name": "6.3.3 Fast Retransmit and Fast",
+      "section": "307",
+      "body_len": 39,
+      "dupe_count": 2,
+      "dupe_ids": [
+        "kp_cf6fcaa0_001_001_093",
+        "kp_cf6fcaa0_003_003_132"
+      ],
+      "dupe_batches": [
+        "001_001",
+        "003_003"
+      ]
+    },
+    {
+      "keep_id": "kp_cf6fcaa0_000_000_047",
+      "keep_batch": "000_000",
+      "name": "The idea of fast retransmit",
+      "section": "307",
+      "body_len": 499,
+      "dupe_count": 2,
+      "dupe_ids": [
+        "kp_cf6fcaa0_001_001_094",
+        "kp_cf6fcaa0_003_003_133"
+      ],
+      "dupe_batches": [
+        "001_001",
+        "003_003"
+      ]
+    },
+    {
+      "keep_id": "kp_cf6fcaa0_000_000_049",
+      "keep_batch": "000_000",
+      "name": "6.3.4 TCP CUBIC",
+      "section": "309",
+      "body_len": 0,
+      "dupe_count": 2,
+      "dupe_ids": [
+        "kp_cf6fcaa0_001_001_096",
+        "kp_cf6fcaa0_003_003_134"
+      ],
+      "dupe_batches": [
+        "001_001",
+        "003_003"
+      ]
+    },
+    {
+      "keep_id": "kp_42b16cd4_000_000_004",
+      "keep_batch": "000_000",
+      "name": "5.1 Simple Demultiplexor UDP",
+      "section": "229",
+      "body_len": 30,
+      "dupe_count": 1,
+      "dupe_ids": [
+        "kp_42b16cd4_001_001_060"
+      ],
+      "dupe_batches": [
+        "001_001"
+      ]
+    },
+    {
+      "keep_id": "kp_42b16cd4_000_000_005",
+      "keep_batch": "000_000",
+      "name": "The simplest possible transpor",
+      "section": "229",
+      "body_len": 500,
+      "dupe_count": 1,
+      "dupe_ids": [
+        "kp_42b16cd4_001_001_061"
+      ],
+      "dupe_batches": [
+        "001_001"
+      ]
+    },
+    {
+      "keep_id": "kp_42b16cd4_000_000_006",
+      "keep_batch": "000_000",
+      "name": "The next issue",
+      "section": "230",
+      "body_len": 500,
+      "dupe_count": 1,
+      "dupe_ids": [
+        "kp_42b16cd4_001_001_062"
+      ],
+      "dupe_batches": [
+        "001_001"
+      ]
+    },
+    {
+      "keep_id": "kp_42b16cd4_000_000_007",
+      "keep_batch": "000_000",
+      "name": "An alternative strategy",
+      "section": "230",
+      "body_len": 499,
+      "dupe_count": 1,
+      "dupe_ids": [
+        "kp_42b16cd4_001_001_063"
+      ],
+      "dupe_batches": [
+        "001_001"
+      ]
+    },
+    {
+      "keep_id": "kp_42b16cd4_000_000_008",
+      "keep_batch": "000_000",
+      "name": "5.1. Simple Demultiplexor UDP",
+      "section": "230",
+      "body_len": 31,
+      "dupe_count": 1,
+      "dupe_ids": [
+        "kp_42b16cd4_001_001_064"
+      ],
+      "dupe_batches": [
+        "001_001"
+      ]
+    },
+    {
+      "keep_id": "kp_42b16cd4_000_000_009",
+      "keep_batch": "000_000",
+      "name": "5.2 Reliable Byte Stream TCP",
+      "section": "232",
+      "body_len": 30,
+      "dupe_count": 1,
+      "dupe_ids": [
+        "kp_42b16cd4_001_001_065"
+      ],
+      "dupe_batches": [
+        "001_001"
+      ]
+    },
+    {
+      "keep_id": "kp_42b16cd4_000_000_024",
+      "keep_batch": "000_000",
+      "name": "There",
+      "section": "240",
+      "body_len": 263,
+      "dupe_count": 1,
+      "dupe_ids": [
+        "kp_42b16cd4_001_001_080"
+      ],
+      "dupe_batches": [
+        "001_001"
+      ]
+    },
+    {
+      "keep_id": "kp_42b16cd4_000_000_030",
+      "keep_batch": "000_000",
+      "name": "There",
+      "section": "243",
+      "body_len": 130,
+      "dupe_count": 1,
+      "dupe_ids": [
+        "kp_42b16cd4_001_001_086"
+      ],
+      "dupe_batches": [
+        "001_001"
+      ]
+    },
+    {
+      "keep_id": "kp_42b16cd4_000_000_045",
+      "keep_batch": "000_000",
+      "name": "There",
+      "section": "251",
+      "body_len": 500,
+      "dupe_count": 1,
+      "dupe_ids": [
+        "kp_42b16cd4_001_001_101"
+      ],
+      "dupe_batches": [
+        "001_001"
+      ]
+    },
+    {
+      "keep_id": "kp_ada1063f_000_000_003",
+      "keep_batch": "000_000",
+      "name": "3.1 Switching Basics",
+      "section": "103",
+      "body_len": 0,
+      "dupe_count": 1,
+      "dupe_ids": [
+        "kp_ada1063f_001_001_100"
+      ],
+      "dupe_batches": [
+        "001_001"
+      ]
+    },
+    {
+      "keep_id": "kp_ada1063f_000_000_004",
+      "keep_batch": "000_000",
+      "name": "A switch",
+      "section": "104",
+      "body_len": 500,
+      "dupe_count": 1,
+      "dupe_ids": [
+        "kp_ada1063f_001_001_101"
+      ],
+      "dupe_batches": [
+        "001_001"
+      ]
+    },
+    {
+      "keep_id": "kp_ada1063f_000_000_005",
+      "keep_batch": "000_000",
+      "name": "One thing that",
+      "section": "104",
+      "body_len": 500,
+      "dupe_count": 1,
+      "dupe_ids": [
+        "kp_ada1063f_001_001_102"
+      ],
+      "dupe_batches": [
+        "001_001"
+      ]
+    },
+    {
+      "keep_id": "kp_ada1063f_000_000_006",
+      "keep_batch": "000_000",
+      "name": "Another assumption that we nee",
+      "section": "104",
+      "body_len": 328,
+      "dupe_count": 1,
+      "dupe_ids": [
+        "kp_ada1063f_001_001_103"
+      ],
+      "dupe_batches": [
+        "001_001"
+      ]
+    },
+    {
+      "keep_id": "kp_ada1063f_000_000_008",
+      "keep_batch": "000_000",
+      "name": "3.1.1 Datagrams",
+      "section": "105",
+      "body_len": 0,
+      "dupe_count": 1,
+      "dupe_ids": [
+        "kp_ada1063f_001_001_105"
+      ],
+      "dupe_batches": [
+        "001_001"
+      ]
+    },
+    {
+      "keep_id": "kp_ada1063f_000_000_009",
+      "keep_batch": "000_000",
+      "name": "The idea behind datagrams",
+      "section": "105",
+      "body_len": 500,
+      "dupe_count": 1,
+      "dupe_ids": [
+        "kp_ada1063f_001_001_106"
+      ],
+      "dupe_batches": [
+        "001_001"
+      ]
+    },
+    {
+      "keep_id": "kp_ada1063f_000_000_010",
+      "keep_batch": "000_000",
+      "name": "This last fact",
+      "section": "106",
+      "body_len": 409,
+      "dupe_count": 1,
+      "dupe_ids": [
+        "kp_ada1063f_001_001_107"
+      ],
+      "dupe_batches": [
+        "001_001"
+      ]
+    },
+    {
+      "keep_id": "kp_ada1063f_000_000_011",
+      "keep_batch": "000_000",
+      "name": "3.1.2 Virtual Circuit Switchin",
+      "section": "106",
+      "body_len": 31,
+      "dupe_count": 1,
+      "dupe_ids": [
+        "kp_ada1063f_001_001_108"
+      ],
+      "dupe_batches": [
+        "001_001"
+      ]
+    },
+    {
+      "keep_id": "kp_ada1063f_000_000_017",
+      "keep_batch": "000_000",
+      "name": "There",
+      "section": "110",
+      "body_len": 65,
+      "dupe_count": 1,
+      "dupe_ids": [
+        "kp_ada1063f_001_001_114"
+      ],
+      "dupe_batches": [
+        "001_001"
+      ]
+    },
+    {
+      "keep_id": "kp_ada1063f_000_000_019",
+      "keep_batch": "000_000",
+      "name": "There",
+      "section": "112",
+      "body_len": 499,
+      "dupe_count": 1,
+      "dupe_ids": [
+        "kp_ada1063f_001_001_116"
+      ],
+      "dupe_batches": [
+        "001_001"
+      ]
+    },
+    {
+      "keep_id": "kp_ada1063f_000_000_022",
+      "keep_batch": "000_000",
+      "name": "There",
+      "section": "113",
+      "body_len": 500,
+      "dupe_count": 1,
+      "dupe_ids": [
+        "kp_ada1063f_001_001_119"
+      ],
+      "dupe_batches": [
+        "001_001"
+      ]
+    },
+    {
+      "keep_id": "kp_ada1063f_000_000_079",
+      "keep_batch": "000_000",
+      "name": "There",
+      "section": "155",
+      "body_len": 500,
+      "dupe_count": 1,
+      "dupe_ids": [
+        "kp_ada1063f_001_001_176"
+      ],
+      "dupe_batches": [
+        "001_001"
+      ]
+    },
+    {
+      "keep_id": "kp_ada1063f_000_000_093",
+      "keep_batch": "000_000",
+      "name": "There",
+      "section": "164",
+      "body_len": 499,
+      "dupe_count": 1,
+      "dupe_ids": [
+        "kp_ada1063f_001_001_190"
+      ],
+      "dupe_batches": [
+        "001_001"
+      ]
+    },
+    {
+      "keep_id": "kp_ada1063f_000_000_099",
+      "keep_batch": "000_000",
+      "name": "All of these factors mean that",
+      "section": "167",
+      "body_len": 406,
+      "dupe_count": 1,
+      "dupe_ids": [
+        "kp_ada1063f_003_003_309"
+      ],
+      "dupe_batches": [
+        "003_003"
+      ]
+    },
+    {
+      "keep_id": "kp_cf6fcaa0_000_000_003",
+      "keep_batch": "000_000",
+      "name": "6.1 Issues in Resource Allocat",
+      "section": "287",
+      "body_len": 33,
+      "dupe_count": 1,
+      "dupe_ids": [
+        "kp_cf6fcaa0_001_001_051"
+      ],
+      "dupe_batches": [
+        "001_001"
+      ]
+    },
+    {
+      "keep_id": "kp_cf6fcaa0_000_000_039",
+      "keep_batch": "000_000",
+      "name": "There",
+      "section": "305",
+      "body_len": 499,
+      "dupe_count": 1,
+      "dupe_ids": [
+        "kp_cf6fcaa0_001_001_087"
+      ],
+      "dupe_batches": [
+        "001_001"
+      ]
+    },
+    {
+      "keep_id": "kp_cf6fcaa0_000_000_050",
+      "keep_batch": "000_000",
+      "name": "The second important aspect of",
+      "section": "309",
+      "body_len": 500,
+      "dupe_count": 1,
+      "dupe_ids": [
+        "kp_cf6fcaa0_003_003_135"
+      ],
+      "dupe_batches": [
+        "003_003"
+      ]
+    },
+    {
+      "keep_id": "kp_42b16cd4_000_000_000",
+      "keep_batch": "000_000",
+      "name": "END-TO-END PROTOCOLS",
+      "section": "END-TO-END PROTOCOLS",
+      "body_len": 0,
+      "dupe_count": 0,
+      "dupe_ids": [],
+      "dupe_batches": []
+    },
+    {
+      "keep_id": "kp_42b16cd4_000_000_001",
+      "keep_batch": "000_000",
+      "name": "Victory",
+      "section": "END-TO-END PROTOCOLS",
+      "body_len": 115,
+      "dupe_count": 0,
+      "dupe_ids": [],
+      "dupe_batches": []
+    },
+    {
+      "keep_id": "kp_42b16cd4_000_000_002",
+      "keep_batch": "000_000",
+      "name": "Problem: Getting Processes to ",
+      "section": "Problem: Getting Processes to Communicate",
+      "body_len": 41,
+      "dupe_count": 0,
+      "dupe_ids": [],
+      "dupe_batches": []
+    },
+    {
+      "keep_id": "kp_42b16cd4_000_000_003",
+      "keep_batch": "000_000",
+      "name": "Such a network",
+      "section": "229",
+      "body_len": 96,
+      "dupe_count": 0,
+      "dupe_ids": [],
+      "dupe_batches": []
+    },
+    {
+      "keep_id": "kp_9f2a1c40_000_000_000",
+      "keep_batch": "000_000",
+      "name": "第 5 章 传输层",
+      "section": "传输层概述",
+      "body_len": 0,
+      "dupe_count": 0,
+      "dupe_ids": [],
+      "dupe_batches": []
+    },
+    {
+      "keep_id": "kp_9f2a1c40_000_000_001",
+      "keep_batch": "000_000",
+      "name": "5.3 TCP 拥塞控制",
+      "section": "传输层概述",
+      "body_len": 0,
+      "dupe_count": 0,
+      "dupe_ids": [],
+      "dupe_batches": []
+    },
+    {
+      "keep_id": "kp_ada1063f_000_000_000",
+      "keep_batch": "000_000",
+      "name": "INTERNETWORKING",
+      "section": "INTERNETWORKING",
+      "body_len": 0,
+      "dupe_count": 0,
+      "dupe_ids": [],
+      "dupe_batches": []
+    },
+    {
+      "keep_id": "kp_ada1063f_000_000_001",
+      "keep_batch": "000_000",
+      "name": "Problem: Not All Networks are ",
+      "section": "Problem: Not All Networks are Directly Connected",
+      "body_len": 48,
+      "dupe_count": 0,
+      "dupe_ids": [],
+      "dupe_batches": []
+    },
+    {
+      "keep_id": "kp_ada1063f_000_000_002",
+      "keep_batch": "000_000",
+      "name": "The core job of a switch",
+      "section": "Problem: Not All Networks are Directly Connected",
+      "body_len": 430,
+      "dupe_count": 0,
+      "dupe_ids": [],
+      "dupe_batches": []
+    },
+    {
+      "keep_id": "kp_cf6fcaa0_000_000_000",
+      "keep_batch": "000_000",
+      "name": "CONGESTION CONTROL",
+      "section": "CONGESTION CONTROL",
+      "body_len": 0,
+      "dupe_count": 0,
+      "dupe_ids": [],
+      "dupe_batches": []
+    },
+    {
+      "keep_id": "kp_cf6fcaa0_000_000_001",
+      "keep_batch": "000_000",
+      "name": "Problem: Allocating Resources",
+      "section": "Problem: Allocating Resources",
+      "body_len": 0,
+      "dupe_count": 0,
+      "dupe_ids": [],
+      "dupe_batches": []
+    },
+    {
+      "keep_id": "kp_cf6fcaa0_000_000_002",
+      "keep_batch": "000_000",
+      "name": "how fast sources",
+      "section": "287",
+      "body_len": 179,
+      "dupe_count": 0,
+      "dupe_ids": [],
+      "dupe_batches": []
+    },
+    {
+      "keep_id": "kp_cf6fcaa0_000_000_041",
+      "keep_batch": "000_000",
+      "name": "There",
+      "section": "306",
+      "body_len": 369,
+      "dupe_count": 0,
+      "dupe_ids": [],
+      "dupe_batches": []
+    }
+  ]
+}
