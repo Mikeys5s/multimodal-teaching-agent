@@ -1,0 +1,163 @@
+{
+  "_说明": "典型例题 / 常见误区 —— 每条带 source_page + source_quote（**从 content_md 直接摘的原文**）",
+  "_生成依据": "SPEC.md L207-208 给的选题方向 + 三份材料节选的真实页",
+  "_铁律": "每条答案都能在材料里找到原文；找不到依据的不写进来",
+  "counts": {
+    "example": 10,
+    "misconception": 7,
+    "total": 17,
+    "knowledge_points_covered": 10
+  },
+  "items": [
+    {
+      "kind": "example",
+      "kp_id": "kp_ada1063f_000_000_051",
+      "question": "主机 H1 的地址是 128.96.34.15，子网掩码 255.255.255.128；它要给 H2（128.96.34.139）发一个数据报。请判断：H2 与 H1 在同一个子网吗？如果不是，H1 会怎么做？",
+      "answer": "不在同一子网。H1 把掩码与 H2 的地址按位与，得到 128.96.34.128，与 H1 自己的子网号 128.96.34.0 不相等，因此 H1 知道 H2 在别的子网，于是把数据报交给它的默认路由器 R1 转发。",
+      "source_page": 28,
+      "source_quote": "if H1 is sending to H2, then H1 ANDs its subnet mask (255.255.255.128) with the address for H2 (128.96.34.139) to obtain 128.96.34.128. This does not match the subnet number for H1 (128.96.34.0) so H1 knows that H2 is on a different subnet. Since H1 cannot deliver the packet to H2 directly over the subnet, it sends the packet to its default router R1."
+    },
+    {
+      "kind": "misconception",
+      "kp_id": "kp_ada1063f_000_000_051",
+      "wrong_belief": "把「掩码」当成和地址做**按位或**（或者直接拿掩码去比大小），于是算出来的子网号根本不对。",
+      "cause": "掩码的名字里有个「掩」字，容易联想成「遮住某些位」，而没意识到它的语义是**按位与（AND）** —— 保留网络部分、清零主机部分。",
+      "remedy": "记一句话：**掩码是用来 AND 的**。先写二进制，再逐位与；本题里 255.255.255.128 的最后一段是 1000 0000，所以它把最后 7 位当主机位清零。",
+      "trigger": "如果掩码不是 255.255.255.0 这种整字节的，比如 255.255.255.128 或 255.255.240.0，会怎样？",
+      "source_page": 28,
+      "source_quote": "the bitwise AND of these two numbers denes … If the results are not equal, the packet needs to be sent to a router to be forwarded to another subnet."
+    },
+    {
+      "kind": "example",
+      "kp_id": "kp_ada1063f_000_000_051",
+      "question": "一个 /25 的子网（掩码 255.255.255.128）里能容纳多少个可分配主机地址？为什么很多场合要用 /25 而不是 /24？",
+      "answer": "/25 把原来 /24 的一个网络号切成两个，各容纳 128 个地址（去掉全 0 与全 1 后约 126 个可用）。用它的动机是**减少路由表条目**：子网化让一个网络号服务多个物理网，否则每个物理网都要单独分配网络号，骨干路由器的转发表会膨胀。",
+      "source_page": 27,
+      "source_quote": "Thus, the more network numbers there are in use, the bigger the forwarding tables get. … Subnetting provides a rst step to reducing total number of network numbers that are assigned."
+    },
+    {
+      "kind": "example",
+      "kp_id": "kp_ada1063f_000_000_035",
+      "question": "IP 首部的校验和是怎么算的？它覆盖哪些字段？为什么首部被改动过（哪怕一个 bit）一定会被发现？",
+      "answer": "把整个首部当成一串 16 位字，用反码算术逐个相加，最后再取反码。覆盖范围是**整个首部**。若传输中任一位被破坏，接收端重算的结果就不会与首部里的校验和相等。",
+      "source_page": 19,
+      "source_quote": "The Checksum is calculated by considering the entire IP header as a sequence of 16-bit words, adding them up using ones' complement arithmetic, and taking the ones' complement of the result. Thus, if any bit in the header is corrupted in transit, the checksum will not contain the correct value upon receipt of the packet."
+    },
+    {
+      "kind": "misconception",
+      "kp_id": "kp_ada1063f_000_000_035",
+      "wrong_belief": "以为校验和能**纠错**（发现错了还能改回来）。",
+      "cause": "把「校验」和「纠错」混为一谈 —— 而 IP 的校验和只做**检错**。",
+      "remedy": "区分两个词：**检错 = 发现出错**（IP 校验和属于这类）；**纠错 = 定位并改回**（要额外信息，如海明码）。IP 发现首部坏了就直接丢弃，靠上层重传。",
+      "trigger": "如果首部校验和不匹配，路由器会怎么办？能修好吗？",
+      "source_page": 19,
+      "source_quote": "Since a corrupted header may contain an error in the destination address—and, as a result, may have been delivered to the wrong host—the checksum is particularly important for the header."
+    },
+    {
+      "kind": "example",
+      "kp_id": "kp_42b16cd4_000_000_020",
+      "question": "TCP 建立连接为什么需要**三次**握手，而不是两次？如果第三次的 ACK 在网络上丢了，连接还能正常工作吗？",
+      "answer": "能。第三次 ACK 丢失时，客户端已经进入 ESTABLISHED，可以直接开始发数据；这些数据段都带着 ACK 标志与正确的确认号，服务端收到第一个数据段就会进入 ESTABLISHED。**这正是 TCP 的一个要点：每个报文都在汇报自己收到了哪些序号。**",
+      "source_page": 13,
+      "source_quote": "if the client's ACK to the server is lost, corresponding to the third leg of the three-way handshake, then the connection still functions correctly. This is because the client side is already in the ESTABLISHED state, so the local application process can start sending data to the other end."
+    },
+    {
+      "kind": "misconception",
+      "kp_id": "kp_42b16cd4_000_000_020",
+      "wrong_belief": "认为「确认号 = 我刚收到的那个序号」，所以看到服务端回 Ack = y + 1 会觉得「多加了 1，是不是算错了」。",
+      "cause": "没理解 TCP 的确认是**累积确认**：确认号表示「下一个期望的序号」，因此它**隐含地确认了之前所有的序号**。",
+      "remedy": "把确认号读成一句话：**「下一个我要的是 y+1」** —— 它同时意味着 y 及以前都收到了。这也是为什么第三段握手只需要一个 ACK 就能确认服务端的 SYN。",
+      "trigger": "如果确认号表示「下一个期望的序号」，那么「Ack = y + 1」到底确认了什么？",
+      "source_page": 11,
+      "source_quote": "The reason why each side acknowledges a sequence number that is one larger than the one sent is that the Acknowledgement eld actually identies the next sequence number expected, thereby implicitly acknowledging all earlier sequence numbers."
+    },
+    {
+      "kind": "example",
+      "kp_id": "kp_cf6fcaa0_000_000_032",
+      "question": "某连接的拥塞窗口当前是 16 个报文。检测到一次丢包后，按 AIMD 应该变成多少？随后又成功发完一个窗口的数据，会变成多少？",
+      "answer": "丢包时**乘性减**：16 → 8。之后每成功发送一个窗口的数据，**加性增**：每个 RTT 加 1，所以 8 → 9。整体呈锯齿波形。",
+      "source_page": 16,
+      "source_quote": "suppose the CongestionWindow is currently set to 16 packets. If a loss is detected, CongestionWindow is set to 8. … This is the additive increase part of AIMD … Every time the source successfully sends a CongestionWindow's worth of packets—that is, each packet sent out during the last RTT …"
+    },
+    {
+      "kind": "misconception",
+      "kp_id": "kp_cf6fcaa0_000_000_032",
+      "wrong_belief": "「慢启动」名字里有「慢」，所以它比线性增长**更慢**。",
+      "cause": "**这个误解有名有姓 —— 教材自己就点出了它**：慢启动实际是**指数增长**（每 RTT 翻一倍），一点都不慢。之所以叫「慢」，是**历史语境**：当年要对比的不是后来的线性机制，而是 TCP 最初的行为 —— 相对那个，它才显得启动得慢。",
+      "remedy": "记结论：**慢启动 = 指数增长，用于冷启动快速爬到可用容量附近**；**加性增 = 线性增长，用于接近容量后小心试探**。两者配合成 AIMD。而「慢」这个字是历史遗留，不是性能描述。",
+      "trigger": "「慢启动」明明是每 RTT 翻倍的指数增长，为什么会起名叫「慢」？",
+      "source_page": 18,
+      "source_quote": "Why any exponential mechanism would be called slow is puzzling at rst, but it can be explained if put in the proper historical context. We need to compare slow start not against the linear mechanism of the previous subsection, but against the original behavior of TCP."
+    },
+    {
+      "kind": "misconception",
+      "kp_id": "kp_cf6fcaa0_000_000_032",
+      "wrong_belief": "把**拥塞窗口（CongestionWindow）**和**通告窗口（AdvertisedWindow）**当成同一个东西，于是搞不清到底谁在限速。",
+      "cause": "两个窗口都叫「窗口」、都限制在途数据量。但**通告窗口由接收方给出**（流控，怕把接收方撑爆）；**拥塞窗口由发送方自己估计**（拥控，怕把网络撑爆）—— **没有任何一方会告诉发送方拥塞窗口该多大**。",
+      "remedy": "记一句话：**流控是别把对方撑爆，拥控是别把网络撑爆**。实际允许的在途上限 = 两者取**较小值**。而拥塞窗口只能靠发送方从丢包 / 超时里**自己推断**。",
+      "trigger": "通告窗口由接收方在报文里告诉你，那拥塞窗口是谁告诉发送方的？",
+      "source_page": 15,
+      "source_quote": "TCP maintains a new state variable for each connection, called CongestionWindow, which is used by the source to limit how much data it is allowed to have in transit at a given time. The congestion window is congestion control's counterpart to ow control's advertised window. … Unlike the AdvertisedWindow, which is sent by the receiving side of the connection, there is no one to send a suitable CongestionWindow to the sending side of TCP."
+    },
+    {
+      "kind": "example",
+      "kp_id": "kp_cf6fcaa0_000_000_040",
+      "question": "慢启动从 1 个报文开始，按每 RTT 翻倍增长。第 1、2、3、4 个 RTT 结束时，拥塞窗口分别是多少？它什么时候停止翻倍？",
+      "answer": "1 → 2 → 4 → 8（每个 RTT 翻一倍）。当窗口涨到接近网络可用容量、开始出现丢包时，就切换到加性增的模式，不再翻倍。",
+      "source_page": 18,
+      "source_quote": "the source starts out by setting CongestionWindow to one packet. When the ACK for this packet arrives, TCP adds 1 to CongestionWindow and then sends two packets. Upon receiving the corresponding two ACKs, TCP increments CongestionWindow by 2—one for each ACK—and next sends four packets. The end result is that TCP effectively doubles the number of packets it has in transit every RTT."
+    },
+    {
+      "kind": "example",
+      "kp_id": "kp_ada1063f_000_000_076",
+      "question": "节点 F 告诉邻居 A：「我到 G 的开销是 1」；A 到 F 的开销也是 1。A 通过 F 到 G 的总开销是多少？为什么 A 会因此更新它的表？",
+      "answer": "总开销 2。若 A 表里原来「到 G」的开销是 ∞（或大于 2），A 就把它更新成「下一跳 F、开销 2」—— 这就是距离向量的核心动作：**邻居告诉我的距离，加上我到邻居的距离，取更小者**。",
+      "source_page": 76,
+      "source_quote": "node F tells node A that it can reach node G at a cost of 1; A also knows it can reach F at a cost of 1, so it adds these costs to get the cost of reaching G by means of F. This total cost of 2 is less than the current cost of innity, so A records …"
+    },
+    {
+      "kind": "misconception",
+      "kp_id": "kp_ada1063f_000_000_092",
+      "wrong_belief": "把两者对**邻居**的行为记反了：以为距离向量是「只告诉邻居它自己的链路状态」，链路状态是「把全表发给邻居」。",
+      "cause": "两条记法都对称，容易互相污染。真正的区分点是**「跟谁说」与「说什么」这两个维度的组合**。",
+      "remedy": "用一句话记牢：**距离向量 = 只跟邻居说、但把「到所有节点的距离」都说**；**链路状态 = 跟所有人说、但只说「我自己直连链路的状态」**。即：**DV 是话少但说得全，LS 是话多但说得少**。",
+      "trigger": "距离向量和链路状态，哪个是「只跟邻居说、告诉他我全部的距离」？",
+      "source_page": 92,
+      "source_quote": "In distance-vector, each node talks only to its directly connected neighbors, but it tells them everything it has learned (i.e., distance to all nodes). In link-state, each node talks to all other nodes, but it tells them only what it knows for sure (i.e., only the state of its directly connected links)."
+    },
+    {
+      "kind": "example",
+      "kp_id": "kp_ada1063f_000_000_095",
+      "question": "链路状态协议里的 LSP 为什么必须带序号？为什么这个序号要设计得很大（比如 64 位）、而且**不期望回绕**？",
+      "answer": "序号用来**判断新旧**：收到更新的序号就覆盖旧信息，从而避免老信息在网络里无限循环。它不像多数协议序号那样会回绕，因为一旦回绕，一条旧 LSP 就可能被误判成新信息 —— 所以要给得足够大。",
+      "source_page": 88,
+      "source_quote": "To make sure that old information is replaced by newer information, LSPs carry sequence numbers. Each time a node generates a new LSP, it increments the sequence number by 1. Unlike most sequence numbers used in protocols, these sequence numbers are not expected to wrap, so the eld needs to be quite large (say, 64 bits)."
+    },
+    {
+      "kind": "example",
+      "kp_id": "kp_ada1063f_000_000_039",
+      "question": "一个 IP 数据报为什么要被分片？如果其中**一个分片**在途中丢了，接收方会怎么做？",
+      "answer": "分片是因为每种链路都有自己的 MTU（最大传输单元）—— 报文超过 MTU 就必须拆成能过这段链路的片段。**只要丢一个分片，整个数据报就重组失败**；接收方会先占着资源尝试重组，最终放弃并回收 —— **而这个先占资源再放弃的行为本身可以被用作拒绝服务攻击**。",
+      "source_page": 39,
+      "source_quote": "IP reassembly is far from a simple process. For example, if a single fragment is lost, the receiver will still attempt to reassemble the datagram, and it will eventually give up and have to garbage-collect the resources that were used to perform the failed reassembly. Getting a host to tie up resources needlessly can be the basis of a denial-of-service attack."
+    },
+    {
+      "kind": "misconception",
+      "kp_id": "kp_ada1063f_000_000_039",
+      "wrong_belief": "认为分片是「网络层的负担，能不拆就不拆」—— 于是没意识到**分片会削弱端到端的可靠性**。",
+      "cause": "把分片理解成一种优化或实现细节，而忽略了：**任何一个分片丢失都导致整个数据报作废**，并且接收方为重组会占用资源。",
+      "remedy": "记住代价的三层：① **丢一片 = 全丢**（放大丢失概率）② **接收方要占资源等重组**（可被 DoS 利用）③ **重组有超时，超时后资源才回收**。所以现实中更希望**路径 MTU 发现**来尽量避免分片。",
+      "trigger": "如果只丢了一个分片，是不是可以「先重组收到的那部分」？",
+      "source_page": 39,
+      "source_quote": "if a single fragment is lost, the receiver will still attempt to reassemble the datagram, and it will eventually give up and have to garbage-collect the resources that were used to perform the failed reassembly."
+    },
+    {
+      "kind": "example",
+      "kp_id": "kp_ada1063f_000_000_067",
+      "question": "VPN 是怎么做到「在公网上传输，却只有该机构内部能解读」的？它和直接租专线相比，代价是什么？",
+      "answer": "VPN 的思路是**在公网之上叠加一层封装（隧道）**：把内部报文再包一层，穿过公网到达对端后解封。这样通信在逻辑上被限制在该机构的站点之间。相比直接租专线，它省了成本，但**依赖公网的质量与安全假设**。",
+      "source_page": 67,
+      "source_quote": "The term VPN is heavily overused and denitions vary, but intuitively we can dene a VPN by considering rst the idea of a private network. Corporations with many sites often build private networks by leasing circuits from the phone companies and using those lines to interconnect sites. In such a network, communication is restricted to take place only among the sites of that corporation …"
+    }
+  ]
+}
