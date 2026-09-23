@@ -26,6 +26,25 @@ const STUDENT_LABEL = 'demo'
  *   ② 苏格拉底状态机 —— state 事件 + GET /state 双通道可视化（api-spec §5.3）；
  *   ③ 三件产出 —— diagnosis 事件给出「涉及知识点 / 卡在哪一步 / 下一步练习」。
  */
+/**
+ * 示例问题 —— **实测挑出来的，不是想出来的**。
+ *
+ * 判据（2026-09-23 线上实测）：每条都命中 ≥ 5 个知识点，
+ * 且首轮都是反问（符合 SPEC A3-4「首轮不给答案」）。
+ *
+ * ⚠️ **最后一条是越界问题**，故意留的 ——
+ * 它演示的是「幻觉率 0」：材料里没有就**明确说不答、不猜**。
+ */
+const SAMPLE_QUESTIONS: { q: string; label: string; scope?: 'out' }[] = [
+  { q: '三次握手为什么不是两次？', label: 'Ch05 · 三次握手' },
+  { q: '子网掩码是怎么用的？', label: 'Ch03 · 子网划分' },
+  { q: '慢启动为什么叫慢启动？', label: 'Ch06 · 拥塞控制' },
+  { q: '校验和是怎么算的？', label: 'Ch03 · 校验和' },
+  { q: '距离向量和链路状态路由的区别是什么？', label: 'Ch03 · 路由' },
+  { q: '滑动窗口是怎么控制流量的？', label: 'Ch05 · 滑动窗口' },
+  { q: '怎么做红烧肉？', label: '越界 · 应拒答', scope: 'out' },
+]
+
 export default function Tutor() {
   const navigate = useNavigate()
   const materialsReq = useRequest(() => api.listMaterials({ page_size: 100 }), [])
@@ -272,6 +291,30 @@ export default function Tutor() {
         {/* 左：问答流 */}
         <div className="space-y-3">
           <section className="xizhi-card p-3">
+            {/* 示例问题 —— 点一下填入输入框（**不自动提交**，留改的余地）*/}
+            <div className="mb-2">
+              <div className="mb-1.5 text-xs font-medium text-slate-500">
+                示例问题（点一下填入，可再修改）
+              </div>
+              <div className="flex flex-wrap gap-1.5">
+                {SAMPLE_QUESTIONS.map((item) => (
+                  <button
+                    key={item.q}
+                    type="button"
+                    onClick={() => setQuestion(item.q)}
+                    title={item.label}
+                    className={
+                      'rounded-full border px-2.5 py-1 text-xs transition-colors ' +
+                      (item.scope === 'out'
+                        ? 'border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100'
+                        : 'border-slate-200 bg-slate-50 text-slate-600 hover:border-brand-300 hover:text-brand-700')
+                    }
+                  >
+                    {item.q}
+                  </button>
+                ))}
+              </div>
+            </div>
             <textarea
               rows={3}
               value={question}
@@ -282,7 +325,7 @@ export default function Tutor() {
                   void handleAsk()
                 }
               }}
-              placeholder="例如：这题为什么用快排不用冒泡？"
+              placeholder="例如：三次握手为什么不是两次？（也可以点上面的示例）"
               className="w-full resize-none rounded-lg border border-slate-200 px-3 py-2 text-sm leading-relaxed text-slate-800 outline-none placeholder:text-slate-400 focus:border-brand-300 focus:ring-2 focus:ring-brand-500/20"
             />
             <div className="mt-2 flex flex-wrap items-center justify-between gap-2">

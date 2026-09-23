@@ -31,6 +31,8 @@ from typing import Any
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from app.tutor.terms import normalize_query
+
 from app.models import KnowledgePoint, KpPrerequisite
 
 #: 命中阈值。低于它判越界（→ REFUSE）。
@@ -119,7 +121,17 @@ def search_kps(
     `material_scope`：会话创建时指定的答疑范围（SPEC F3.1）。
     `"all"` 或 `None` = 全部材料；否则是 material_id 的逗号分隔串。
     **范围影响检索域** —— 这是 F3.1 的规格要求，不是可选优化。
+
+    ## ⚠️ 进检索前先做**术语归一化**（2026-09-23 加）
+
+    材料原文是**英文**，而学生用**中文**提问 —— 纯中文 query 对英文文档是 0 命中
+    （实测：纯中文 0/6、纯英文 6/6、中文+英文 6/6）。
+
+    `normalize_query` 把 query 里的中文术语**追加**对应英文原词，
+    让两个通道都有东西可比 —— 而 `score_text` 本就取两者较高者。
     """
+    query = normalize_query(query)
+
     stmt = select(KnowledgePoint)
     if material_scope and material_scope != "all":
         ids = [x.strip() for x in material_scope.split(",") if x.strip()]
