@@ -94,6 +94,7 @@ class ExampleOut(BaseModel):
     analysis_md: str | None = None
     difficulty: int | None = None
     source_page: int | None = None
+    source: str | None = Field(default=None, description="human / derived")
 
 
 class MisconceptionOut(BaseModel):

@@ -29,9 +29,18 @@ const KP_TYPE_LABEL: Record<KpType, string> = {
   other: '其他',
 }
 
-const MISCONCEPTION_SOURCE_LABEL: Record<Misconception['source'], string> = {
+const MISCONCEPTION_SOURCE_LABEL: Record<string, string> = {
   human: '人工标注',
+  material: '材料原文',
+  // 后端派生内容用的就是 llm_inferred —— 界面上说清是"派生"，不谎称人工
+  llm_inferred: '由原文派生',
   ai: 'AI 归纳',
+}
+
+/** 例题来源徽章的文案与样式。 */
+const EXAMPLE_SOURCE_BADGE: Record<string, { label: string; className: string }> = {
+  human: { label: '人工精选', className: 'bg-emerald-100 text-emerald-700' },
+  derived: { label: '由原文派生', className: 'bg-slate-100 text-slate-500' },
 }
 
 function SectionHeading({
@@ -79,7 +88,18 @@ function ExampleItem({ item, index }: { item: Example; index: number }) {
       <div className="mb-1.5 flex items-center gap-2">
         <span className="text-[11px] font-medium text-slate-400">例 {index + 1}</span>
         <DifficultyBadge difficulty={item.difficulty} />
-        <span className="text-[11px] text-slate-400">第 {item.source_page} 页</span>
+        {item.source_page != null && item.source_page > 0 && (
+          <span className="text-[11px] text-slate-400">第 {item.source_page} 页</span>
+        )}
+        {(() => {
+          const badge = EXAMPLE_SOURCE_BADGE[item.source ?? 'human']
+          if (!badge) return null
+          return (
+            <span className={`rounded-full px-1.5 py-0.5 text-[11px] ${badge.className}`}>
+              {badge.label}
+            </span>
+          )
+        })()}
       </div>
       <p className="whitespace-pre-wrap text-sm leading-relaxed text-slate-700">{item.stem_md}</p>
       {item.options_json && item.options_json.length > 0 && (

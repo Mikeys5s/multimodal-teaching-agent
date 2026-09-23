@@ -19,6 +19,8 @@
 
 from __future__ import annotations
 
+import re  # 派生内容里要剥掉 summary_md 的 markdown 标题行
+
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
@@ -137,6 +139,96 @@ def load_kp_items(db: Session, kps: list[KnowledgePoint]) -> list[KpItemOut]:
     return [to_kp_item(k, chapters, sections, materials, counts) for k in kps]
 
 
+def _derive_examples(kp: KnowledgePoint, prereq_names: list[str]) -> list[dict]:
+    """**派生**思考题 —— 用于「没有人工精选例题」的知识点。
+
+    全库 629 个点里人工精选的只有 9 个。剩下的点如果显示「暂无例题」，
+    演示与答辩时点开就是空的。而「不空」不一定要靠编内容 ——
+    可以**从已有的确定性数据派生**：题干来自 `summary_md`（材料原文的摘要）。
+
+    ⚠️ 派生内容一律标 `source="derived"`，前端单独分区、单独徽章，**
+    不混进「人工精选」里冒充** —— 这是 §1.4「宁缺毋错」的直接要求。
+    """
+    out: list[dict] = []
+    summary = (kp.summary_md or "").strip()
+    if not summary:
+        return out
+
+    body = re.sub(r"^#+\s.*$", "", summary, flags=re.M).strip()
+    if not body:
+        return out
+    short = body if len(body) <= 300 else body[:300].rstrip() + "…"
+
+    out.append({
+        "id": f"{kp.id}__derived_ex1",
+        "question_type": "short_answer",
+        "stem_md": f"材料里这样讲这个知识点：\n\n> {short}\n\n"
+                   f"请用你自己的话说明「{kp.name}」到底在解决什么问题 —— "
+                   f"并指出这段话里最关键的一个限定条件。",
+        "options_json": None,
+        "answer_md": f"要点来自材料原文：\n\n{short}",
+        "analysis_md": "本题由原文摘要派生（非人工精选）。"
+                       "若需要可判对错的硬题目，见本知识点的「人工精选」分区（如有）。",
+        "difficulty": kp.difficulty,
+        "source_page": None,
+        "source": "derived",
+    })
+
+    if prereq_names:
+        first = prereq_names[0]
+        out.append({
+            "id": f"{kp.id}__derived_ex2",
+            "question_type": "short_answer",
+            "stem_md": f"在学「{kp.name}」之前，材料把它排在「{first}」之后。\n\n"
+                       f"请说明：如果不先掌握「{first}」，「{kp.name}」这里会在哪一步卡住？",
+            "options_json": None,
+            "answer_md": f"这是一道**先修检查题**：能说清「{first}」与「{kp.name}」的依赖关系，"
+                         f"说明前置已具备；说不清则建议先回去补「{first}」。\n\n"
+                         f"依赖依据见本知识点的「前置知识点」分区（带 relation_type 与理由）。",
+            "analysis_md": "由「前置依赖边」派生（非人工精选）—— 用于自查前置是否吃透。",
+            "difficulty": kp.difficulty,
+            "source_page": None,
+            "source": "derived",
+        })
+    return out
+
+
+def _derive_misconceptions(kp: KnowledgePoint, hard_prereqs: list[tuple[str, str]]) -> list[dict]:
+    """**派生**易错点 —— 同样只用于「没有人工误区」的点。
+
+    ⚠️ `source` 用 `llm_inferred`（`MISCONCEPTION_SOURCES` 里已有的合法值，
+    语义是「由系统推断、未经人工确认」）。**不新增枚举值** —— 那要动 CHECK 约束。
+    """
+    out: list[dict] = []
+    if hard_prereqs:
+        _pre_id, pre_name = hard_prereqs[0]
+        out.append({
+            "id": f"{kp.id}__derived_mc1",
+            "description": f"跳过「{pre_name}」直接学「{kp.name}」—— "
+                           f"结论记住了，但一问「为什么」就答不上来。",
+            "cause": f"材料把「{pre_name}」排在前面是有原因的："
+                     f"「{kp.name}」的论述里用到了前置的概念。"
+                     f"没学过前置时，读得通字面，但建不起因果。",
+            "remedy": f"先回去把「{pre_name}」的摘要读一遍，再回来看这个点 —— "
+                      f"重点看它用到了前置的哪个性质。",
+            "source": "llm_inferred",
+            "confidence": 0.5,
+        })
+    out.append({
+        "id": f"{kp.id}__derived_mc2",
+        "description": "把摘要当成全部 —— 只记住了一段话，"
+                       "说不清这个知识点的**适用条件**和**它不解决什么**。",
+        "cause": "摘要是「压缩后的要点」，省掉的正是边界条件。"
+                 "只读摘要会得到一个「什么场合都对」的印象，"
+                 "而真实的协议/算法都有前提。",
+        "remedy": "对照着问自己两个问题：① **什么情况下它不成立？** "
+                  "② **它和相邻的知识点分工在哪？** 答不上就别急着往下学。",
+        "source": "llm_inferred",
+        "confidence": 0.4,
+    })
+    return out
+
+
 def to_kp_detail(db: Session, kp: KnowledgePoint) -> KpDetailOut:
     """知识点行 → 详情（列表项 + 前置边 + 例题 + 误区）。"""
     base = load_kp_items(db, [kp])[0]
@@ -162,6 +254,40 @@ def to_kp_detail(db: Session, kp: KnowledgePoint) -> KpDetailOut:
         select(KpMisconception).where(KpMisconception.kp_id == kp.id)
     ).all()
 
+    active_edges = [e for e in edges if not e.pruned]
+    hard = [(e.prereq_kp_id, names.get(e.prereq_kp_id, ""))
+            for e in active_edges if e.relation_type == "hard"]
+    all_pre = [names.get(e.prereq_kp_id, "") for e in active_edges]
+    all_pre = [n for n in all_pre if n]
+
+    ex_rows: list[dict]
+    if examples:
+        ex_rows = [
+            {
+                "id": x.id, "question_type": x.question_type, "stem_md": x.stem_md,
+                "options_json": x.options_json, "answer_md": x.answer_md,
+                "analysis_md": x.analysis_md, "difficulty": x.difficulty,
+                "source_page": x.source_page,
+                "source": "human",
+            }
+            for x in examples
+        ]
+    else:
+        ex_rows = _derive_examples(kp, all_pre)
+
+    mc_rows: list[dict]
+    if misconceptions:
+        mc_rows = [
+            {
+                "id": m.id, "description": m.description, "cause": m.cause,
+                "remedy": m.remedy, "source": m.source,
+                "confidence": float(m.confidence) if m.confidence is not None else None,
+            }
+            for m in misconceptions
+        ]
+    else:
+        mc_rows = _derive_misconceptions(kp, hard)
+
     return KpDetailOut(
         **base.model_dump(),
         prerequisites=[
@@ -175,28 +301,6 @@ def to_kp_detail(db: Session, kp: KnowledgePoint) -> KpDetailOut:
             for e in edges
             if not e.pruned
         ],
-        examples=[
-            ExampleOut(
-                id=x.id,
-                question_type=x.question_type,
-                stem_md=x.stem_md,
-                options_json=x.options_json,
-                answer_md=x.answer_md,
-                analysis_md=x.analysis_md,
-                difficulty=x.difficulty,
-                source_page=x.source_page,
-            )
-            for x in examples
-        ],
-        misconceptions=[
-            MisconceptionOut(
-                id=m.id,
-                description=m.description,
-                cause=m.cause,
-                remedy=m.remedy,
-                source=m.source,
-                confidence=float(m.confidence) if m.confidence is not None else None,
-            )
-            for m in misconceptions
-        ],
+        examples=[ExampleOut(**r) for r in ex_rows],
+        misconceptions=[MisconceptionOut(**r) for r in mc_rows],
     )

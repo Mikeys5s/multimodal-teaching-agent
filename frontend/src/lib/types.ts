@@ -366,6 +366,16 @@ export interface Example {
   analysis_md: string
   difficulty: Difficulty
   source_page: number
+  /**
+   * 来源。
+   *
+   * - `human`：`kp_examples` 表里的人工精选（逐条带原文出处）
+   * - `derived`：**该点没有精选例题时，后端由 `summary_md` / 前置依赖边派生**
+   *
+   * ⚠️ 派生不是"假装有例题" —— 它让详情面板在任何知识点上都不空白，
+   * 同时**如实标注来源**。前端据此显示不同徽章。
+   */
+  source?: 'human' | 'derived'
 }
 
 export interface Misconception {
@@ -373,7 +383,14 @@ export interface Misconception {
   description: string
   cause: string
   remedy: string
-  source: 'human' | 'ai'
+  /**
+   * 来源 —— **必须如实反映**，LLM 推断的不得伪装成人工确认。
+   *
+   * 取值对齐后端 `MISCONCEPTION_SOURCES`（`material` / `llm_inferred` / `human`）。
+   * **派生内容用 `llm_inferred`** —— 语义是"由系统推断、未经人工确认"，与事实相符。
+   * （不新增枚举值：那要动 DB 的 CHECK 约束，而 schema 冻结在 9/24。）
+   */
+  source: 'human' | 'llm_inferred' | 'material' | string
   confidence: number
 }
 
