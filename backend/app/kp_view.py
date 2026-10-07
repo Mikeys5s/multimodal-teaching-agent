@@ -87,6 +87,52 @@ def load_counts(db: Session, kp_ids: list[str]) -> dict[str, dict[str, int]]:
     return out
 
 
+# ---------------------------------------------------------------------------
+# 重复组映射（**标注用，不是去重**）
+# ---------------------------------------------------------------------------
+
+_DEDUP: dict[str, dict] | None = None
+
+
+def _load_dedup() -> dict[str, dict]:
+    """惰性加载 `kp_dedup.json`（模块级单例，只读一次）。
+
+    ## 这份数据从哪来
+
+    `docs/graph/dedup-grouping.json` —— 9/23 按**正文指纹**把 629 条归成 167 组。
+    **它一直是"决策材料"，没被接进服务** —— 所以界面上仍然会看到重复。
+
+    ## 为什么用文件而不是查库
+
+    重复关系是**离线算出来的**（指纹归组），不是运行期能推的。
+    而且它对 629 条点是**静态**的 —— 放文件里读一次就够，**不必占一次查询**。
+
+    ## ⚠️ 加载失败时的行为
+
+    **返回空 dict** ⇒ `_dedup_info` 会给出"无重复"的默认值 ⇒
+    **服务照常工作，只是没有标注**。**不抛异常** —— 一个辅助标注不该让整个接口挂掉。
+    """
+    global _DEDUP
+    if _DEDUP is None:
+        import json as _json
+        import pathlib as _pathlib
+
+        p = _pathlib.Path(__file__).with_name("kp_dedup.json")
+        try:
+            _DEDUP = _json.loads(p.read_text(encoding="utf-8")).get("mapping", {})
+        except Exception:  # noqa: BLE001
+            _DEDUP = {}
+    return _DEDUP
+
+
+def _dedup_info(kp_id: str) -> dict:
+    """查一个知识点在重复组里的位置。**查不到 ⇒ 无重复**。"""
+    m = _load_dedup().get(kp_id)
+    if not m:
+        return {"is_representative": True, "keep_id": kp_id, "group_size": 1}
+    return m
+
+
 def to_kp_item(
     kp: KnowledgePoint,
     chapters: dict,
@@ -94,11 +140,22 @@ def to_kp_item(
     materials: dict,
     counts: dict[str, dict[str, int]],
 ) -> KpItemOut:
-    """知识点行 → 列表项。**`source.quote` 必须有**（A2-3 溯源覆盖率 100%）。"""
+    """知识点行 → 列表项。**`source.quote` 必须有**（A2-3 溯源覆盖率 100%）。
+
+    ## ⚠️ 重复组标注（2026-10-07 加）
+
+    629 个知识点里 **462 个是副本**（同一段材料内容被抽了多遍，最多的一组有 35 个成员）。
+    **详情面板上会出现两个点显示一模一样的内容** —— 评委看到会以为数据是凑数的。
+
+    **这里只做「标注」，不做「去重」** —— 副本数据**仍在库里、仍能被检索到**。
+    前端文案必须是「**已合并显示**」这类，**不能写「已去重」**（那是假的）。
+    """
     ch = chapters.get(kp.chapter_id)
     sec = sections.get(kp.section_id)
     mat = materials.get(kp.material_id)
     c = counts.get(kp.id, {"prereq": 0, "example": 0, "misconception": 0})
+
+    dup = _dedup_info(kp.id)
 
     return KpItemOut(
         id=kp.id,
@@ -129,6 +186,9 @@ def to_kp_item(
         misconception_count=c["misconception"],
         needs_review=bool(kp.needs_review),
         confidence=float(kp.confidence) if kp.confidence is not None else None,
+        is_duplicate=not dup["is_representative"],
+        duplicate_of=(None if dup["is_representative"] else dup["keep_id"]),
+        duplicate_group_size=dup["group_size"],
     )
 
 

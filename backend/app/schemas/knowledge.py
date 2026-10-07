@@ -62,6 +62,25 @@ class KpItemOut(BaseModel):
 
     needs_review: bool = Field(description="待核实标记，前端应显著提示")
     confidence: float | None = None
+    # ── 重复组标注（2026-10-07 加）────────────────────────────────────────
+    #
+    # 629 个知识点里 **462 个是副本**（同一段材料内容被抽了多遍，最多一组 35 个成员）。
+    # 界面会出现两个点显示一模一样的内容 —— 评委看到会以为数据是凑数的。
+    #
+    # ⚠️ **这是「标注」，不是「去重」** —— 副本**仍在库里、仍能被检索到**。
+    # 前端文案必须是「**已合并显示**」这类，**不能写「已去重」**（那是假的）。
+    is_duplicate: bool = Field(
+        default=False,
+        description="是否是重复组里的副本（**非代表**）。代表自己是 false",
+    )
+    duplicate_of: str | None = Field(
+        default=None,
+        description="该组代表的 kp_id（**代表自己是 None**）。前端可用它做跳转或合并提示",
+    )
+    duplicate_group_size: int = Field(
+        default=1,
+        description="这一组共几个成员（**无重复时为 1**）。前端显示「在材料中出现 N 处」",
+    )
 
 
 # ---------------------------------------------------------------------------
