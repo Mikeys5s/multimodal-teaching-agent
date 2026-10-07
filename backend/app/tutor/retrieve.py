@@ -33,6 +33,40 @@ from sqlalchemy.orm import Session
 
 from app.tutor.terms import normalize_query
 
+# ---------------------------------------------------------------------------
+# 可读标题表（**用于排序，不是用于显示**）
+# ---------------------------------------------------------------------------
+
+_TITLES: dict[str, dict] | None = None
+
+#: 没有可读标题的点乘这个系数。
+#:
+#: **209 个点没有**（约 33%）—— 它们大概率是句片段（`There` / `3` / `Note that it`）。
+#: 但**"没有可读标题"不等于"不相关"**（有的只是名字被切坏了、正文是好的），
+#: 所以**只温和降权，不过滤** —— 同类命中时排后面，但不至于消失。
+#: **⇒ 这是"调序"，不是"过滤"。**
+_NO_TITLE_PENALTY = 0.75
+
+
+def _load_titles() -> dict[str, dict]:
+    """惰性加载 `kp-titles.json`（与 dedup 同款：文件放 `app/` 下、只读一次）。
+
+    **加载失败返回空 dict** ⇒ 不降权、不参与 —— **服务照常，只是没优化**。
+    """
+    global _TITLES
+    if _TITLES is None:
+        import json as _json
+        import pathlib as _pathlib
+
+        p = _pathlib.Path(__file__).resolve().parents[1] / "kp-titles.json"
+        try:
+            _TITLES = {x["kp_id"]: x
+                       for x in _json.loads(p.read_text(encoding="utf-8"))["items"]}
+        except Exception:  # noqa: BLE001
+            _TITLES = {}
+    return _TITLES
+
+
 from app.models import KnowledgePoint, KpPrerequisite
 
 #: 命中阈值。低于它判越界（→ REFUSE）。
@@ -140,16 +174,35 @@ def search_kps(
 
     rows = session.scalars(stmt).all()
 
+    titles = _load_titles()
+
     scored: list[Hit] = []
     for kp in rows:
         # 名字权重更高 —— 它是"这个知识点叫什么"，比正文摘要更能代表主题
-        s = max(
+        t = titles.get(kp.id) or {}
+        disp = t.get("display_title")
+
+        parts = [
             score_text(query, kp.name) * 1.6,
             score_text(query, kp.summary_md or ""),
             score_text(query, kp.source_quote or ""),
-        )
+        ]
+        # ⭐ 可读标题参与打分（2026-10-07 加）
+        #
+        # 原名常被切坏（`There` / `3` / `Note that it`），而可读标题是从
+        # 小节标题或首句提炼的 —— 它**更能代表这个知识点在讲什么**。
+        # 权重与 name 同级：名字一侧取两者较高者。
+        if disp:
+            parts.append(score_text(query, disp) * 1.6)
+
+        s = max(parts)
         if s <= 0:
             continue
+
+        # ⭐ 没有可读标题 ⇒ 温和降权（**只调序，不过滤**）
+        if not disp:
+            s *= _NO_TITLE_PENALTY
+
         scored.append(
             Hit(
                 kp_id=kp.id, name=kp.name, summary_md=kp.summary_md or "",
