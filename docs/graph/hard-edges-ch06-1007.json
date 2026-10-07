@@ -1,0 +1,72 @@
+{
+  "_source_note": "构建期人工确认：P2 逐条读 Ch06 原文（6.2 排队规则 / 6.3 拥塞控制），语义判定「真前置」。判据：不先会 X 就不懂 Y 的什么，且能给出 evidence_quote。不靠名字猜。",
+  "_为什么补这一批": "9/22 补的 15 条 hard 边只覆盖 Ch03(9) 与 Ch05(6)，**Ch06 一条都没有** —— 导致 Ch06 任何知识点的学习路径都只有 1 步（被当成起点）。本批补 8 条。",
+  "_判据": "① 每条 reason 必须回答「不先会 X，就不懂 Y 的什么」；② evidence_quote 从 summary_md 原文直摘（不改写）；③ 补完跑 graph_infer.py verify，环数必须仍为 0。",
+  "_批次": "2026-10-07 · 决赛完善期 · 隐患④",
+  "edges": [
+    {
+      "kp_id": "kp_cf6fcaa0_000_000_024",
+      "prereq_kp_id": "kp_cf6fcaa0_000_000_022",
+      "relation_type": "hard",
+      "confidence": 0.9,
+      "reason": "公平队列是为解决「FIFO 不区分流量来源」这个问题而提出的：不知道 FIFO 把不同来源的包一视同仁这件事有多糟，就看不懂「我们真正想要的是逐位轮转」为什么是个进步。",
+      "evidence_quote": "The main problem with FIFO queuing is that it does not discriminate between different trafﬁc sources, or, in the language introduced in the previous section, it does not separate packets acc… / What we really want is bit-by-bit round-robin, where the router transmits a bit from ﬂow 1, then a bit from ﬂow 2, and so on."
+    },
+    {
+      "kp_id": "kp_cf6fcaa0_000_000_026",
+      "prereq_kp_id": "kp_cf6fcaa0_000_000_024",
+      "relation_type": "hard",
+      "confidence": 0.85,
+      "reason": "「公平队列的两点观察」是对机制本身性质的分析：不先知道它怎么按流分配（逐位轮转的近似），这两点观察就没有被观察的对象。",
+      "evidence_quote": "There are two things to notice about fair queuing. First, the link is never left idle as long as there is at least one packet in the queue. Any queuing scheme with this characteristic is sai… / What we really want is bit-by-bit round-robin…"
+    },
+    {
+      "kp_id": "kp_cf6fcaa0_000_000_027",
+      "prereq_kp_id": "kp_cf6fcaa0_000_000_026",
+      "relation_type": "hard",
+      "confidence": 0.9,
+      "reason": "这段原文自称「第二点要观察的」，它承接的是第一点：第一点讲「链路不会空闲」，第二点才讲「满载时每条流最多只能拿到 1/n」。不知道第一点的语境，就看不出第二点在对比什么。",
+      "evidence_quote": "The second thing to notice is that if the link is fully loaded and there are n ﬂows sending data, I cannot use more than 1/nth of the link bandwidth."
+    },
+    {
+      "kp_id": "kp_cf6fcaa0_000_000_028",
+      "prereq_kp_id": "kp_cf6fcaa0_000_000_026",
+      "relation_type": "hard",
+      "confidence": 0.85,
+      "reason": "work conserving（工作守恒）是「链路不空闲」那条观察的直接推论：原文用「Because FQ is work conserving」起句，说明它是在沿用前一句的结论来解释带宽如何被重新分配。",
+      "evidence_quote": "Because FQ is work conserving, any bandwidth that is not used by one ﬂow is automatically available to other ﬂows. / the link is never left idle as long as there is at least one packet in the queue"
+    },
+    {
+      "kp_id": "kp_cf6fcaa0_000_000_040",
+      "prereq_kp_id": "kp_cf6fcaa0_000_000_032",
+      "relation_type": "hard",
+      "confidence": 0.9,
+      "reason": "trace 里「窗口被除以 2、从 34KB 砍到 17KB」正是在演示乘性减这条规则：不知道规则本身（丢包就把 CongestionWindow 减半），就只会看到一串数字在跳，读不出这是设计而不是意外。",
+      "evidence_quote": "which time the congestion window is divided by 2 (i.e., cut from approximately 34 KB to around 17 KB) and CongestionThreshold is set to this value. / If a loss is detected, CongestionWindow is set to 8."
+    },
+    {
+      "kp_id": "kp_cf6fcaa0_000_000_037",
+      "prereq_kp_id": "kp_cf6fcaa0_000_000_035",
+      "relation_type": "hard",
+      "confidence": 0.9,
+      "reason": "原文自称「慢启动被使用的**第二种**情形」，它和前一种（连接刚建立）是一组对照：不知道第一种情形为什么需要慢启动，就看不出第二种（超时后重入）为什么要用同一机制。",
+      "evidence_quote": "The second situation in which slow start is used is a bit more subtle; it occurs when the connection goes dead while waiting for a timeout to occur. / There are actually two different situations in which slow start runs. The ﬁrst is at the very beginning of a connection…"
+    },
+    {
+      "kp_id": "kp_cf6fcaa0_000_000_037",
+      "prereq_kp_id": "kp_42b16cd4_000_000_011",
+      "relation_type": "hard",
+      "confidence": 0.95,
+      "reason": "**材料原文自己写了 Recall**：讲「超时后连接死掉」时，它要求读者回忆 TCP 滑动窗口的工作方式（发送方填满通告窗口后阻塞、等一个永远不来的 ACK）。不知道滑动窗口怎么阻塞，就读不懂这个死锁是怎么形成的。",
+      "evidence_quote": "Recall how TCP's sliding window algorithm works—when a packet is lost, the source eventually reaches a point where it has sent as much data as the advertised window allows, and so it blocks while waiting for an ACK that will not arrive."
+    },
+    {
+      "kp_id": "kp_cf6fcaa0_000_000_038",
+      "prereq_kp_id": "kp_cf6fcaa0_000_000_032",
+      "relation_type": "hard",
+      "confidence": 0.9,
+      "reason": "这段说重入慢启动时「已经有一个有用的 CongestionWindow 值」，而这个值的来历正是乘性减（上一次丢包时除以 2）。不知道乘性减，就不知道那个「目标窗口」是怎么算出来的。",
+      "evidence_quote": "the source has a current (and useful) value of CongestionWindow; this is the value of CongestionWindow that existed prior to the last packet loss, divided by 2 as a result of the loss. We can think of this as the target congestion window."
+    }
+  ]
+}
