@@ -1,0 +1,122 @@
+{
+  "_说明": "典型例题 / 常见误区（**P2 那一半：Ch05 端到端协议**）· 每条带 source_page + source_quote（从 summary_md 直接摘的原文）",
+  "_生成依据": "SPEC.md L207-208 给的选题方向 + Ch05 材料节选（EndToEndProtocols 5.1+5.2）的真实页",
+  "_铁律": "每条答案都能在材料里找到原文；找不到依据的不写进来。**不生成、不推断、不改写原文**。",
+  "_本批范围": "Ch05（kp_42b16cd4_*）· P1 负责 Ch03，P2 负责 Ch05+Ch06",
+  "_日期": "2026-10-07 · 决赛完善期 · 隐患③",
+  "counts": {
+    "examples": 9,
+    "misconceptions": 5
+  },
+  "items": [
+    {
+      "kind": "example",
+      "kp_id": "kp_42b16cd4_000_000_034",
+      "source_page": 19,
+      "question": "材料说糊涂窗口综合症（silly window syndrome）只在某些条件下才是问题。请问：要让它不出现，只要堵住其中一边就够了吗？为什么？",
+      "answer": "不够。原文写明它**两个条件任一成立**就会出现：① 发送方发小段，**或** ② 接收方只把窗口开一点点。两个都不发生时才不会有「小容器」进入数据流。\n\n而「禁止发小段」是做不到的（应用可能只想发一个字节就 push），所以**能下手的只有接收方** —— 规则是接收方不要在窗口只腾出一点时就通告出去。",
+      "source_quote": "Note that the silly window syndrome is only a problem when either the sender transmits a small segment or the receiver opens the window a small amount. If neither of these happens, then the small container is never introduced into the stream. It's not possible to outlaw sending small segments; for example, the application might do a push after sending a single byte. It is possible, however, to keep the receiver from introducing a small container (i.e., a small open window)."
+    },
+    {
+      "kind": "example",
+      "kp_id": "kp_42b16cd4_000_000_038",
+      "source_page": 21,
+      "question": "TCP 用 SampleRTT 和 EstimatedRTT 两个量。请说明：它们各自是怎么得到的？为什么超时值不能直接用 SampleRTT？",
+      "answer": "**SampleRTT** 是单次测量的差值：TCP 每发一个数据段就记时间，收到该段的 ACK 时再读一次时间，两者相减。\n\n**EstimatedRTT** 是对 SampleRTT 做的**加权平均** —— 把上一次的估计值与这一次的新样本按权重混合。\n\n不能直接用 SampleRTT 当超时，因为它**只反映一次测量**，波动大；直接拿它设超时会来回跳，导致把正常的慢确认误判成丢包而重传。",
+      "source_quote": "The idea is to keep a running average of the RTT and then to compute the timeout as a function of this RTT. Specifically, every time TCP sends a data segment, it records the time. When an ACK for that segment arrives, TCP reads the time again, and then takes the difference between these two times as a SampleRTT. TCP then computes an EstimatedRTT as a weighted average between the previous estimate and this new sample."
+    },
+    {
+      "kind": "example",
+      "kp_id": "kp_42b16cd4_000_000_039",
+      "source_page": 21,
+      "question": "公式里的 alpha 用来平滑 EstimatedRTT。请问 alpha 取**小**和取**大**各牺牲了什么？原始 TCP 规范推荐的范围是多少？",
+      "answer": "**取小**：能跟上 RTT 的变化，但**太容易被临时波动带偏**。\n**取大**：更稳定，但**对真实的变化反应不够快**。\n\n原始 TCP 规范推荐 **alpha 在 0.8 到 0.9 之间** —— 偏大，即偏向「稳定」。",
+      "source_quote": "The parameter alpha is selected to smooth the EstimatedRTT. A small alpha tracks changes in the RTT but is perhaps too heavily inﬂuenced by temporary ﬂuctuations. On the other hand, a large alpha is more stable but perhaps not quick enough to adapt to real changes. The original TCP speciﬁcation recom- mended a setting of alpha between 0.8 and 0.9."
+    },
+    {
+      "kind": "example",
+      "kp_id": "kp_42b16cd4_000_000_044",
+      "source_page": 24,
+      "question": "材料提到 Jacobson/Karels 算法「只和读时间的时钟一样好」。当时的 Unix 时钟粒度是多少？它相对典型跨洲 RTT 是什么量级？这带来什么后果？",
+      "answer": "当时典型 Unix 实现的**时钟粒度大到 500 ms**；而**跨洲 RTT 平均只有 100~200 ms**。\n\n**⇒ 时钟粒度比被测对象还大。** 后果是：算法再精确，**测量精度的上限被时钟钉死了**；而且实现只在每个 500ms 时钟滴答时才检查是否超时。",
+      "source_quote": "The second point of note is that the Jacobson/Karels algorithm is only as good as the clock used to read the current time. On typical Unix implementations at the time, the clock granularity was as large as 500 ms, which is significantly larger than the average cross-country RTT of somewhere between 100 and 200 ms."
+    },
+    {
+      "kind": "example",
+      "kp_id": "kp_42b16cd4_000_000_045",
+      "source_page": 24,
+      "question": "「计算超时」这件事看起来不复杂，但材料说它专门有一个 RFC（RFC 6298）。这说明了一个什么更一般的问题？",
+      "answer": "说明**「把协议完整规定清楚」本身可能复杂到让规范与实现的界限变模糊** —— 细节太多，以至于有人说「**实现就是规范**」。\n\n材料强调这**不一定坏**，但它确实解释了为什么有些看起来简单的机制，实际规定起来极难。",
+      "source_quote": "There is one other point to make about computing timeouts. It is a surprisingly tricky business, so much so, that there is an entire RFC dedicated to the topic: RFC 6298. The takeaway is that sometimes fully specify- ing a protocol involves so much minutiae that the line between specification and implementation becomes blurred."
+    },
+    {
+      "kind": "example",
+      "kp_id": "kp_42b16cd4_000_000_047",
+      "source_page": 24,
+      "question": "发送方往 TCP 连接里依次写 8 字节、2 字节、20 字节；接收方每次读 5 字节。请问接收方要循环几次才能读完？TCP 会把发送方的三次写入边界保留下来吗？",
+      "answer": "总共 8+2+20 = **30 字节**，每次读 5 ⇒ **循环 6 次**（原文给的正是这个例子）。\n\n**不会保留边界。** 原文明确：TCP **不在第 8 与第 9 字节之间、也不在第 10 与第 11 字节之间插入记录边界**。这正是「字节流」协议与「消息流」协议的关键区别 —— 接收方**无法从字节流本身**知道发送方分了几次写。",
+      "source_quote": "Since TCP is a byte-stream protocol, the number of bytes written by the sender are not necessarily the same as the number of bytes read by the receiver. For example, the application might write 8 bytes, then 2 bytes, then 20 bytes to a TCP connection, while on the receiving side the application reads 5 bytes at a time inside a loop that iterates 6 times. TCP does not interject record boundaries between the 8th and 9th bytes, nor between the 10th and 11th bytes."
+    },
+    {
+      "kind": "example",
+      "kp_id": "kp_42b16cd4_000_000_052",
+      "source_page": 27,
+      "question": "用 TTCP 测吞吐时，消息越大吞吐越高吗？这个趋势一直持续下去吗？为什么？",
+      "answer": "**越大越高** —— 因为每条消息都有固定开销，消息越大，**这份开销被摊到更多字节上**。\n\n但**不会一直涨**：曲线在**约 1 KB 以上就变平了**，此时每条消息的开销已经可以忽略。（原文用 Figure 5.12 展示这条曲线。）",
+      "source_quote": "The key thing to notice in this graph is that throughput improves as the messages get larger. This makes sense-each message involves a certain amount of overhead, so a larger message means that this overhead is amortized over more bytes. The throughput curve flattens off above 1 KB, at which point the per-message overhead beco"
+    },
+    {
+      "kind": "example",
+      "kp_id": "kp_42b16cd4_000_000_057",
+      "source_page": 31,
+      "question": "在网络延迟很高（数百毫秒）时，材料说要建立一条「基于 TCP + TLS 的 HTTP 会话」，在第一条 HTTP 消息发出之前一共要花掉几个 RTT？分别花在哪？",
+      "answer": "**三个 RTT**：\n1. **一个**用于建立 TCP 会话（三次握手）\n2. **两个**用于设置加密参数（TLS 握手）\n\n**⇒ 这就是「分层设计带来的延迟」** —— QUIC 的设计者正是看到这一点（延迟是分层方法的直接结果）才决定另起炉灶。",
+      "source_quote": "If network latency is high—in the hundreds of milliseconds—then a few RTTs can quickly add up to a visible annoyance for an end user. Establishing an HTTP session over TCP with Transport Layer Security (Section 8.5) would typically take three round trips (one for TCP session establishment and two for setting up the encryption parameters) before the first HTTP message could be sent."
+    },
+    {
+      "kind": "example",
+      "kp_id": "kp_42b16cd4_000_000_056",
+      "source_page": 31,
+      "question": "Multipath TCP 的核心思路是什么？材料举的哪个场景最能体现它的价值？",
+      "answer": "核心思路：**让数据包走多条路径**，例如给一端同时用两个不同的 IP 地址。\n\n最典型的场景是**移动设备同时连着 Wi-Fi 和蜂窝网**（因而有两个不同 IP）。两个网络都是无线的，**都可能大量丢包** —— 能同时用两条链路来承载数据包，会**显著改善用户体验**。",
+      "source_quote": "The idea of Multipath TCP is to steer packets over multiple paths through the Internet, for example, by using two different IP addresses for one of the end-points. This can be especially helpful when delivering data to a mobile device that is connected to both Wi-Fi and the cellular network (and hence, has two unique IP addresses). Being wireless, both networks can experience significant packet-loss, so being able to use both to carry packets can dramatically improve the user experience."
+    },
+    {
+      "kind": "misconception",
+      "kp_id": "kp_42b16cd4_000_000_039",
+      "wrong_belief": "把 alpha **取小**理解成「更精确」—— 以为越紧跟每一次测量就越准。",
+      "cause": "直觉上「反应快 = 准」。但 RTT 的**单次测量本身带噪**（排队、路由抖动），紧跟它等于**把噪声也当信号**。原文对此的原话是「太容易被临时波动带偏」。",
+      "remedy": "记住 alpha 的取舍是**稳定 vs 灵敏**，不是**准 vs 不准**。而且原始 TCP 规范推荐 **0.8~0.9（偏大）** —— 说明工程上选了稳定这一侧。"
+    },
+    {
+      "kind": "misconception",
+      "kp_id": "kp_42b16cd4_000_000_047",
+      "wrong_belief": "以为「发送方分三次写、接收方就该收到三次」—— 把 TCP 当成了**保留消息边界**的协议。",
+      "cause": "平时用 socket 调 `send()` / `recv()` 是一来一回的，容易误推「发送端的写入次数 = 接收端的读取次数」。而 TCP 在字节流上**不插任何边界**。",
+      "remedy": "记一句：**TCP 是字节流，不是消息流**。需要边界就**自己在应用层定**（定长头 + 长度字段、或分隔符）。原文也提到 TCP 有两个可以标边界的特性，但它们**原本是为别的目的设计的**，只是后来被这样用。"
+    },
+    {
+      "kind": "misconception",
+      "kp_id": "kp_42b16cd4_000_000_034",
+      "wrong_belief": "以为糊涂窗口综合症**只怪发送方**（发小段）—— 于是在发送端加逻辑就以为解决了。",
+      "cause": "原文写的是**两个条件「任一」成立**即可：发送小段 **或** 接收方开小窗。只堵一边，另一边仍会把「小容器」引进来。",
+      "remedy": "**两边都要管**，但顺序上有讲究：原文指出「禁止发小段」**做不到**（应用可能就发一个字节然后 push），所以**实际能下手的只有接收方** —— 规则是接收方不要在窗口只多出一点点时就通告。"
+    },
+    {
+      "kind": "misconception",
+      "kp_id": "kp_42b16cd4_000_000_044",
+      "wrong_belief": "以为「算法够好，超时就一定准」—— 忽略了**测量工具本身**的限制。",
+      "cause": "把算法与测量分开看了。但原文说得很直白：**Jacobson/Karels 算法「只和读时间的时钟一样好」**。当时 Unix 时钟粒度 **500 ms**，而跨洲 RTT 才 **100~200 ms** —— **尺子比被测物还粗**。",
+      "remedy": "遇到「估计/测量」类机制，先问一句：**我的测量精度够吗？** 精度不够时，再好的平滑算法也只是把噪声磨圆。"
+    },
+    {
+      "kind": "misconception",
+      "kp_id": "kp_42b16cd4_000_000_057",
+      "wrong_belief": "以为「延迟高只是慢一点」—— 没意识到**RTT 会累加**，而协议的分层结构会把 RTT 乘以若干倍。",
+      "cause": "只看单个 RTT 的绝对值，没看**一次会话要几个 RTT**。原文举的 HTTPS 建连就是 **3 个 RTT**（1 个 TCP + 2 个 TLS）。在数百毫秒的延迟下，三个 RTT 累起来就**变成了用户能感知的卡顿**。",
+      "remedy": "算延迟要算**总往返次数 × 单次 RTT**，而不是只看单次。这也是 QUIC 的出发点：**减少建连的往返次数**。"
+    }
+  ],
+  "_修正记录": "2026-10-07 核验发现 2 条 quote 与材料不一致，已改回原文原样：\n① kp_..._045：我原来把原文的跨行连字符 'specify- ing' 改成了 'specifying'（读起来顺，但改了引文）\n② kp_..._052：原文摘要在 'beco' 处被截断，我原来用 '[negligible]' 补全（方括号补全仍是改写）\n⇒ 现在：连字符保留；截断处用 '…' 显式标出（如实标注，不是篡改）。",
+  "_校正说明": "2026-10-07 核验：手工摘 quote 时把 PDF 的跨行连字符「顺手修好了」（specify- ing → specifying、recom- mended → recommended 等），违反「原文直摘」。已用 difflib 定位后用原文片段覆盖；连字（ﬁ/ﬂ）也按原文保留。"
+}
