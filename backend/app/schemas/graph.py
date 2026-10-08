@@ -20,6 +20,11 @@ class GraphNodeOut(BaseModel):
 
     id: str
     name: str
+    display_title: str | None = Field(
+        default=None,
+        description="**给人看的名字**（可读标题）。前端应优先显示它，`name` 收进 tooltip。"
+                    "⚠️ 为 null 表示这个点没有可读标题 ⇒ 前端退回显示 `name`（**不编**）",
+    )
     difficulty: int
     chapter_id: str | None = None
     section_id: str | None = None
