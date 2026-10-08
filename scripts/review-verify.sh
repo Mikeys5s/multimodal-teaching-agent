@@ -54,7 +54,7 @@ if [ -z "$PR" ] && [ -z "$BRANCH" ]; then
     exit 2
 fi
 
-REPO_SLUG="RyeYen/multimodal-teaching-agent"
+REPO_SLUG="mikey_code/multimodal-teaching-agent"   # Gitee（2026-10-07 迁移后）
 WORK_ROOT="${REVIEW_WORK_ROOT:-$HOME/.xizhi-review}"
 CLONE="$WORK_ROOT/repo"
 VENV="$WORK_ROOT/venv"
@@ -115,7 +115,7 @@ if [ -d "$CLONE/.git" ]; then
     (cd "$CLONE" && git fetch --quiet origin 2>&1 | tail -3)
 else
     echo "  首次克隆 ..."
-    git clone --quiet "https://github.com/$REPO_SLUG.git" "$CLONE" 2>&1 | tail -3
+    git clone --quiet "https://gitee.com/$REPO_SLUG.git" "$CLONE" 2>&1 | tail -3
     [ -d "$CLONE/.git" ] || die "克隆失败"
 fi
 ok "克隆就绪：$CLONE"

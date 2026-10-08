@@ -142,18 +142,27 @@ python -c "import shutil;shutil.copytree(r'.git', r'../mta-git-backup')"
 
 一次提交只解决一个主题。禁止 `改一下` / `最终版` / `update`。
 
-## 6. 迁移遗留待办
+## 6. 迁移遗留（已处理）
 
-以下文件仍写着 GitHub 的地址，需在后续 PR 中一并更新：
+原本仍指向 GitHub 的地址，**已在同一个 PR 里全部更新**：
 
-| 文件 | 位置 | 现状 |
-|---|---|---|
-| `CONTRIBUTING.md` | §1 / §2 / §6 | 写「接受 GitHub 邀请」「在 GitHub 创建 Pull Request」「写在 GitHub Issues」 |
-| `scripts/review-verify.sh` | 第 57、118 行 | `REPO_SLUG="RyeYen/multimodal-teaching-agent"`，从 `github.com` 克隆 |
-| `docs/deployment.md` | 第 92 行 | `git clone https://github.com/RyeYen/...` |
-| `docs/delivery-checklist.md` | 第 121 行 | 用 `api.github.com` 判仓库是否公开 |
-| `README.md` | 第 73–75 行 | 贡献者个人主页链接（GitHub 主页，属身份信息，可保留） |
-| `SPEC.md` / `docs/tasks/*` / `docs/buddy-logs/*` | — | **历史记录，不改**（改了就失去可溯源价值） |
+| 文件 | 改动 |
+|---|---|
+| `CONTRIBUTING.md` | §1 克隆地址改为 Gitee；§2 PR 链接改为 Gitee；§6 改为「Gitee Issues」；**§5 的 `rebase` 改成 `merge`（见下）** |
+| `scripts/review-verify.sh` | `REPO_SLUG` → `mikey_code/multimodal-teaching-agent`；克隆地址 → `gitee.com` |
+| `docs/deployment.md` | `git clone` 地址改为 Gitee |
+| `docs/delivery-checklist.md` | 公开性校验改用 Gitee API（`gitee.com/api/v5/repos/...`） |
+| `README.md` 第 73–75 行 | 贡献者个人主页链接（GitHub 主页属身份信息）—— **保留不改** |
+| `SPEC.md` / `docs/tasks/*` / `docs/buddy-logs/*` | **历史记录，不改**（改了就失去可溯源价值） |
+
+### ⚠️ `CONTRIBUTING.md` §5 为什么从 rebase 改成 merge
+
+原版建议用 `git rebase origin/main` 解决冲突。**在团队成员的开发机上这会毁仓库**：
+rebase 会清空 `.git/refs/`，之后所有 git 命令报 `fatal: not a git repository`，
+严重时 `.git/objects` 也掉文件、工作区的未提交改动一起丢（已复现多次）。
+
+`merge` 解决冲突的效果完全一样，代价只是多一个合并提交 —— 相比丢仓库可以忽略。
+需要线性历史的话，用「另开新克隆重建分支」，**不要在本仓库里 rebase**。
 
 ## 7. 本机环境现状（2026-10-07 迁移后）
 

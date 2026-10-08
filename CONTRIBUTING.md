@@ -1,11 +1,14 @@
 # Git 协作规范
 
+> 仓库已迁至 **Gitee**：<https://gitee.com/mikey_code/multimodal-teaching-agent>
+> 本文件里的 PR、Issue、评审全部在 Gitee 上进行；GitHub 侧只留作只读历史镜像。
+
 ## 1. 首次获取项目
 
-仓库成员接受 GitHub 邀请后，运行：
+仓库成员在 Gitee 接受邀请后，运行：
 
 ```bash
-git clone <仓库地址>
+git clone https://gitee.com/mikey_code/multimodal-teaching-agent.git
 cd multimodal-teaching-agent
 ```
 
@@ -13,7 +16,7 @@ cd multimodal-teaching-agent
 
 ```bash
 git config --global user.name "你的名字"
-git config --global user.email "你的 GitHub 邮箱"
+git config --global user.email "你的邮箱"
 ```
 
 ## 2. 日常开发流程
@@ -35,7 +38,11 @@ git commit -m "feat: 简要说明完成了什么"
 git push -u origin feat/简短任务名
 ```
 
-随后在 GitHub 创建 Pull Request（PR），由至少一名队友检查后合并。合并完成后清理本地分支：
+随后在 **Gitee** 创建 Pull Request（PR），由至少一名队友检查后合并：
+
+<https://gitee.com/mikey_code/multimodal-teaching-agent/pulls>
+
+合并完成后清理本地分支：
 
 ```bash
 git switch main
@@ -69,25 +76,31 @@ chore: 更新依赖版本
 
 ## 5. 冲突处理
 
-推送前先同步 `main`：
+推送前先同步 `main`。**用 `merge`，不要用 `rebase`**：
 
 ```bash
 git fetch origin
-git rebase origin/main
+git merge origin/main
 ```
 
 若出现冲突，打开冲突文件，保留正确内容并删除冲突标记，然后运行：
 
 ```bash
 git add <已解决的文件>
-git rebase --continue
+git commit
 ```
 
-确认无误后推送。已经推送过且经过 rebase 的个人功能分支，使用：
+确认无误后推送。
 
-```bash
-git push --force-with-lease
-```
+> ### ⚠️ 为什么这里改成了 merge 而不是 rebase
+>
+> 原版写的是 `git rebase origin/main`。**在团队成员的开发机上，rebase 已经多次造成事故**：
+> 它会清空 `.git/refs/`，之后仓库直接变成 `fatal: not a git repository`，
+> 严重时 `.git/objects` 也会掉文件，**工作区的未提交改动可能一起丢**。
+>
+> `merge` 解决冲突的效果完全一样，代价只是多一个合并提交。
+> **如果你确实需要线性历史**：另开一份新克隆（`git clone --no-checkout` →
+> `git switch -c <分支> origin/main`），在新克隆里重建分支；**不要在本仓库里 rebase**。
 
 不要对 `main` 强制推送，也不要使用 `git push --force`。
 
@@ -97,7 +110,7 @@ git push --force-with-lease
 - 配置示例使用 `.env.example`，其中只写变量名和无敏感性的示例值。
 - 提交前务必运行 `git status` 和 `git diff --staged`。
 - 模型权重、原始数据集、视频和大型演示文件应使用 Git LFS 或团队约定的对象存储。
-- 需求讨论和任务分工写在 GitHub Issues；代码审查和合并结论写在 PR，避免只留在聊天记录中。
+- 需求讨论和任务分工写在 **Gitee Issues**；代码审查和合并结论写在 PR，避免只留在聊天记录中。
 
 ## 7. 提交前跑测试
 
