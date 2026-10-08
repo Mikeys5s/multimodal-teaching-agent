@@ -1,9 +1,9 @@
 {
   "_说明": "知识点可读标题映射表（v3）。只从材料已有文本提炼，取不到写 null —— 不编标题。",
   "_判据": "标题可读率；每条标出处；取不到显式 null。v3 加了「续句检测」（原名末词+seg首词在原文里连续 ⇒ 是续句）",
-  "_覆盖率": "66.8%",
+  "_覆盖率": "69.6%",
   "_来源分布": {
-    "raw_name": 138,
+    "raw_name": 156,
     "section_heading": 282
   },
   "items": [
@@ -469,11 +469,11 @@
     {
       "kp_id": "kp_42b16cd4_000_000_016",
       "raw_name": "TCP",
-      "display_title": null,
-      "source": null,
-      "confidence": null,
+      "display_title": "TCP",
+      "source": "raw_name",
+      "confidence": 0.9,
       "section": "234",
-      "readable_raw": false
+      "readable_raw": true
     },
     {
       "kp_id": "kp_ada1063f_000_000_016",
@@ -604,11 +604,11 @@
     {
       "kp_id": "kp_42b16cd4_000_000_021",
       "raw_name": "TCP",
-      "display_title": null,
-      "source": null,
-      "confidence": null,
+      "display_title": "TCP",
+      "source": "raw_name",
+      "confidence": 0.9,
       "section": "238",
-      "readable_raw": false
+      "readable_raw": true
     },
     {
       "kp_id": "kp_ada1063f_000_000_021",
@@ -1603,11 +1603,11 @@
     {
       "kp_id": "kp_42b16cd4_000_000_058",
       "raw_name": "QUIC",
-      "display_title": null,
-      "source": null,
-      "confidence": null,
+      "display_title": "QUIC",
+      "source": "raw_name",
+      "confidence": 0.9,
       "section": "258",
-      "readable_raw": false
+      "readable_raw": true
     },
     {
       "kp_id": "kp_ada1063f_000_000_058",
@@ -1720,11 +1720,11 @@
     {
       "kp_id": "kp_ada1063f_000_000_062",
       "raw_name": "DHCP",
-      "display_title": null,
-      "source": null,
-      "confidence": null,
+      "display_title": "DHCP",
+      "source": "raw_name",
+      "confidence": 0.9,
       "section": "145",
-      "readable_raw": false
+      "readable_raw": true
     },
     {
       "kp_id": "kp_cf6fcaa0_001_001_063",
@@ -1981,11 +1981,11 @@
     {
       "kp_id": "kp_42b16cd4_001_001_072",
       "raw_name": "TCP",
-      "display_title": null,
-      "source": null,
-      "confidence": null,
+      "display_title": "TCP",
+      "source": "raw_name",
+      "confidence": 0.9,
       "section": "Segment Format",
-      "readable_raw": false
+      "readable_raw": true
     },
     {
       "kp_id": "kp_ada1063f_000_000_072",
@@ -2116,11 +2116,11 @@
     {
       "kp_id": "kp_42b16cd4_001_001_077",
       "raw_name": "TCP",
-      "display_title": null,
-      "source": null,
-      "confidence": null,
+      "display_title": "TCP",
+      "source": "raw_name",
+      "confidence": 0.9,
       "section": "Connection Establishment and Termination",
-      "readable_raw": false
+      "readable_raw": true
     },
     {
       "kp_id": "kp_ada1063f_000_000_077",
@@ -2260,11 +2260,11 @@
     {
       "kp_id": "kp_ada1063f_000_000_082",
       "raw_name": "RIP",
-      "display_title": null,
-      "source": null,
-      "confidence": null,
+      "display_title": "RIP",
+      "source": "raw_name",
+      "confidence": 0.9,
       "section": "157",
-      "readable_raw": false
+      "readable_raw": true
     },
     {
       "kp_id": "kp_cf6fcaa0_001_001_083",
@@ -3115,11 +3115,11 @@
     {
       "kp_id": "kp_42b16cd4_001_001_114",
       "raw_name": "QUIC",
-      "display_title": null,
-      "source": null,
-      "confidence": null,
+      "display_title": "QUIC",
+      "source": "raw_name",
+      "confidence": 0.9,
       "section": "Alternative Design Choices (SCTP, QUIC)",
-      "readable_raw": false
+      "readable_raw": true
     },
     {
       "kp_id": "kp_ada1063f_001_001_114",
@@ -3331,11 +3331,11 @@
     {
       "kp_id": "kp_42b16cd4_002_002_122",
       "raw_name": "TCP",
-      "display_title": null,
-      "source": null,
-      "confidence": null,
+      "display_title": "TCP",
+      "source": "raw_name",
+      "confidence": 0.9,
       "section": "End-to-End Issues",
-      "readable_raw": false
+      "readable_raw": true
     },
     {
       "kp_id": "kp_ada1063f_001_001_122",
@@ -3439,11 +3439,11 @@
     {
       "kp_id": "kp_42b16cd4_002_002_126",
       "raw_name": "TCP",
-      "display_title": null,
-      "source": null,
-      "confidence": null,
+      "display_title": "TCP",
+      "source": "raw_name",
+      "confidence": 0.9,
       "section": "Reliable Byte Stream (TCP)",
-      "readable_raw": false
+      "readable_raw": true
     },
     {
       "kp_id": "kp_ada1063f_001_001_126",
@@ -4060,11 +4060,11 @@
     {
       "kp_id": "kp_42b16cd4_003_003_156",
       "raw_name": "TCP",
-      "display_title": null,
-      "source": null,
-      "confidence": null,
+      "display_title": "TCP",
+      "source": "raw_name",
+      "confidence": 0.9,
       "section": "Reliable Byte Stream (TCP)",
-      "readable_raw": false
+      "readable_raw": true
     },
     {
       "kp_id": "kp_ada1063f_001_001_156",
@@ -4123,11 +4123,11 @@
     {
       "kp_id": "kp_ada1063f_001_001_159",
       "raw_name": "DHCP",
-      "display_title": null,
-      "source": null,
-      "confidence": null,
+      "display_title": "DHCP",
+      "source": "raw_name",
+      "confidence": 0.9,
       "section": "Internet (IP)",
-      "readable_raw": false
+      "readable_raw": true
     },
     {
       "kp_id": "kp_42b16cd4_003_003_160",
@@ -4483,20 +4483,20 @@
     {
       "kp_id": "kp_ada1063f_001_001_179",
       "raw_name": "RIP",
-      "display_title": null,
-      "source": null,
-      "confidence": null,
+      "display_title": "RIP",
+      "source": "raw_name",
+      "confidence": 0.9,
       "section": "Routing",
-      "readable_raw": false
+      "readable_raw": true
     },
     {
       "kp_id": "kp_42b16cd4_003_003_180",
       "raw_name": "QUIC",
-      "display_title": null,
-      "source": null,
-      "confidence": null,
+      "display_title": "QUIC",
+      "source": "raw_name",
+      "confidence": 0.9,
       "section": "Reliable Byte Stream (TCP)",
-      "readable_raw": false
+      "readable_raw": true
     },
     {
       "kp_id": "kp_ada1063f_001_001_180",
@@ -4969,11 +4969,11 @@
     {
       "kp_id": "kp_ada1063f_002_002_232",
       "raw_name": "DHCP",
-      "display_title": null,
-      "source": null,
-      "confidence": null,
+      "display_title": "DHCP",
+      "source": "raw_name",
+      "confidence": 0.9,
       "section": "Internet (IP)",
-      "readable_raw": false
+      "readable_raw": true
     },
     {
       "kp_id": "kp_ada1063f_002_002_233",
@@ -5113,11 +5113,11 @@
     {
       "kp_id": "kp_ada1063f_002_002_248",
       "raw_name": "RIP",
-      "display_title": null,
-      "source": null,
-      "confidence": null,
+      "display_title": "RIP",
+      "source": "raw_name",
+      "confidence": 0.9,
       "section": "Routing",
-      "readable_raw": false
+      "readable_raw": true
     },
     {
       "kp_id": "kp_ada1063f_002_002_249",
@@ -5437,11 +5437,11 @@
     {
       "kp_id": "kp_ada1063f_003_003_284",
       "raw_name": "DHCP",
-      "display_title": null,
-      "source": null,
-      "confidence": null,
+      "display_title": "DHCP",
+      "source": "raw_name",
+      "confidence": 0.9,
       "section": "Internet (IP)",
-      "readable_raw": false
+      "readable_raw": true
     },
     {
       "kp_id": "kp_ada1063f_003_003_285",
@@ -5563,11 +5563,11 @@
     {
       "kp_id": "kp_ada1063f_003_003_298",
       "raw_name": "RIP",
-      "display_title": null,
-      "source": null,
-      "confidence": null,
+      "display_title": "RIP",
+      "source": "raw_name",
+      "confidence": 0.9,
       "section": "Internet (IP)",
-      "readable_raw": false
+      "readable_raw": true
     },
     {
       "kp_id": "kp_ada1063f_003_003_299",
