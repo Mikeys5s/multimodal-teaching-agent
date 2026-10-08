@@ -138,6 +138,22 @@ const hint  = kp.source?.page ? `第 ${kp.source.page} 页` : ''   // 页码可�
   以及**「多轮答疑」建议进正片**：四轮连起来能一次证明三件 SPEC 硬规则）
 - `docs/ppt/ppt-data-pack-1008.md` —— **六组可核对的数字 + 出处**，并标了哪几个数字**不能用**
 
+**④ ⚠️ 动手前先看这条：前端还没接这三个字段**
+
+我跑了一遍前后端一致性检查：
+
+```
+· `frontend/src/` 对 `is_duplicate` / `duplicate_of` / `duplicate_group_size`
+  **零引用** ⇒ 光后端加字段，界面上什么都不会变
+· `frontend/src/lib/types.ts:319` 的 `KnowledgePoint` **缺这 3 个字段**
+  ⇒ 得先补 TS 类型定义
+· 另发现 `KpType` 词表等 **5 处前后端口径不一致**
+  详见 `docs/frontend-backend-consistency-1008.md`
+```
+
+**✅ 好消息**：线上前端产物是**最新的**（容器 `dist` = Oct 8 15:53，比工作区还新）
+—— **不存在「前端改了没生效」的部署坑**，不用排查这个。
+
 ## 三、想向你请教
 
 **答疑正文里会把英文原文整段抛出来**，例如：

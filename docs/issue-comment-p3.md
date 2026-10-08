@@ -43,6 +43,22 @@ duplicate_group_size  int      组内成员数（无重复时为 1）
 3. **全链路复验（1h）—— 我这边已经做完，你不用重做。** 已固化为 `scripts/e2e-check.py`（4 层 33 项断言，`python scripts/e2e-check.py` 直接跑，退出码 0/1 可进 CI），**可直接替代手工复验**，省你 1 小时。
 4. **录新演示视频 + PPT 更新（1h+）—— 只有你能做**（`docs/demo-script.md` 是你写的）。需要反映三处改动：**重复标注、可读标题、Ch06 学习路径**。
 
+**④ ⚠️ 我查了一下，前端目前还没接这三个字段 —— 你动手前先看这条**
+
+我跑了一遍一致性检查，结论是：
+
+```
+· `frontend/src/` 对 `is_duplicate` / `duplicate_of` / `duplicate_group_size`
+  **零引用** ⇒ 光后端加了字段，界面上什么都不会变
+· `frontend/src/lib/types.ts:319` 的 `KnowledgePoint` **缺这 3 个字段**
+  ⇒ 即使组件想读，TS 类型里也没有 —— **得先补类型定义**
+· 另外发现 `KpType` 词表等 **5 处前后端口径不一致**（详见
+  `docs/frontend-backend-consistency-1008.md`）
+```
+
+**✅ 但有一条好消息**：线上前端产物是**最新的**（容器里 `dist` 是 Oct 8 15:53，
+比工作区的还新）——**所以不存在「前端改了但线上没生效」的部署坑**，你不用排查这个。
+
 ## 三、想向你请教
 
 答疑页的回复会把**英文原文整段抛出来**，例如：「先想一个问题：如果 which time the congestion window is divided by 2 (i.e., cut from approximately 34 KB to around 17 KB)… 这句话在说什么？」根因是知识点名字/引用是**被截断的英文句片段**（和上面「无标题」同源）。
