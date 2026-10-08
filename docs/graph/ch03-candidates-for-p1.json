@@ -1,0 +1,304 @@
+{
+  "candidates": [
+    {
+      "id": "kp_ada1063f_000_000_002",
+      "name": "The core job of a switch",
+      "page": 1,
+      "summ": "The core job of a switch is to take packets that arrive on an input and forward (or switch) them to the right output so that they will reach their appropriate destination. There are a variet"
+    },
+    {
+      "id": "kp_ada1063f_000_000_004",
+      "name": "A switch",
+      "page": 3,
+      "summ": "A switch is connected to a set of links and, for each of these links, runs the appropriate data link protocol to communicate with the node at the other end of the link. A switch’s primary jo"
+    },
+    {
+      "id": "kp_ada1063f_000_000_005",
+      "name": "One thing that",
+      "page": 3,
+      "summ": "One thing that is common to all networks is that we need to have a way to identify the end nodes. Such identiﬁers are usually called addresses. We have already seen examples of addresses, su"
+    },
+    {
+      "id": "kp_ada1063f_000_000_006",
+      "name": "Another assumption that we nee",
+      "page": 3,
+      "summ": "Another assumption that we need to make is that there is some way to identify the input and output ports of each switch. There are at least two sensible ways to identify ports: One is to num"
+    },
+    {
+      "id": "kp_ada1063f_000_000_009",
+      "name": "The idea behind datagrams",
+      "page": 4,
+      "summ": "The idea behind datagrams is incredibly simple: You just include in every packet enough information to enable any switch to decide how to get it to its destination. That is, every packet con"
+    },
+    {
+      "id": "kp_ada1063f_000_000_010",
+      "name": "This last fact",
+      "page": 5,
+      "summ": "This last fact is particularly important to the history of datagram networks. One of the important design goals of the Internet is robustness to failures, and history has shown it to be quit"
+    },
+    {
+      "id": "kp_ada1063f_000_000_013",
+      "name": "The semantics of one such entr",
+      "page": 6,
+      "summ": "The semantics of one such entry is as follows: If a packet arrives on the designated incoming interface and that packet contains the designated VCI value in its header, then that packet shou"
+    },
+    {
+      "id": "kp_ada1063f_000_000_014",
+      "name": "Whenever a new connection",
+      "page": 6,
+      "summ": "Whenever a new connection is created, we need to assign a new VCI for that connection on each link that the connection will traverse. We also need to ensure that the chosen VCI on a given li"
+    },
+    {
+      "id": "kp_ada1063f_000_000_015",
+      "name": "There",
+      "page": 6,
+      "summ": "There are two broad approaches to establishing connection state. One is to have a network administrator conﬁgure the state, in which case the virtual circuit is “permanent.” Of course, it ca"
+    },
+    {
+      "id": "kp_ada1063f_000_000_017",
+      "name": "There",
+      "page": 9,
+      "summ": "There are several things to note about virtual circuit switching:"
+    },
+    {
+      "id": "kp_ada1063f_000_000_019",
+      "name": "There",
+      "page": 11,
+      "summ": "There is another good argument in favor of small ATM cells, having to do with end-to-end latency. ATM was designed to carry both voice phone calls (the dominant use case at the time) and dat"
+    },
+    {
+      "id": "kp_ada1063f_000_000_022",
+      "name": "There",
+      "page": 12,
+      "summ": "There are various ways to implement source routing. One would be to assign a number to each output of each switch and to place that number in the header of the packet. The switching function"
+    },
+    {
+      "id": "kp_ada1063f_000_000_023",
+      "name": "Source routes",
+      "page": 13,
+      "summ": "Source routes are sometimes categorized as strict or loose. In a strict source route, every node along the path must be speciﬁed, whereas a loose source route only speciﬁes a set of nodes to"
+    },
+    {
+      "id": "kp_ada1063f_000_000_028",
+      "name": "The Internet Protocol",
+      "page": 15,
+      "summ": "The Internet Protocol is the key tool used today to build scalable, heterogeneous internetworks. It was originally known as the Kahn-Cerf protocol after its inventors. One way to think of IP"
+    },
+    {
+      "id": "kp_ada1063f_000_000_029",
+      "name": "The rest of this and the next",
+      "page": 16,
+      "summ": "The rest of this and the next chapter are about various aspects of IP. While it is certainly possible to build an internetwork that does not use IP—and in fact, in the early days of the Inte"
+    },
+    {
+      "id": "kp_ada1063f_000_000_030",
+      "name": "The good news",
+      "page": 16,
+      "summ": "The good news is that when you fully understand the implications of this duality, you will have cleared a major hurdle in mastering modern packet-switched networks."
+    },
+    {
+      "id": "kp_ada1063f_000_000_033",
+      "name": "The IP datagram",
+      "page": 17,
+      "summ": "The IP datagram is fundamental to the Internet Protocol. Recall an earlier section that a datagram is a type of packet that happens to be sent in a connectionless manner over a network. Ever"
+    },
+    {
+      "id": "kp_ada1063f_000_000_035",
+      "name": "The Checksum",
+      "page": 19,
+      "summ": "The Checksum is calculated by considering the entire IP header as a sequence of 16-bit words, adding them up using ones’ complement arithmetic, and taking the ones’ complement of the result."
+    },
+    {
+      "id": "kp_ada1063f_000_000_036",
+      "name": "The central idea here",
+      "page": 19,
+      "summ": "The central idea here is that every network type has a maximum transmission unit (MTU), which is the"
+    },
+    {
+      "id": "kp_ada1063f_000_000_038",
+      "name": "Observe that the fragmentation",
+      "page": 22,
+      "summ": "Observe that the fragmentation process is done in such a way that it could be repeated if a fragment arrived at another network with an even smaller MTU. Fragmentation produces smaller, vali"
+    },
+    {
+      "id": "kp_ada1063f_000_000_039",
+      "name": "IP reassembly",
+      "page": 22,
+      "summ": "IP reassembly is far from a simple process. For example, if a single fragment is lost, the receiver will still attempt to reassemble the datagram, and it will eventually give up and have to "
+    },
+    {
+      "id": "kp_ada1063f_000_000_041",
+      "name": "Ethernet addresses",
+      "page": 22,
+      "summ": "Ethernet addresses are globally unique, but that alone does not sufﬁce for an addressing scheme in a large internetwork. Ethernet addresses are also ﬂat, which means that they have no struct"
+    },
+    {
+      "id": "kp_ada1063f_000_000_043",
+      "name": "The class of an IP address",
+      "page": 23,
+      "summ": "The class of an IP address is identiﬁed in the most signiﬁcant few bits. If the ﬁrst bit is 0, it is a class A address. If the ﬁrst bit is 1 and the second is 0, it is a class B address. If "
+    },
+    {
+      "id": "kp_ada1063f_000_000_045",
+      "name": "If the node",
+      "page": 24,
+      "summ": "If the node is not connected to the same physical network as the destination node, then it needs to send the datagram to a router. In general, each node will have a choice of several routers"
+    },
+    {
+      "id": "kp_ada1063f_000_000_047",
+      "name": "Note that it",
+      "page": 25,
+      "summ": "Note that it is possible to include the information about directly connected networks in the forwarding table. For example, we could label the network interfaces of router R2 as interface 0 "
+    },
+    {
+      "id": "kp_ada1063f_000_000_048",
+      "name": "The forwarding table used by R",
+      "page": 26,
+      "summ": "The forwarding table used by R2 is simple enough that it could be manually conﬁgured. Usually, however, these tables are more complex and would be built up by running a routing protocol such"
+    },
+    {
+      "id": "kp_ada1063f_000_000_051",
+      "name": "What subnetting means to a hos",
+      "page": 27,
+      "summ": "What subnetting means to a host is that it is now conﬁgured with both an IP address and a subnet mask for the subnet to which it is attached. For example, host H1 in Figure 3.22 is conﬁgured"
+    },
+    {
+      "id": "kp_ada1063f_000_000_054",
+      "name": "An important consequence of su",
+      "page": 29,
+      "summ": "An important consequence of subnetting is that different parts of the internet see the world differently. From outside our hypothetical campus, routers see a single network. In the example a"
+    },
+    {
+      "id": "kp_ada1063f_000_000_059",
+      "name": "Ethernet addresses",
+      "page": 33,
+      "summ": "Ethernet addresses are conﬁgured into the network adaptor by the manufacturer, and this process is managed in such a way to ensure that these addresses are globally unique. This is clearly a"
+    },
+    {
+      "id": "kp_ada1063f_000_000_060",
+      "name": "Since the goal of DHCP",
+      "page": 34,
+      "summ": "Since the goal of DHCP is to minimize the amount of manual conﬁguration required for a host to function, it would rather defeat the purpose if each host had to be conﬁgured with the address "
+    },
+    {
+      "id": "kp_ada1063f_000_000_062",
+      "name": "DHCP",
+      "page": 35,
+      "summ": "DHCP is derived from an earlier protocol called BOOTP, and some of the packet ﬁelds are thus not strictly relevant to host conﬁguration. When trying to obtain conﬁguration information, the c"
+    },
+    {
+      "id": "kp_ada1063f_000_000_064",
+      "name": "The next issue",
+      "page": 36,
+      "summ": "The next issue is how the Internet treats errors. While IP is perfectly willing to drop datagrams when the going gets tough—for example, when a router does not know how to forward the datagr"
+    },
+    {
+      "id": "kp_ada1063f_000_000_067",
+      "name": "The term VPN",
+      "page": 37,
+      "summ": "The term VPN is heavily overused and deﬁnitions vary, but intuitively we can deﬁne a VPN by considering ﬁrst the idea of a private network. Corporations with many sites often build private n"
+    },
+    {
+      "id": "kp_ada1063f_000_000_069",
+      "name": "While R2",
+      "page": 39,
+      "summ": "While R2 is acting as the endpoint of the tunnel, there is nothing to prevent it from performing the normal functions of a router. For example, it might receive some packets that are not tun"
+    },
+    {
+      "id": "kp_ada1063f_000_000_073",
+      "name": "The basic problem of routing",
+      "page": 41,
+      "summ": "The basic problem of routing is to ﬁnd the lowest-cost path between any two nodes, where the cost of a path equals the sum of the costs of all the edges that make up the path. For a simple n"
+    },
+    {
+      "id": "kp_ada1063f_000_000_076",
+      "name": "The next step in distance-vect",
+      "page": 44,
+      "summ": "The next step in distance-vector routing is that every node sends a message to its directly connected neigh- bors containing its personal list of distances. For example, node F tells node A "
+    },
+    {
+      "id": "kp_ada1063f_000_000_077",
+      "name": "There",
+      "page": 44,
+      "summ": "There are a few details to ﬁll in before our discussion of distance-vector routing is complete. First we note that there are two different circumstances under which a given node decides to s"
+    },
+    {
+      "id": "kp_ada1063f_000_000_079",
+      "name": "There",
+      "page": 45,
+      "summ": "There are several partial solutions to this problem. The ﬁrst one is to use some relatively small number as an approximation of inﬁnity. For example, we might decide that the maximum number "
+    },
+    {
+      "id": "kp_ada1063f_000_000_080",
+      "name": "The code that implements this",
+      "page": 46,
+      "summ": "The code that implements this algorithm is very straightforward; we give only some of the basics here. Structure Route deﬁnes each entry in the routing table, and constant MAX_TTL speciﬁes h"
+    },
+    {
+      "id": "kp_ada1063f_000_000_082",
+      "name": "RIP",
+      "page": 47,
+      "summ": "RIP is in fact a fairly straightforward implementation of distance-vector routing. Routers running RIP send their advertisements every 30 seconds; a router also sends an update message whene"
+    },
+    {
+      "id": "kp_ada1063f_000_000_085",
+      "name": "Link-state routing",
+      "page": 49,
+      "summ": "Link-state routing is the second major class of intradomain routing protocol. The starting assumptions for link-state routing are rather similar to those for distance-vector routing. Each no"
+    },
+    {
+      "id": "kp_ada1063f_000_000_087",
+      "name": "One easy way to reduce overhea",
+      "page": 51,
+      "summ": "One easy way to reduce overhead is to avoid generating LSPs unless absolutely necessary. This can be done by using very long timers—often on the order of hours—for the periodic generation of"
+    },
+    {
+      "id": "kp_ada1063f_000_000_088",
+      "name": "To make sure that old informat",
+      "page": 51,
+      "summ": "To make sure that old information is replaced by newer information, LSPs carry sequence numbers. Each time a node generates a new LSP, it increments the sequence number by 1. Unlike most seq"
+    },
+    {
+      "id": "kp_ada1063f_000_000_090",
+      "name": "Since D",
+      "page": 53,
+      "summ": "Since D is the only new member of the conﬁrmed list, look at its LSP."
+    },
+    {
+      "id": "kp_ada1063f_000_000_091",
+      "name": "Cost to reach B through C",
+      "page": 53,
+      "summ": "Cost to reach B through C is 5, so replace (B,11,B). C’s LSP tells us that we can reach A at cost 12."
+    },
+    {
+      "id": "kp_ada1063f_000_000_092",
+      "name": "Distance-vector and link-state",
+      "page": 53,
+      "summ": "Distance-vector and link-state are both distributed routing algorithms, but they adopt different strategies. In distance-vector, each node talks only to its directly connected neighbors, but"
+    },
+    {
+      "id": "kp_ada1063f_000_000_093",
+      "name": "There",
+      "page": 54,
+      "summ": "There are several different types of OSPF messages, but all begin with the same header, as shown in Fig- ure 3.35. The Version ﬁeld is currently set to 2, and the Type ﬁeld may take the valu"
+    },
+    {
+      "id": "kp_ada1063f_000_000_095",
+      "name": "The LS sequence number",
+      "page": 55,
+      "summ": "The LS sequence number is used exactly as described above to detect old or duplicate LSAs. The LS checksum is similar to others we have seen in other protocols; it is, of course, used to ver"
+    },
+    {
+      "id": "kp_ada1063f_000_000_096",
+      "name": "The TOS information",
+      "page": 56,
+      "summ": "The TOS information is present to allow OSPF to choose different routes for IP packets based on the value in their TOS ﬁeld. Instead of assigning a single metric to a link, it is possible to"
+    },
+    {
+      "id": "kp_ada1063f_000_000_099",
+      "name": "All of these factors mean that",
+      "page": 57,
+      "summ": "All of these factors mean that a link is much less likely to be universally abandoned, since a threefold increase in cost is likely to make the link unattractive for some paths while letting"
+    }
+  ]
+}
