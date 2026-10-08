@@ -152,9 +152,33 @@ def layer2_api(c: Client) -> None:
     ms = ((d.get("data") if isinstance(d, dict) else {}) or {}).get("items") or []
     rec("2-契约", code == 200 and bool(ms), f"/api/materials  {len(ms)} 份")
 
+    # ⭐ 导出接口（2026-10-08 补）
+    #
+    # 它是**从服务自己声明的 openapi.json 里反查出来的** —— 我原先的检查只覆盖了
+    # 我自己知道的入口，而导出接口**可能复用 `load_kp_items`** ⇒
+    # **改了 `KpItemOut` 就有可能把它弄坏，而我不会知道。**
+    #
+    # **⇒ 教训：端点清单要"从服务声明里取"，不要写死。**
+    code, body = c.get("/api/export/knowledge-points")
+    n = len(body) if isinstance(body, str) else len(json.dumps(body, ensure_ascii=False))
+    rec("2-契约", code == 200 and n > 10_000,
+        f"/api/export/knowledge-points  HTTP {code}", f"{n:,} 字符")
+
+    code, d = c.get("/api/review/queue")
+    rec("2-契约", code == 200, f"/api/review/queue  HTTP {code}",
+        f"{len(d.get('data') or [])} 项" if isinstance(d, dict) else "")
+
+    code, d = c.get("/api/report/quality")
+    rec("2-契约", code == 200, f"/api/report/quality  HTTP {code}")
+
     code, d = c.get("/api/definitely-not-exist")
     is_json = isinstance(d, dict) and (bool(d.get("error")) or d.get("ok") is False)
     rec("2-契约", code == 404 and is_json, f"未注册路由 -> JSON 404  HTTP {code}")
+
+    # ⚠️ `/api/learning-path` **需要 kp_id** —— 不带参数会 400，那是**正确的**
+    code, d = c.get("/api/learning-path")
+    rec("2-契约", code == 400, f"learning-path 缺参数 -> 400（**参数校验在工作**）",
+        f"HTTP {code}")
 
 
 def layer3_tutor(c: Client) -> None:
@@ -208,11 +232,34 @@ def layer3_tutor(c: Client) -> None:
         rec("3-答疑", bool(kinds) and kinds[-1] == "done",
             f"第 {i} 轮以 done 收尾", f"序列 {kinds[:8]}")
 
-        # 第 1 轮：不给答案
+        # 第 1 轮：**不给答案**（R1 铁律）
+        #
+        # ⚠️ 判据改过一次（2026-10-08）：
+        # 原先写「第 1 轮含引导问句」= `("？" in text)` —— **太窄**。
+        # 实测 8 次，有 2 次的首轮是：
+        #   「先试着用一句话说说「…」在干什么。说错没关系，我要知道你现在站在哪。」
+        # **它是完全合格的引导**（引导 + 降门槛 + 探测起点），**只是没有问号**。
+        #
+        # ⇒ 换成**反向判据**：**铁律的核心是"不给答案"，不是"必须有问号"** ——
+        #    所以断言「**没有直接给答案的措辞**」，而不是「必须有问号」。
+        #
+        # ⚠️ **只对第 1 轮断言** —— 第 3 轮（S4_EXPLAIN）**本来就该直接讲**
+        # （连续 2 次答不上 ⇒ 降级是**硬规则要求**的），在那里断言"不给答案"是错的。
         if i == 1:
+            banned = ["正确答案是", "答案是", "直接告诉你", "应该是", "结论是"]
             hit = [b for b in banned if b in text]
-            rec("3-答疑", not hit, "第 1 轮不给答案", f"出现 {hit}" if hit else "")
-            rec("3-答疑", ("？" in text or "?" in text), "第 1 轮含引导问句")
+            rec("3-答疑", not hit, "第 1 轮不给答案（R1 铁律）",
+                f"**出现直接给答案的措辞** {hit}" if hit else "")
+
+            # 正向判据放宽：问号 **或** 引导语
+            GUIDE = ("？", "?", "说说", "你觉得", "你的直觉", "怎么解释", "怎么想",
+                     "先说", "想一下", "试着", "假设有人问")
+            g_hit = [g for g in GUIDE if g in text]
+            rec("3-答疑", bool(g_hit), "第 1 轮是引导（不是干巴巴的结论）",
+                f"命中 {g_hit[:3]}")
+        else:
+            # 除第 1 轮外，只断言"不是空回复"（正文长度已在上面查过）
+            rec("3-答疑", len(text) > 0, f"第 {i} 轮有正文内容", f"{len(text)} 字符")
 
         # 每轮：diagnosis 里的三级结构（**SPEC L783：右侧面板**）
         if diag is not None:
