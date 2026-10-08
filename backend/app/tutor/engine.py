@@ -324,7 +324,22 @@ def run_turn(
     # ---- ③ 组装回复 ----------------------------------------------------------
     pre_name = pre_sum = ""
     if decision.root_cause_kp_id:
-        pre_kp = session.get(type(top), decision.root_cause_kp_id) if top else None  # type: ignore[arg-type]
+        # ⚠️ **这里必须是 `KnowledgePoint`（ORM 映射类），不能写 `type(top)`**。
+        #
+        # `top` 是 `retrieve.Hit` —— 一个 **dataclass**，不是 ORM 实例。
+        # 写 `type(top)` 就等于把 `Hit` 这个类传给 `session.get()`，
+        # SQLAlchemy 在它身上找不到 mapper，抛：
+        #     sqlalchemy.exc.NoInspectionAvailable:
+        #     No inspection system is available for object of type <class 'type'>
+        #
+        # **为什么这个 bug 藏了很久**：本行只在**卡住时**才执行
+        # （上面 L321 的 `if state in (S2_HINT1, S3_HINT2)`），
+        # 所以**第 1 轮（S1_PROBE）完全正常**，从**第 2 轮**开始崩 ——
+        # 而崩的时候 SSE 已经返回 200 并开始流，异常只能让连接**静默断掉**
+        # （客户端看到 0 字节、无任何事件）⇒ 表现是"第二轮没反应"，不像报错。
+        #
+        # 2026-10-08 全链路复验时抓到。
+        pre_kp = session.get(KnowledgePoint, decision.root_cause_kp_id)
         if pre_kp is not None:
             pre_name, pre_sum = pre_kp.name, pre_kp.summary_md or ""
 
