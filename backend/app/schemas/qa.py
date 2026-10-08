@@ -42,6 +42,11 @@ class StuckAtOut(BaseModel):
 
     step: str = Field(description="卡点的中文描述，如「尚未建立分区与最终位置的关系」")
     evidence_kp_id: str | None = None
+    evidence_kp_name: str | None = Field(
+        default=None,
+        description="上面那个知识点的**可显示名字** —— 前端应该用它，而不是渲染 kp_id。"
+                    "⚠️ 取可读标题优先，取不到退回原名（**不编**）",
+    )
     evidence_misconception_id: str | None = Field(
         default=None, description="若命中了已知误区，给出它的 id"
     )
@@ -51,6 +56,10 @@ class NextPracticeOut(BaseModel):
     """「下一步建议练习什么」—— 三件产出之一。"""
 
     kp_id: str
+    kp_name: str = Field(
+        default="",
+        description="上面那个知识点的**可显示名字** —— 前端应该用它，而不是渲染 kp_id",
+    )
     task: str = Field(description="具体可执行的练习建议，不是空泛的「多复习」")
 
 
@@ -150,6 +159,11 @@ class SseRetrievedEvent(BaseModel):
 
     seq: int
     kp_ids: list[str] = Field(default_factory=list)
+    kp_names: list[str] = Field(
+        default_factory=list,
+        description="与 `kp_ids` **一一对应**的可显示名字。"
+                    "⚠️ 前端渲染「检索材料」那一栏时**用这个**，不要直接显示 kp_id",
+    )
     block_ids: list[str] = Field(default_factory=list)
     is_out_of_scope: bool = Field(
         default=False, description="越界时为 true，此时后续 delta 必须是拒答模板"

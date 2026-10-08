@@ -55,6 +55,52 @@ DELTA_CHUNK = 24
 DELTA_SLEEP = 0.02
 
 
+
+# ---------------------------------------------------------------------------
+# 可显示名字（**把 kp_id 换成人看得懂的东西**）
+# ---------------------------------------------------------------------------
+
+_TITLES: dict[str, str] | None = None
+
+
+def _load_titles() -> dict[str, str]:
+    """读 `backend/app/kp-titles.json` → `{kp_id: display_title}`（只读一次）。
+
+    **为什么答疑侧也要用它**：答疑里原本只吐 `kp_id`，学生看不懂；
+    而**原名也常被切坏**（`There` / `which time the congestion wind`）——
+    **可读标题是从材料小节标题或首句提炼的，学生才看得懂**。
+
+    **加载失败返回空 dict** ⇒ 全部退回原名 ⇒ **服务照常**。
+    """
+    global _TITLES
+    if _TITLES is None:
+        import json as _json
+        import pathlib as _pathlib
+
+        p = _pathlib.Path(__file__).resolve().parents[1] / "kp-titles.json"
+        try:
+            items = _json.loads(p.read_text(encoding="utf-8")).get("items", [])
+            _TITLES = {x["kp_id"]: x["display_title"]
+                       for x in items if x.get("display_title")}
+        except Exception:  # noqa: BLE001
+            _TITLES = {}
+    return _TITLES
+
+
+def display_name(kp_id: str, fallback: str = "") -> str:
+    """给一个 kp_id，返回**给人看的名字**。
+
+    优先级：**可读标题** → **调用方给的 fallback（通常是原名）** → **kp_id 自己**。
+
+    ⚠️ 最后一档「退回 kp_id」是**兜底**，正常不该走到 ——
+    走到说明这个名字在库里找不到，**那本身是个数据问题**，不该靠前端猜。
+    """
+    t = _load_titles().get(kp_id)
+    if t:
+        return t
+    return fallback or kp_id
+
+
 def _chunks(text: str, size: int = DELTA_CHUNK) -> Iterator[str]:
     """按固定长度切块。**按标点优先断句**，避免把词切断（读起来更自然）。"""
     buf = ""
@@ -65,6 +111,20 @@ def _chunks(text: str, size: int = DELTA_CHUNK) -> Iterator[str]:
             buf = ""
     if buf:
         yield buf
+
+
+def _name_of(tr: TurnResult, kp_id: str) -> str:
+    """从本轮命中里找出这个 kp_id 的**原名**（作为 display_name 的 fallback）。
+
+    ⚠️ **必须定义在 `_diagnosis_event` 之前** ——
+    2026-10-08 我把它加在了 `event_stream` 前，而 `_diagnosis_event` 更靠前，
+    ⇒ 线上报 `NameError: name '_name_of' is not defined`（**事件流被掐断**）。
+    """
+
+    for h in tr.hits:
+        if h.kp_id == kp_id:
+            return h.name
+    return ""
 
 
 def _diagnosis_event(seq: int, tr: TurnResult) -> SseDiagnosisEvent:
@@ -85,13 +145,23 @@ def _diagnosis_event(seq: int, tr: TurnResult) -> SseDiagnosisEvent:
     stuck = StuckAtOut(
         step=str(d.get("stuck_at") or "未知"),
         evidence_kp_id=tr.decision.root_cause_kp_id or tr.decision.kp_id,
+        # ⭐ 同时给名字 —— 前端不该渲染 kp_id
+        evidence_kp_name=display_name(
+            tr.decision.root_cause_kp_id or tr.decision.kp_id or "",
+            _name_of(tr, tr.decision.root_cause_kp_id or tr.decision.kp_id or ""),
+        ),
         evidence_misconception_id=None,   # 误区表为空（见 templates.DATA_SOURCE 的说明）
     )
 
     practices: list[NextPracticeOut] = []
     if tr.hits:
         practices.append(
-            NextPracticeOut(kp_id=tr.hits[0].kp_id, task=str(d.get("next_practice") or ""))
+            NextPracticeOut(
+                kp_id=tr.hits[0].kp_id,
+                # ⭐ 名字（**优先可读标题**）：前端不该渲染 kp_id
+                kp_name=display_name(tr.hits[0].kp_id, tr.hits[0].name),
+                task=str(d.get("next_practice") or ""),
+            )
         )
 
     return SseDiagnosisEvent(
@@ -122,6 +192,10 @@ def event_stream(
     yield "retrieved", SseRetrievedEvent(
         seq=seq,
         kp_ids=[h.kp_id for h in tr.hits],
+        # ⭐ **与 kp_ids 一一对应的可显示名字** ——
+        #    前端渲染「检索材料」时用这个，而不是直接显示 kp_id。
+        #    优先可读标题，取不到退回原名（`hit.name`）——**不编**。
+        kp_names=[display_name(h.kp_id, h.name) for h in tr.hits],
         block_ids=[],                      # 溯源到具体块：抽取还没落 block 级引用，如实留空
         is_out_of_scope=tr.is_out_of_scope,
     )
