@@ -1,0 +1,296 @@
+#!/usr/bin/env python
+"""析知 · 全链路复验（end-to-end check）。
+
+    python scripts/e2e-check.py                      # 打线上
+    python scripts/e2e-check.py --base http://...    # 打别处（本地/预发）
+    python scripts/e2e-check.py --json               # 输出 JSON（给 CI）
+
+## 为什么要有这个脚本
+
+2026-10-08 做全链路复验时，**手工验出一批问题**，其中最严重的一个是：
+
+    答疑**只有第 1 轮正常**，从第 2 轮起 `/ask` 返回 **HTTP 200 但 SSE 零字节**。
+    根因：`session.get(type(top), ...)` —— 把 dataclass 当 ORM 类传给了 SQLAlchemy。
+
+**它的表现极具误导性**：HTTP 200 看起来"成功了"，零事件看起来"模型没产出"，
+**很容易被当成"内容为空"而不是"崩了"** —— 而 traceback 只在容器日志里。
+
+**⇒ 所以这个脚本把"当时是怎么发现的"固化成断言。三条经验值得单列：**
+
+1. **答疑必须验多轮** —— 只验第 1 轮会完全漏掉状态机分支里的 bug。
+2. **SSE 零字节要当失败** —— 不是"空回复"，是"流被中途掐了"。
+3. **接口不报错不等于没崩** —— 断言要卡在**内容结构**上，不能只看状态码。
+
+## 层与判据
+
+| 层 | 验什么 | 判据 |
+|---|---|---|
+| 1 路由 | 6 个前端路由 | HTTP 200 |
+| 2 API 契约 | 关键端点 | 状态码 + **字段在不在**（改 schema 漏改能查出来） |
+| 3 业务链路 | **多轮答疑** | 见下 |
+| 4 今日改动 | 重复标注 / 例题溯源 / 学习路径 | 值对得上 |
+
+**第 3 层的判据（对照 SPEC）**：
+  · 建会话返回 **200 或 201**（201 Created 才是标准的）
+  · **每一轮** SSE 都要有事件，且以 `done` 收尾（**≥2 轮**）
+  · 第 1 轮：**不给答案**（含引导问句、不含"答案是…"式断言）
+  · `diagnosis` 事件含三级结构（`knowledge_points` / `stuck_at` / `next_practice`）
+    —— **SPEC L783 说的是「右侧固定面板」，所以它本来就不该在正文里**
+  · 连续 2 次答不上 ⇒ 降级直讲（**由代码层强制**）
+
+退出码：全通过 0，否则 1。
+"""
+
+from __future__ import annotations
+
+import argparse
+import json
+import sys
+import urllib.error
+import urllib.request
+
+DEFAULT_BASE = "http://120.77.177.171:8000"
+UA = {"User-Agent": "xizhi-e2e-check/1.0"}
+
+RESULTS: list[dict] = []
+
+
+def rec(layer: str, ok: bool, label: str, detail: str = "") -> bool:
+    RESULTS.append({"layer": layer, "ok": ok, "label": label, "detail": detail})
+    print(f"      {'✅' if ok else '❌'} {label}" + (f"   {detail}" if detail else ""))
+    return ok
+
+
+class Client:
+    def __init__(self, base: str) -> None:
+        self.base = base.rstrip("/")
+
+    def get(self, path: str, timeout: int = 60):
+        req = urllib.request.Request(self.base + path, headers=UA)
+        return self._send(req, timeout)
+
+    def post(self, path: str, body: dict, *, sse: bool = False, timeout: int = 180):
+        h = {**UA, "Content-Type": "application/json"}
+        if sse:
+            h["Accept"] = "text/event-stream"
+        req = urllib.request.Request(self.base + path, data=json.dumps(body).encode(),
+                                     headers=h, method="POST")
+        return self._send(req, timeout, raw=sse)
+
+    def _send(self, req, timeout: int, raw: bool = False):
+        try:
+            with urllib.request.urlopen(req, timeout=timeout) as r:
+                data = r.read().decode("utf-8", "ignore")
+                if raw:
+                    return r.status, data
+                try:
+                    return r.status, json.loads(data)
+                except Exception:  # noqa: BLE001
+                    return r.status, data
+        except urllib.error.HTTPError as e:
+            body = e.read().decode("utf-8", "ignore")
+            try:
+                return e.code, json.loads(body)
+            except Exception:  # noqa: BLE001
+                return e.code, body
+        except Exception as e:  # noqa: BLE001
+            return -1, f"{type(e).__name__}: {e}"
+
+
+def parse_sse(raw: str) -> list[tuple[str, dict]]:
+    ev: list[tuple[str, dict]] = []
+    cur = None
+    for ln in raw.splitlines():
+        if ln.startswith("event:"):
+            cur = ln[6:].strip()
+        elif ln.startswith("data:") and cur:
+            try:
+                ev.append((cur, json.loads(ln[5:].strip())))
+            except Exception:  # noqa: BLE001
+                pass
+    return ev
+
+
+def layer1_routes(c: Client) -> None:
+    print()
+    print("=" * 74)
+    print("  第 1 层 · 前端路由")
+    print("=" * 74)
+    for route in ("/", "/graph", "/path", "/tutor", "/review", "/report"):
+        code, body = c.get(route)
+        n = len(body) if isinstance(body, str) else len(json.dumps(body, ensure_ascii=False))
+        rec("1-路由", code == 200, f"{route:<10} HTTP {code}", f"{n:,} 字符")
+
+
+def layer2_api(c: Client) -> None:
+    print()
+    print("=" * 74)
+    print("  第 2 层 · API 契约")
+    print("=" * 74)
+    code, d = c.get("/api/health")
+    rec("2-契约", code == 200, f"/api/health  HTTP {code}")
+
+    code, d = c.get("/api/knowledge-points?page_size=3")
+    items = (((d.get("data") if isinstance(d, dict) else {}) or {})
+             .get("items") or []) if isinstance(d, dict) else []
+    rec("2-契约", code == 200 and len(items) == 3,
+        f"/api/knowledge-points  {len(items)} 条")
+    if items:
+        need = {"id", "name", "difficulty", "source", "is_duplicate",
+                "duplicate_of", "duplicate_group_size"}
+        miss = need - set(items[0])
+        rec("2-契约", not miss, "列表项字段齐全",
+            f"缺 {miss}" if miss else f"{len(items[0])} 字段")
+
+    code, d = c.get("/api/knowledge-graph?max_nodes=1000")
+    g = ((d.get("data") if isinstance(d, dict) else {}) or {}) if isinstance(d, dict) else {}
+    rec("2-契约", code == 200 and bool(g.get("nodes")),
+        f"/api/knowledge-graph  {len(g.get('nodes') or [])} 节点 / "
+        f"{len(g.get('edges') or [])} 边")
+
+    code, d = c.get("/api/materials")
+    ms = ((d.get("data") if isinstance(d, dict) else {}) or {}).get("items") or []
+    rec("2-契约", code == 200 and bool(ms), f"/api/materials  {len(ms)} 份")
+
+    code, d = c.get("/api/definitely-not-exist")
+    is_json = isinstance(d, dict) and (bool(d.get("error")) or d.get("ok") is False)
+    rec("2-契约", code == 404 and is_json, f"未注册路由 -> JSON 404  HTTP {code}")
+
+
+def layer3_tutor(c: Client) -> None:
+    """**这一层是核心** —— 多轮答疑，且每轮的 SSE 都必须有内容。"""
+    print()
+    print("=" * 74)
+    print("  第 3 层 · 业务链路（多轮答疑）")
+    print("=" * 74)
+
+    code, d = c.post("/api/qa/sessions",
+                     {"material_scope": [], "student_label": "e2e-check"})
+    # ⚠️ **201 Created 才是标准的** —— 别把 201 判成失败（我犯过）
+    rec("3-答疑", code in (200, 201),
+        f"建会话 HTTP {code}（**200 或 201 都算对**）")
+    sid = ((d.get("data") if isinstance(d, dict) else {}) or {}).get("session_id")
+    if not sid:
+        rec("3-答疑", False, "拿到 session_id", f"实际 {d!r}"[:80])
+        return
+
+    # 四轮：正常 → 提示 → 再不会 → 超范围
+    # ⚠️ **必须多轮** —— 只问一轮会漏掉状态机分支里的 bug（2026-10-08 的教训）
+    TURNS = [
+        ("慢启动为什么叫慢启动？", "probe"),
+        ("我不太懂，能不能再提示一下？", "hint"),
+        ("还是不会……", "escalate"),
+        ("量子纠缠和 TCP 有什么关系？", "oos"),
+    ]
+    seen_states: list[str] = []
+    banned = ["正确答案是", "答案是", "直接告诉你"]
+
+    for i, (q, tag) in enumerate(TURNS, 1):
+        try:
+            status, raw = c.post(f"/api/qa/sessions/{sid}/ask",
+                                 {"question": q}, sse=True)
+        except Exception as e:  # noqa: BLE001
+            rec("3-答疑", False, f"第 {i} 轮请求异常", f"{type(e).__name__}")
+            continue
+        ev = parse_sse(raw)
+        kinds = [k for k, _ in ev]
+        text = "".join(str(x.get("text") or x.get("delta") or "")
+                       for k, x in ev if k not in ("retrieved", "done", "state"))
+        diag = next((x for k, x in ev if k == "diagnosis"), None)
+        st = next((x.get("state") for k, x in ev if k == "state"), None)
+        if st:
+            seen_states.append(st)
+
+        # ⚠️ 核心断言：**零字节 = 失败，不是"空回复"**
+        rec("3-答疑", len(raw) > 0 and len(ev) > 0,
+            f"第 {i} 轮有事件  HTTP {status} / {len(raw)} 字节 / {len(ev)} 事件",
+            f"状态={st}  正文={len(text)} 字符")
+        rec("3-答疑", bool(kinds) and kinds[-1] == "done",
+            f"第 {i} 轮以 done 收尾", f"序列 {kinds[:8]}")
+
+        # 第 1 轮：不给答案
+        if i == 1:
+            hit = [b for b in banned if b in text]
+            rec("3-答疑", not hit, "第 1 轮不给答案", f"出现 {hit}" if hit else "")
+            rec("3-答疑", ("？" in text or "?" in text), "第 1 轮含引导问句")
+
+        # 每轮：diagnosis 里的三级结构（**SPEC L783：右侧面板**）
+        if diag is not None:
+            need = {"knowledge_points", "stuck_at", "next_practice"}
+            got = set(diag)
+            rec("3-答疑", need <= got,
+                f"第 {i} 轮 diagnosis 含三级结构",
+                f"缺 {need - got}" if not (need <= got) else "")
+
+    # 状态机推进（连续 2 次答不上 ⇒ 降级）
+    rec("3-答疑", len(set(seen_states)) >= 2,
+        f"状态机在推进（看到 {len(set(seen_states))} 个不同状态）",
+        str(seen_states))
+
+
+def layer4_today(c: Client) -> None:
+    print()
+    print("=" * 74)
+    print("  第 4 层 · 近期改动是否生效")
+    print("=" * 74)
+    code, d = c.get("/api/knowledge-points/kp_42b16cd4_000_000_012")
+    x = ((d.get("data") if isinstance(d, dict) else {}) or {}) if isinstance(d, dict) else {}
+    rec("4-改动", x.get("duplicate_group_size") == 35 and x.get("is_duplicate") is False,
+        "重复标注（代表）", f"size={x.get('duplicate_group_size')}")
+    code, d = c.get("/api/knowledge-points/kp_42b16cd4_000_000_017")
+    y = ((d.get("data") if isinstance(d, dict) else {}) or {}) if isinstance(d, dict) else {}
+    rec("4-改动",
+        y.get("is_duplicate") is True and y.get("duplicate_of") == "kp_42b16cd4_000_000_012",
+        "重复标注（副本）", f"of={y.get('duplicate_of')}")
+
+    code, d = c.get("/api/knowledge-points/kp_42b16cd4_000_000_034")
+    z = ((d.get("data") if isinstance(d, dict) else {}) or {}) if isinstance(d, dict) else {}
+    ex = z.get("examples") or []
+    rec("4-改动", bool(ex) and bool(z.get("misconceptions")),
+        "例题/误区（Ch05 灌库）",
+        f"例 {len(ex)} 误 {len(z.get('misconceptions') or [])}")
+    an = str((ex[0] if ex else {}).get("analysis_md") or "")
+    rec("4-改动", "原文" in an and len(an) > 100, "例题带原文溯源")
+
+    code, d = c.get("/api/learning-path?kp_id=kp_cf6fcaa0_000_000_028")
+    steps = (d.get("data") if isinstance(d, dict) else None) if isinstance(d, dict) else None
+    n = len(steps) if isinstance(steps, list) else 0
+    rec("4-改动", n >= 2, f"学习路径（Ch06 补边）{n} 步")
+
+
+def main() -> int:
+    ap = argparse.ArgumentParser(description="析知全链路复验")
+    ap.add_argument("--base", default=DEFAULT_BASE, help="服务地址")
+    ap.add_argument("--json", action="store_true", help="输出 JSON")
+    args = ap.parse_args()
+
+    c = Client(args.base)
+    print("=" * 74)
+    print(f"  析知 · 全链路复验   {args.base}")
+    print("=" * 74)
+
+    layer1_routes(c)
+    layer2_api(c)
+    layer3_tutor(c)
+    layer4_today(c)
+
+    bad = [r for r in RESULTS if not r["ok"]]
+    print()
+    print("=" * 74)
+    if bad:
+        print(f"  ❌ **{len(bad)} / {len(RESULTS)} 项未通过**")
+        for r in bad:
+            print(f"      [{r['layer']}] {r['label']}   {r['detail']}")
+    else:
+        print(f"  ✅ **全部通过**（{len(RESULTS)} 项）")
+    print("=" * 74)
+
+    if args.json:
+        print(json.dumps({"base": args.base, "total": len(RESULTS),
+                          "failed": len(bad), "results": RESULTS},
+                         ensure_ascii=False, indent=2))
+    return 1 if bad else 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())
