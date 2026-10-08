@@ -56,7 +56,15 @@ if [ "$BUILD_ONLY" -eq 0 ]; then
     #
     #    **所以这里显式地把它从工作区补进去**：即使它一时没提交上，
     #    部署也不会因此失败。（同时它当然应该被提交 —— 那是另一件事。）
-    echo "==> ① 本地打包（**工作区**，不是 git）"
+    # ⚠️ **先查 git 索引**（2026-10-08 加）——
+# 索引一旦落后于 HEAD，`git status` 会**虚报**（把已提交的文件显示成「未跟踪」），
+# 而 `git commit -am` 会**真把文件删进历史**。**这是「不报错的错」，所以让它自动暴露。**
+if ! bash scripts/check-git-index.sh > /tmp/xizhi-idx.log 2>&1; then
+    echo "⚠️ **git 索引检查未通过** —— 部署可以继续，但先看一眼 /tmp/xizhi-idx.log"
+    echo "   修法：bash scripts/fix-git-index.sh（**工作区不动**）"
+fi
+
+echo "==> ① 本地打包（**工作区**，不是 git）"
     mkdir -p "$(dirname "$TARBALL")"
     STAMP="$(date +%m%d-%H%M%S)"
     TARBALL="$(dirname "$TARBALL")/xizhi-main-${STAMP}.tar.gz"

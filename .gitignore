@@ -95,3 +95,8 @@ xizhi-source-*.tar.gz
 .pack-work/
 .pack-files.txt
 .pack-log.txt
+
+# Office 临时锁文件（打开 pptx/xlsx/docx 时会生成 `~$<原名>`）
+# ⚠️ 它**不该提交** —— 是「某人正开着这个文件」的标记，不是内容。
+# 2026-10-08 工作区里就出现过 2 个，差点被 `git add -A` 带进去。
+~$*
