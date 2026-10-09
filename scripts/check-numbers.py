@@ -96,8 +96,27 @@ def main() -> int:
             f"expected={item['expected']:<5} actual={item['actual']:<5} n={item['sample_size']}"
         )
 
-    print("\n提示：`/graph` 前端默认 max_nodes=200 —— 面板显示的是**子图**统计，不是全图。")
-    print("      录制前要么把节点上限拉满，要么按面板实际显示的数字讲。")
+    # /graph 面板默认 max_nodes=200 —— 面板显示的是**子图**，与上面的全图口径不同。
+    # 2026-10-08 实测这里踩过一次：后端把截断从「按 seq」改成「按重要性」后，
+    # 200 点视图的边数从 211 变成 199、hard 覆盖率从 78.3% 升到 100%，
+    # 而文档里写死的 211 就过期了。所以这一块必须一起打出来。
+    g200 = get("/api/knowledge-graph", max_nodes=200)["data"]
+    n200 = {n["id"] for n in g200.get("nodes", [])}
+    s200 = g200["stats"]
+    # 全图（含边）要单独再取一次 —— 上面只取了 stats
+    full_edges = get("/api/knowledge-graph", max_nodes=1000)["data"].get("edges", [])
+    hard_all = [e for e in full_edges if e.get("relation_type") == "hard"]
+    hard_seen = [e for e in hard_all if e.get("source") in n200 or e.get("target") in n200]
+
+    print("\n── /graph 面板默认视图（max_nodes=200，**子图**口径）")
+    print(f"   节点 / 边           {s200['node_count']} / {s200['edge_count']}")
+    print(f"   hard / soft         {s200['hard_edge_count']} / {s200['soft_edge_count']}")
+    print(
+        f"   hard 边覆盖率       {len(hard_seen)}/{len(hard_all)}"
+        f" = {100.0 * len(hard_seen) / max(1, len(hard_all)):.1f}%"
+    )
+
+    print("\n提示：面板数字与上面「全图」不同 —— 录制前要么把节点上限拉满，要么按面板实际显示讲。")
 
     if passed != len(checks):
         print("\n[!!] 不变量被破坏，先查清再录。")
