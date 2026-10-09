@@ -21,12 +21,12 @@ function PrerequisiteItem({ item }: { item: GapPrerequisite }) {
     <li className="rounded-lg border border-slate-200 p-2.5">
       <div className="flex items-start justify-between gap-2">
         <span className="text-sm font-medium text-slate-700">{item.name}</span>
-        <span className="shrink-0 rounded-full bg-brand-50 px-2 py-0.5 text-[11px] text-brand-700">
+        <span className="shrink-0 rounded-full bg-brand-50 px-2 py-0.5 text-xs text-brand-700">
           第 {item.depth} 层前置
         </span>
       </div>
       {item.reason && <p className="mt-1 text-xs leading-relaxed text-slate-500">{item.reason}</p>}
-      <div className="mt-1 font-mono text-[11px] text-slate-400">{item.kp_id}</div>
+      <div className="mt-1 font-mono text-xs text-slate-400">{item.kp_id}</div>
     </li>
   )
 }
@@ -43,7 +43,7 @@ function AnalysisBody({ analysis }: { analysis: GapAnalysis }) {
         <Target className="h-3.5 w-3.5 shrink-0 text-slate-400" aria-hidden />
         <span className="text-xs text-slate-500">回溯目标</span>
         <span className="text-sm font-medium text-slate-700">{analysis.target_kp.name}</span>
-        <span className="font-mono text-[11px] text-slate-400">{analysis.target_kp.kp_id}</span>
+        <span className="font-mono text-xs text-slate-400">{analysis.target_kp.kp_id}</span>
       </div>
 
       {/* 必须补的前置 */}
@@ -53,13 +53,13 @@ function AnalysisBody({ analysis }: { analysis: GapAnalysis }) {
           <span className="text-slate-400">（{prerequisites.length}）</span>
           <span className="text-slate-400">沿 hard 边反向可达，由近及远</span>
         </div>
-        <p className="mb-2 text-[11px] leading-relaxed text-slate-400">
+        <p className="mb-2 text-xs leading-relaxed text-slate-400">
           硬前置 = 不会就学不动（约束先后）；软前置 = 有帮助、非必需。只有硬前置会被用在这个回溯里。
         </p>
         {prerequisites.length === 0 ? (
-          <div className="rounded-lg border border-amber-200 bg-amber-50/60 px-3 py-2 text-xs leading-relaxed text-amber-900">
+          <div className="rounded-lg border border-warning-line bg-warning-soft px-3 py-2 text-xs leading-relaxed text-warning">
             <p className="font-medium">未检出硬前置 —— 但这不等于它可以直接学起。</p>
-            <p className="mt-1 text-amber-800">
+            <p className="mt-1 text-warning">
               这个回溯只沿「hard 边」走。如果当前图里还没有 hard 边（依赖边全是 AI 预抽取的软前置、待人工确认），
               这里返回 0 只说明「无法判定」，不说明它是起点。
               界面上别处若显示它有前置（软前置），两者并不矛盾。
@@ -78,16 +78,16 @@ function AnalysisBody({ analysis }: { analysis: GapAnalysis }) {
       <section>
         <div className="mb-2 text-xs font-medium text-slate-600">最可能的断层</div>
         {likelyGap ? (
-          <div className="rounded-lg border border-amber-200 bg-amber-50/60 p-3">
+          <div className="rounded-lg border border-warning-line bg-warning-soft p-3">
             <div className="flex flex-wrap items-center gap-2">
-              <AlertTriangle className="h-3.5 w-3.5 shrink-0 text-amber-500" aria-hidden />
-              <span className="text-sm font-medium text-amber-900">{likelyGap.name}</span>
-              <Badge color="#f59e0b">根因候选</Badge>
+              <AlertTriangle className="h-3.5 w-3.5 shrink-0 text-warning" aria-hidden />
+              <span className="text-sm font-medium text-warning">{likelyGap.name}</span>
+              <Badge color="#92400e">根因候选</Badge>
             </div>
             {likelyGap.evidence && (
-              <p className="mt-1.5 text-xs leading-relaxed text-amber-800">{likelyGap.evidence}</p>
+              <p className="mt-1.5 text-xs leading-relaxed text-warning">{likelyGap.evidence}</p>
             )}
-            <div className="mt-1.5 text-[11px] text-amber-700/80">
+            <div className="mt-1.5 text-xs text-warning">
               溯源：素材 <span className="font-mono">{likelyGap.source.material_id}</span> · 第{' '}
               {likelyGap.source.page} 页
             </div>
@@ -190,7 +190,7 @@ export function GapAnalysisPanel({ targetKpId, targetKpName }: GapAnalysisPanelP
               value={draft}
               onChange={(event) => setDraft(event.target.value)}
               placeholder="粘贴误区 id，可一次多个，用空格 / 逗号分隔"
-              className="h-8 flex-1 rounded-lg border border-slate-300 bg-white px-2.5 font-mono text-xs text-slate-700 placeholder:font-sans placeholder:text-slate-400 focus:xizhi-focus"
+              className="h-11 flex-1 rounded-lg border border-slate-300 bg-white px-2.5 font-mono text-xs text-slate-700 placeholder:font-sans placeholder:text-slate-400 focus:xizhi-focus sm:h-10"
             />
             <Button type="submit" variant="secondary" size="sm" icon={<Plus className="h-3.5 w-3.5" />} disabled={!draft.trim()}>
               添加
@@ -202,12 +202,12 @@ export function GapAnalysisPanel({ targetKpId, targetKpName }: GapAnalysisPanelP
               {evidenceIds.map((id) => (
                 <span
                   key={id}
-                  className="inline-flex items-center gap-1 rounded-md bg-white px-2 py-0.5 font-mono text-[11px] text-slate-600 ring-1 ring-slate-200"
+                  className="inline-flex items-center gap-1 rounded-md bg-white px-2 py-0.5 font-mono text-xs text-slate-600 ring-1 ring-slate-200"
                 >
                   {id}
                   <button
                     type="button"
-                    className="text-slate-400 hover:text-red-500"
+                    className="text-slate-400 hover:text-danger"
                     aria-label={`移除 ${id}`}
                     onClick={() => setEvidenceIds((prev) => prev.filter((item) => item !== id))}
                   >
@@ -217,7 +217,7 @@ export function GapAnalysisPanel({ targetKpId, targetKpName }: GapAnalysisPanelP
               ))}
               <button
                 type="button"
-                className="ml-1 text-[11px] text-slate-500 hover:text-brand-600 hover:underline"
+                className="ml-1 text-xs text-slate-500 hover:text-brand-600 hover:underline"
                 onClick={() => setEvidenceIds([])}
               >
                 清空
@@ -225,7 +225,7 @@ export function GapAnalysisPanel({ targetKpId, targetKpName }: GapAnalysisPanelP
             </div>
           )}
 
-          <p className="mt-2 text-[11px] leading-relaxed text-slate-400">
+          <p className="mt-2 text-xs leading-relaxed text-slate-400">
             无效 id 会被后端<b className="font-medium text-slate-500">忽略而不是报错</b>
             ，只影响「最可能断层」的排序精度，不影响本次请求成功；所以这里不做格式校验，粘错了也不会让回溯失败。
           </p>

@@ -49,8 +49,8 @@ export function formatMetricValue(spec: MetricSpec): string {
 }
 
 const COLOR = {
-  pass: '#10b981',
-  fail: '#ef4444',
+  pass: '#15803d',
+  fail: '#dc2626',
   info: '#64748b',
   missing: '#cbd5e1',
 } as const
@@ -91,7 +91,7 @@ export function MetricCard({ spec }: { spec: MetricSpec }) {
     <div
       className={[
         'rounded-xl border p-3.5',
-        status === 'fail' ? 'border-red-200 bg-red-50/50' : 'border-slate-200 bg-white',
+        status === 'fail' ? 'border-danger-line bg-danger-soft' : 'border-slate-200 bg-white',
       ].join(' ')}
     >
       <div className="flex items-start justify-between gap-2">
@@ -102,10 +102,10 @@ export function MetricCard({ spec }: { spec: MetricSpec }) {
             ) : null}
             <span className="truncate">{spec.redLine ?? spec.label}</span>
           </div>
-          {spec.redLine && <div className="mt-0.5 truncate text-[11px] text-slate-400">{spec.label}</div>}
+          {spec.redLine && <div className="mt-0.5 truncate text-xs text-slate-400">{spec.label}</div>}
         </div>
         <span
-          className="inline-flex items-center gap-1 whitespace-nowrap rounded-full px-2 py-0.5 text-[11px] font-medium"
+          className="inline-flex items-center gap-1 whitespace-nowrap rounded-full px-2 py-0.5 text-xs font-medium"
           style={{ color, backgroundColor: `${color}18` }}
         >
           <StatusIcon status={status} />
@@ -120,7 +120,7 @@ export function MetricCard({ spec }: { spec: MetricSpec }) {
         >
           {formatMetricValue(spec)}
         </span>
-        <span className="text-[11px] text-slate-500">{spec.targetText}</span>
+        <span className="text-xs text-slate-500">{spec.targetText}</span>
       </div>
 
       {/* 进度条：自己用 div 画，不引图表库 */}
@@ -131,9 +131,9 @@ export function MetricCard({ spec }: { spec: MetricSpec }) {
         />
       </div>
 
-      {spec.note && <p className="mt-2 text-[11px] leading-relaxed text-slate-500">{spec.note}</p>}
+      {spec.note && <p className="mt-2 text-xs leading-relaxed text-slate-500">{spec.note}</p>}
       {status === 'fail' && (
-        <p className="mt-1.5 text-[11px] font-medium leading-relaxed text-red-600">
+        <p className="mt-1.5 text-xs font-medium leading-relaxed text-danger">
           未达标：当前值未满足验收红线，请回到对应环节核对。
         </p>
       )}
@@ -153,11 +153,11 @@ export function MetricSection({
 }) {
   return (
     <section className="xizhi-card">
-      <header className="flex items-baseline gap-3 border-b border-slate-100 px-4 py-3">
-        <h2 className="text-sm font-semibold text-slate-800">{title}</h2>
-        <span className="text-xs text-slate-400">{subtitle}</span>
+      <header className="flex flex-wrap items-baseline gap-x-3 gap-y-0.5 border-b border-slate-100 px-4 py-3">
+        <h2 className="shrink-0 text-base font-semibold leading-6 text-slate-800">{title}</h2>
+        <span className="min-w-0 text-xs text-slate-400">{subtitle}</span>
       </header>
-      <div className="grid grid-cols-2 gap-3 p-4 lg:grid-cols-3">
+      <div className="grid grid-cols-1 gap-3 p-4 sm:grid-cols-2 lg:grid-cols-3">
         {metrics.map((spec) => (
           <MetricCard key={spec.key} spec={spec} />
         ))}

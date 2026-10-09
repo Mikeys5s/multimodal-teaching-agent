@@ -99,11 +99,11 @@ export function JobProgressPanel({
             <li key={item.job_id} className="space-y-1.5">
               <div className="flex items-center gap-2">
                 {isFailed ? (
-                  <XCircle className="h-3.5 w-3.5 shrink-0 text-red-500" aria-hidden />
+                  <XCircle className="h-3.5 w-3.5 shrink-0 text-danger" aria-hidden />
                 ) : isDone ? (
-                  <CheckCircle2 className="h-3.5 w-3.5 shrink-0 text-emerald-500" aria-hidden />
+                  <CheckCircle2 className="h-3.5 w-3.5 shrink-0 text-success" aria-hidden />
                 ) : isPartial ? (
-                  <AlertTriangle className="h-3.5 w-3.5 shrink-0 text-amber-500" aria-hidden />
+                  <AlertTriangle className="h-3.5 w-3.5 shrink-0 text-warning" aria-hidden />
                 ) : (
                   <Spinner className="h-3.5 w-3.5 shrink-0" />
                 )}
@@ -111,7 +111,7 @@ export function JobProgressPanel({
                   {item.filename}
                 </span>
                 {item.hint && (
-                  <span className="shrink-0 text-[11px] text-slate-400">{item.hint}</span>
+                  <span className="shrink-0 text-xs text-slate-400">{item.hint}</span>
                 )}
                 <JobStatusBadge status={status} />
                 <span className="w-10 shrink-0 text-right text-xs tabular-nums text-slate-400">
@@ -126,7 +126,7 @@ export function JobProgressPanel({
                 {job?.stage_detail?.trim() ? job.stage_detail : waitingLabel}
               </div>
 
-              <div className="flex flex-wrap items-center gap-x-3 text-[11px] text-slate-400">
+              <div className="flex flex-wrap items-center gap-x-3 text-xs text-slate-400">
                 {!isSettled && item.estimated_seconds !== undefined && (
                   <span title={`后端估算 ${item.estimated_seconds} 秒`}>
                     {formatEstimate(item.estimated_seconds)}
@@ -144,9 +144,9 @@ export function JobProgressPanel({
                 结果是「任务失败了但界面上什么都不显示」，还不报错。
               */}
               {isFailed && job?.error_message && (
-                <div className="flex items-start gap-1.5 rounded-lg border border-red-100 bg-red-50/70 px-2.5 py-1.5">
-                  <span className="mt-px shrink-0 text-[11px] font-medium text-red-500">失败</span>
-                  <span className="text-xs leading-relaxed text-red-700">{job.error_message}</span>
+                <div className="flex items-start gap-1.5 rounded-lg border border-danger-line bg-danger-soft px-2.5 py-1.5">
+                  <span className="mt-px shrink-0 text-xs font-medium text-danger">失败</span>
+                  <span className="text-xs leading-relaxed text-danger">{job.error_message}</span>
                 </div>
               )}
 

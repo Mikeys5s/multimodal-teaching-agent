@@ -36,12 +36,12 @@ export function TraceCard({ retrieved, pending }: { retrieved: SseRetrieved | nu
     <div
       className={[
         'rounded-lg border px-3 py-2.5 text-xs',
-        outOfScope ? 'border-red-200 bg-red-50/70' : 'border-brand-100 bg-brand-50/50',
+        outOfScope ? 'border-danger-line bg-danger-soft' : 'border-brand-100 bg-brand-50/50',
       ].join(' ')}
     >
       <div className="flex flex-wrap items-center gap-2">
         {outOfScope ? (
-          <ShieldAlert className="h-3.5 w-3.5 shrink-0 text-red-500" aria-hidden />
+          <ShieldAlert className="h-3.5 w-3.5 shrink-0 text-danger" aria-hidden />
         ) : (
           <FileSearch className="h-3.5 w-3.5 shrink-0 text-brand-600" aria-hidden />
         )}
@@ -49,12 +49,12 @@ export function TraceCard({ retrieved, pending }: { retrieved: SseRetrieved | nu
         <span className="text-slate-400">
           命中 {retrieved.kp_ids.length} 个知识点 / {retrieved.block_ids.length} 个原文块
         </span>
-        <span className="font-mono text-[10px] text-slate-400">seq {retrieved.seq}</span>
+        <span className="font-mono text-xs text-slate-400">seq {retrieved.seq}</span>
         {pendingTail && <Spinner className="h-3 w-3" />}
       </div>
 
       {outOfScope && (
-        <div className="mt-1.5 rounded-md bg-red-100/80 px-2 py-1.5 font-medium text-red-700">
+        <div className="mt-1.5 rounded-md bg-danger-line/50 px-2 py-1.5 font-medium text-danger">
           本次提问超出材料范围，将拒答 —— 不会使用材料以外的知识作答。
         </div>
       )}

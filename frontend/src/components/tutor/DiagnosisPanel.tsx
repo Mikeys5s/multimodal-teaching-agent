@@ -28,7 +28,7 @@ function StuckAt({ stuckAt }: { stuckAt: DiagnosisStuckAt }) {
     <div className="space-y-1.5">
       <p className="text-xs leading-relaxed text-slate-700">{stuckAt.step}</p>
       <div className="flex flex-wrap items-center gap-1">
-        <span className="text-[11px] text-slate-400">来源证据</span>
+        <span className="text-xs text-slate-400">来源证据</span>
         {evidence.length > 0 ? (
           evidence.map((item) => (
             <Tag key={`${item.label}-${item.value}`} title={item.hint}>
@@ -36,7 +36,7 @@ function StuckAt({ stuckAt }: { stuckAt: DiagnosisStuckAt }) {
             </Tag>
           ))
         ) : (
-          <span className="text-[11px] text-slate-400">本轮未定位到具体证据</span>
+          <span className="text-xs text-slate-400">本轮未定位到具体证据</span>
         )}
       </div>
     </div>
@@ -54,14 +54,14 @@ export function DiagnosisPanel({ diagnosis }: { diagnosis: SseDiagnosis }) {
     <div className="rounded-xl border border-slate-200 bg-slate-50/60 p-3">
       <div className="mb-2.5 flex items-center gap-2">
         <span className="text-xs font-semibold text-slate-700">本轮诊断 · 三件产出</span>
-        <span className="font-mono text-[10px] text-slate-400">seq {diagnosis.seq}</span>
+        <span className="font-mono text-xs text-slate-400">seq {diagnosis.seq}</span>
       </div>
 
       <div className="grid gap-3 md:grid-cols-3">
         {/* ① 涉及知识点 */}
         <section className="rounded-lg border border-slate-200 bg-white p-2.5">
           <header className="mb-1.5 flex items-center gap-1.5 text-xs font-medium text-slate-600">
-            <Lightbulb className="h-3.5 w-3.5 text-amber-500" aria-hidden />
+            <Lightbulb className="h-3.5 w-3.5 text-warning" aria-hidden />
             ① 涉及知识点
           </header>
           {kps.length > 0 ? (
@@ -82,7 +82,7 @@ export function DiagnosisPanel({ diagnosis }: { diagnosis: SseDiagnosis }) {
               ))}
             </ul>
           ) : (
-            <p className="text-[11px] text-slate-400">本轮未命中知识点</p>
+            <p className="text-xs text-slate-400">本轮未命中知识点</p>
           )}
         </section>
 
@@ -95,14 +95,14 @@ export function DiagnosisPanel({ diagnosis }: { diagnosis: SseDiagnosis }) {
           {stuckAt ? (
             <StuckAt stuckAt={stuckAt} />
           ) : (
-            <p className="text-[11px] text-slate-400">本轮没有定位到卡点</p>
+            <p className="text-xs text-slate-400">本轮没有定位到卡点</p>
           )}
         </section>
 
         {/* ③ 下一步建议练习 */}
         <section className="rounded-lg border border-slate-200 bg-white p-2.5">
           <header className="mb-1.5 flex items-center gap-1.5 text-xs font-medium text-slate-600">
-            <ListChecks className="h-3.5 w-3.5 text-emerald-600" aria-hidden />
+            <ListChecks className="h-3.5 w-3.5 text-success" aria-hidden />
             ③ 下一步建议练习
           </header>
           {nextPractice.length > 0 ? (
@@ -116,7 +116,7 @@ export function DiagnosisPanel({ diagnosis }: { diagnosis: SseDiagnosis }) {
               ))}
             </ul>
           ) : (
-            <p className="text-[11px] text-slate-400">本轮没有建议练习</p>
+            <p className="text-xs text-slate-400">本轮没有建议练习</p>
           )}
         </section>
       </div>

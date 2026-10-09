@@ -16,14 +16,15 @@ export const SOCRATIC_STATE_LABEL: Record<SocraticState, string> = {
   CONFIRM: '确认巩固',
 }
 
+// 语义化配色（对白底对比度 ≥ 4.5:1；状态码同时展示，不靠颜色单独传达）
 export const SOCRATIC_STATE_COLOR: Record<SocraticState, string> = {
   S0_RETRIEVE: '#64748b',
   S1_PROBE: '#2563eb',
-  S2_HINT1: '#0ea5e9',
-  S3_HINT2: '#8b5cf6',
-  S4_EXPLAIN: '#f59e0b',
-  REFUSE: '#ef4444',
-  CONFIRM: '#10b981',
+  S2_HINT1: '#0284c7',
+  S3_HINT2: '#4f46e5',
+  S4_EXPLAIN: '#b45309',
+  REFUSE: '#dc2626',
+  CONFIRM: '#15803d',
 }
 
 export const TURN_TYPE_LABEL: Record<TurnType, string> = {

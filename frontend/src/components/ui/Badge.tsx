@@ -3,6 +3,10 @@ import type { ReactNode } from 'react'
 import { DIFFICULTY_LABEL, STATUS_LABEL, JOB_STATUS_LABEL, SEVERITY_LABEL, difficultyColor } from '@/lib/format'
 import type { Difficulty, JobStatus, MaterialStatus, Severity } from '@/lib/types'
 
+/**
+ * 状态 badge：颜色与文字（+ 圆点图标）同时出现，不靠颜色单独传达状态。
+ * 24px 高、12px/500，语义色对固定映射后端枚举。
+ */
 export function Badge({
   color,
   children,
@@ -14,40 +18,40 @@ export function Badge({
 }) {
   return (
     <span
-      className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full border px-2 py-0.5 text-xs font-medium"
+      className="inline-flex h-6 items-center gap-1.5 whitespace-nowrap rounded-full border px-2 text-2xs"
       style={{ color, backgroundColor: `${color}14`, borderColor: `${color}33` }}
     >
-      {dot && <span className="h-1.5 w-1.5 shrink-0 rounded-full" style={{ backgroundColor: color }} />}
+      {dot && <span className="h-1.5 w-1.5 shrink-0 rounded-full" style={{ backgroundColor: color }} aria-hidden />}
       {children}
     </span>
   )
 }
 
 const MATERIAL_STATUS_COLOR: Record<MaterialStatus, string> = {
-  pending: '#94a3b8',
-  parsing: '#3b82f6',
-  done: '#10b981',
-  partial: '#f59e0b',
-  failed: '#ef4444',
+  pending: '#64748b',
+  parsing: '#1d4ed8',
+  done: '#166534',
+  partial: '#92400e',
+  failed: '#991b1b',
 }
 
 const JOB_STATUS_COLOR: Record<JobStatus, string> = {
-  pending: '#94a3b8',
-  running: '#3b82f6',
-  done: '#10b981',
-  partial: '#f59e0b',
-  failed: '#ef4444',
+  pending: '#64748b',
+  running: '#1d4ed8',
+  done: '#166534',
+  partial: '#92400e',
+  failed: '#991b1b',
 }
 
 const SEVERITY_COLOR: Record<Severity, string> = {
   low: '#64748b',
-  medium: '#f59e0b',
-  high: '#ef4444',
+  medium: '#92400e',
+  high: '#991b1b',
 }
 
 export function StatusBadge({ status }: { status: MaterialStatus }) {
   return (
-    <Badge color={MATERIAL_STATUS_COLOR[status] ?? '#94a3b8'} dot>
+    <Badge color={MATERIAL_STATUS_COLOR[status] ?? '#64748b'} dot>
       {STATUS_LABEL[status] ?? status}
     </Badge>
   )
@@ -55,7 +59,7 @@ export function StatusBadge({ status }: { status: MaterialStatus }) {
 
 export function JobStatusBadge({ status }: { status: JobStatus }) {
   return (
-    <Badge color={JOB_STATUS_COLOR[status] ?? '#94a3b8'} dot>
+    <Badge color={JOB_STATUS_COLOR[status] ?? '#64748b'} dot>
       {JOB_STATUS_LABEL[status] ?? status}
     </Badge>
   )
@@ -70,7 +74,7 @@ export function DifficultyBadge({ difficulty }: { difficulty: Difficulty }) {
 }
 
 export function SeverityBadge({ severity }: { severity: Severity }) {
-  return <Badge color={SEVERITY_COLOR[severity] ?? '#94a3b8'}>{SEVERITY_LABEL[severity]}风险</Badge>
+  return <Badge color={SEVERITY_COLOR[severity] ?? '#64748b'}>{SEVERITY_LABEL[severity]}风险</Badge>
 }
 
 /**
@@ -80,7 +84,7 @@ export function SeverityBadge({ severity }: { severity: Severity }) {
 export function Tag({ children, title }: { children: ReactNode; title?: string }) {
   return (
     <span
-      className="inline-flex items-center rounded-md bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-600"
+      className="inline-flex items-center rounded-md bg-slate-100 px-2 py-0.5 text-2xs text-slate-600"
       title={title}
     >
       {children}

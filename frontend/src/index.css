@@ -4,13 +4,20 @@
 
 @layer base {
   :root {
-    /* 设计 token（CSS 变量层，供非 Tailwind 场景与内联样式引用） */
+    /* 设计 token（CSS 变量层，供 SVG 内联样式与非 Tailwind 场景引用） */
     --xizhi-bg: #f8fafc;
     --xizhi-surface: #ffffff;
+    --xizhi-surface-muted: #f1f5f9;
     --xizhi-border: #e2e8f0;
     --xizhi-text: #0f172a;
+    --xizhi-text-secondary: #334155;
     --xizhi-muted: #64748b;
     --xizhi-brand: #2563eb;
+    --xizhi-brand-hover: #1d4ed8;
+    --xizhi-brand-soft: #eff6ff;
+    --xizhi-success: #166534;
+    --xizhi-warning: #92400e;
+    --xizhi-danger: #991b1b;
   }
 
   html,
@@ -24,20 +31,62 @@
     margin: 0;
   }
 
-  /* 桌面端为基准视口（SPEC §2.4：不做移动端适配，基准 1440×900） */
-  #root {
-    min-width: 1024px;
+  /* 全局焦点可见性：键盘用户必须看得清焦点在哪（2px 环 + 2px 间隔） */
+  :focus-visible {
+    outline: 2px solid var(--xizhi-brand);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+
+  /* 减少动态效果偏好：关闭位移/缩放/逐项动画，状态直接切换 */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
   }
 }
 
 @layer components {
+  /* 表面容器：仅用于需要边界的内容块（上传区、关键数据块、风险提示、详情面板） */
   .xizhi-card {
     @apply rounded-xl border border-slate-200 bg-white shadow-card;
   }
 
+  /* 交互元素的焦点环（Tailwind 场景） */
   .xizhi-focus {
     @apply outline-none ring-2 ring-brand-500/40 ring-offset-1;
   }
+
+  /* 分区标题行：标题 + 说明 + 操作的对齐基准 */
+  .xizhi-section-title {
+    @apply text-base font-semibold leading-6 text-slate-900;
+  }
+
+  /* 骨架屏：尺寸与最终内容一致，仅结构占位 */
+  .xizhi-skeleton {
+    @apply animate-pulse rounded-md bg-slate-100;
+  }
+}
+
+/* 逐项淡入（学习路径步骤、内容显现 160ms 量级）；
+   prefers-reduced-motion 已在 base 层把所有动画压到瞬时，无需额外判断 */
+@keyframes xizhi-rise {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.xizhi-rise {
+  animation: xizhi-rise 160ms ease-out both;
 }
 
 /* 细滚动条，避免长表格破坏版面 */

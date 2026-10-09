@@ -117,13 +117,13 @@ export function ExportPanel() {
           >
             导出 JSON
           </Button>
-          <span className="text-[11px] text-slate-400">
+          <span className="text-xs text-slate-400">
             文件名形如 knowledge-points-{dateStamp()}.csv，CSV 带 UTF-8 BOM，Excel 可直接打开中文。
           </span>
         </div>
 
         {message && (
-          <div className="flex items-start gap-2 rounded-lg border border-emerald-100 bg-emerald-50/70 px-3 py-2 text-xs text-emerald-700">
+          <div className="flex items-start gap-2 rounded-lg border border-success-line bg-success-soft px-3 py-2 text-xs text-success">
             <Download className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden />
             <span>{message}</span>
           </div>

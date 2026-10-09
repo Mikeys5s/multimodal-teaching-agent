@@ -112,12 +112,12 @@ export function TargetPicker({ selectedId, onSelect }: TargetPickerProps) {
                 value={draftKeyword}
                 onChange={(event) => setDraftKeyword(event.target.value)}
                 placeholder="按知识点名称搜索，回车确认"
-                className="h-9 w-full rounded-lg border border-slate-300 bg-white pl-8 pr-3 text-sm text-slate-700 placeholder:text-slate-400 focus:xizhi-focus"
+                className="h-11 w-full rounded-lg border border-slate-300 bg-white pl-8 pr-3 text-sm text-slate-700 placeholder:text-slate-400 focus:xizhi-focus sm:h-10"
               />
             </div>
           </label>
 
-          <label className="flex flex-col gap-1">
+          <label className="flex w-full flex-col gap-1 sm:w-auto">
             <span className="text-xs text-slate-500">难度</span>
             <select
               value={difficulty === '' ? '' : String(difficulty)}
@@ -125,7 +125,7 @@ export function TargetPicker({ selectedId, onSelect }: TargetPickerProps) {
                 const value = event.target.value
                 setDifficulty(value === '' ? '' : (Number(value) as Difficulty))
               }}
-              className="h-9 rounded-lg border border-slate-300 bg-white px-2 text-sm text-slate-700"
+              className="h-11 w-full rounded-lg border border-slate-300 bg-white px-2 text-sm text-slate-700 sm:h-10 sm:w-auto"
             >
               <option value="">全部难度</option>
               {DIFFICULTY_OPTIONS.map((value) => (
@@ -136,12 +136,12 @@ export function TargetPicker({ selectedId, onSelect }: TargetPickerProps) {
             </select>
           </label>
 
-          <label className="flex flex-col gap-1">
+          <label className="flex w-full flex-col gap-1 sm:w-auto">
             <span className="text-xs text-slate-500">章节</span>
             <select
               value={chapterId}
               onChange={(event) => setChapterId(event.target.value)}
-              className="h-9 min-w-[160px] rounded-lg border border-slate-300 bg-white px-2 text-sm text-slate-700"
+              className="h-11 w-full rounded-lg border border-slate-300 bg-white px-2 text-sm text-slate-700 sm:h-10 sm:w-auto sm:min-w-[160px]"
             >
               <option value="">全部章节</option>
               {chapters.map((chapter) => (
@@ -220,7 +220,7 @@ export function TargetPicker({ selectedId, onSelect }: TargetPickerProps) {
                       </div>
                     </div>
                     <div className="flex shrink-0 items-center gap-2">
-                      <span className="text-[11px] text-slate-400">
+                      <span className="text-xs text-slate-400">
                         前置 {kp.prerequisite_count} · 误区 {kp.misconception_count}
                       </span>
                       <DifficultyBadge difficulty={kp.difficulty} />
@@ -233,7 +233,7 @@ export function TargetPicker({ selectedId, onSelect }: TargetPickerProps) {
         )}
 
         {items.length > 0 && (
-          <p className="text-[11px] text-slate-400">
+          <p className="text-xs text-slate-400">
             选中一个知识点后，下方会按它的硬前置依赖输出拓扑有序的学习路径，并做卡点根因回溯。
           </p>
         )}

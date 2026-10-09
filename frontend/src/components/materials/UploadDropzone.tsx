@@ -100,7 +100,7 @@ export function UploadDropzone({ onFiles, uploading = false, capabilities, disab
       </div>
 
       {unsupportedExt.length > 0 && (
-        <div className="text-xs text-amber-600">
+        <div className="text-xs text-warning">
           暂不支持 {unsupportedExt.join(' / ')}（本版本聚焦图文材料解析）
         </div>
       )}

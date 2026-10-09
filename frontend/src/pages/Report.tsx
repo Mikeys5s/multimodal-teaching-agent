@@ -26,9 +26,9 @@ export default function Report() {
   return (
     <div className="mx-auto max-w-6xl space-y-5">
       <section className="flex items-start justify-between gap-4">
-        <div>
-          <h1 className="text-base font-semibold text-slate-800">质量报告</h1>
-          <p className="mt-1 text-xs text-slate-500">
+        <div className="min-w-0">
+          <h1 className="text-lg font-semibold leading-7 text-slate-900">质量报告</h1>
+          <p className="mt-1 text-xs leading-relaxed text-slate-500">
             每项指标都标注了它对应的验收红线（A2-1 / A2-3 / B1-1 / B1-2 / B1-5 与接地率），
             未达标会显式标红 —— 这一页给评委看的是「能不能过验收」，不是一组好看的数字。
           </p>
@@ -36,6 +36,7 @@ export default function Report() {
         <Button
           variant="secondary"
           size="sm"
+          className="shrink-0"
           loading={reportReq.loading}
           icon={<RefreshCw className="h-3.5 w-3.5" />}
           onClick={() => void reportReq.reload()}

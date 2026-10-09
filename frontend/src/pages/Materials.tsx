@@ -113,13 +113,13 @@ export default function Materials() {
         {uploadError && <InlineError>{uploadError}</InlineError>}
 
         {rejected.length > 0 && (
-          <div className="rounded-xl border border-amber-200 bg-amber-50/70 p-3">
-            <div className="mb-1.5 text-xs font-medium text-amber-800">
+          <div className="rounded-xl border border-warning-line bg-warning-soft p-3">
+            <div className="mb-1.5 text-xs font-medium text-warning">
               {rejected.length} 个文件未被接受
             </div>
             <ul className="space-y-1">
               {rejected.map((item) => (
-                <li key={item.filename} className="text-xs text-amber-700">
+                <li key={item.filename} className="text-xs text-warning">
                   <span className="font-medium">{item.filename}</span>：{item.reason}
                 </li>
               ))}

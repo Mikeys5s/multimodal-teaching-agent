@@ -13,10 +13,10 @@ export function ReportOverview({ metrics }: { metrics: MetricSpec[] }) {
   const allPass = failed.length === 0 && missing.length === 0
 
   const tone = allPass
-    ? { border: 'border-emerald-200', bg: 'bg-emerald-50/60', text: 'text-emerald-700', accent: '#10b981' }
+    ? { border: 'border-success-line', bg: 'bg-success-soft', text: 'text-success', accent: '#15803d' }
     : failed.length > 0
-      ? { border: 'border-red-200', bg: 'bg-red-50/60', text: 'text-red-700', accent: '#ef4444' }
-      : { border: 'border-amber-200', bg: 'bg-amber-50/60', text: 'text-amber-700', accent: '#f59e0b' }
+      ? { border: 'border-danger-line', bg: 'bg-danger-soft', text: 'text-danger', accent: '#dc2626' }
+      : { border: 'border-warning-line', bg: 'bg-warning-soft', text: 'text-warning', accent: '#b45309' }
 
   const verdict = allPass ? '核心红线全部达标，可过验收' : failed.length > 0 ? '存在未达标红线' : '红线数据尚未齐备'
   const detail = allPass
@@ -37,35 +37,35 @@ export function ReportOverview({ metrics }: { metrics: MetricSpec[] }) {
           <div className={`text-sm font-semibold ${tone.text}`}>{verdict}</div>
           <p className="mt-0.5 text-xs leading-relaxed text-slate-600">{detail}</p>
         </div>
-        <span className="hidden items-center gap-1 rounded-full bg-white/70 px-2.5 py-1 text-[11px] font-medium text-slate-600 lg:inline-flex">
+        <span className="hidden items-center gap-1 rounded-full bg-white/70 px-2.5 py-1 text-xs font-medium text-slate-600 lg:inline-flex">
           <ShieldCheck className="h-3.5 w-3.5" aria-hidden />
           四条核心红线
         </span>
       </div>
 
-      <div className="mt-3 grid grid-cols-4 gap-3">
+      <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
         {metrics.map((spec) => {
           const status = metricStatus(spec)
-          const color = status === 'pass' ? '#10b981' : status === 'fail' ? '#ef4444' : '#94a3b8'
+          const color = status === 'pass' ? '#15803d' : status === 'fail' ? '#dc2626' : '#94a3b8'
           return (
             <div key={spec.key} className="rounded-lg border border-white/70 bg-white/80 px-3 py-2.5">
-              <div className="truncate text-[11px] font-medium text-slate-500">
+              <div className="truncate text-xs font-medium text-slate-500">
                 {spec.redLine ?? spec.label}
               </div>
               <div className="mt-1 flex items-baseline gap-1.5">
                 <span className="text-xl font-semibold tabular-nums" style={{ color }}>
                   {formatMetricValue(spec)}
                 </span>
-                <span className="text-[11px] text-slate-400">{spec.targetText}</span>
+                <span className="text-xs text-slate-400">{spec.targetText}</span>
               </div>
-              <div className="mt-1 flex items-center gap-1 text-[11px] font-medium" style={{ color }}>
+              <div className="mt-1 flex items-center gap-1 text-xs font-medium" style={{ color }}>
                 {status === 'pass' && <CheckCircle2 className="h-3 w-3" aria-hidden />}
                 {status === 'fail' && <AlertTriangle className="h-3 w-3" aria-hidden />}
                 {status === 'missing' && <CircleHelp className="h-3 w-3" aria-hidden />}
                 {status === 'pass' ? '达标' : status === 'fail' ? '未达标' : '暂缺'}
               </div>
               {spec.compare === 'eq' && isNum(spec.value) && (
-                <div className="mt-1 text-[10px] text-slate-400">必须为 0，当前 {spec.value}</div>
+                <div className="mt-1 text-xs text-slate-400">必须为 0，当前 {spec.value}</div>
               )}
             </div>
           )

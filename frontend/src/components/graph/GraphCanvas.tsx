@@ -52,6 +52,9 @@ export function GraphCanvas({ nodes, edges, selectedId, onSelect }: GraphCanvasP
   const [keyboardId, setKeyboardId] = useState<string | null>(null)
   const drag = useRef({ x: 0, y: 0, moved: 0, active: false })
 
+  /**
+   * 适应画布（全景）：整图收进视口。大图时会缩得很小，适合看结构，不适合读文字。
+   */
   const fitView = useCallback(() => {
     const el = containerRef.current
     if (!el || layout.width === 0 || layout.height === 0) return
@@ -59,9 +62,30 @@ export function GraphCanvas({ nodes, edges, selectedId, onSelect }: GraphCanvasP
     setView({ k, x: (el.clientWidth - layout.width * k) / 2, y: (el.clientHeight - layout.height * k) / 2 })
   }, [layout])
 
+  /**
+   * 初始视图：优先「可读」而非「看全」——
+   * 全景缩放若低于 0.5（图很宽），改为 0.5 倍并左对齐到先修起点层，用户向右平移探索；
+   * 「适应画布」按钮仍提供全景。
+   */
+  const fitReadable = useCallback(() => {
+    const el = containerRef.current
+    if (!el || layout.width === 0 || layout.height === 0) return
+    const kFit = Math.min((el.clientWidth - 48) / layout.width, (el.clientHeight - 48) / layout.height)
+    if (kFit >= 0.5) {
+      fitView()
+      return
+    }
+    const k = clamp(0.5, MIN_SCALE, 1.1)
+    setView({
+      k,
+      x: 24,
+      y: Math.max(24, (el.clientHeight - layout.height * k) / 2),
+    })
+  }, [layout, fitView])
+
   useEffect(() => {
-    fitView()
-  }, [fitView])
+    fitReadable()
+  }, [fitReadable])
 
   const zoomAt = useCallback((factor: number, cx: number, cy: number) => {
     setView((prev) => {
@@ -156,22 +180,40 @@ export function GraphCanvas({ nodes, edges, selectedId, onSelect }: GraphCanvasP
         aria-label="知识点依赖有向无环图：可拖拽平移、滚轮缩放；按 Tab 遍历知识点，Enter 或空格查看前置与例题"
       >
         <defs>
+          {/* 硬前置：实心箭头（形态线索 1） */}
           <marker id="xizhi-arrow-hard" markerUnits="userSpaceOnUse" markerWidth="9" markerHeight="9" refX="8.5" refY="4.5" orient="auto">
-            <path d="M0 0 L9 4.5 L0 9 z" fill="#94a3b8" />
+            <path d="M0 0 L9 4.5 L0 9 z" fill="#64748b" />
           </marker>
-          <marker id="xizhi-arrow-soft" markerUnits="userSpaceOnUse" markerWidth="8" markerHeight="8" refX="7.5" refY="4" orient="auto">
-            <path d="M0 0 L8 4 L0 8 z" fill="#cbd5e1" />
+          <marker id="xizhi-arrow-hard-active" markerUnits="userSpaceOnUse" markerWidth="9" markerHeight="9" refX="8.5" refY="4.5" orient="auto">
+            <path d="M0 0 L9 4.5 L0 9 z" fill="#2563eb" />
+          </marker>
+          {/* 软前置：空心箭头（与硬前置的形态区分，不靠颜色） */}
+          <marker id="xizhi-arrow-soft" markerUnits="userSpaceOnUse" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+            <path d="M0.8 0.8 L7.2 4 L0.8 7.2 z" fill="#ffffff" stroke="#94a3b8" strokeWidth="1.2" />
+          </marker>
+          <marker id="xizhi-arrow-soft-active" markerUnits="userSpaceOnUse" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+            <path d="M0.8 0.8 L7.2 4 L0.8 7.2 z" fill="#ffffff" stroke="#2563eb" strokeWidth="1.2" />
           </marker>
         </defs>
 
         <g transform={`translate(${view.x} ${view.y}) scale(${view.k})`}>
-          {/* 边（先画，压在节点下面） */}
+          {/* 边（先画，压在节点下面）。
+              硬/软前置用三重线索区分：线型（实线 vs 点线）+ 箭头形态（实心 vs 空心）+ 颜色深浅；
+              选中节点时关联边变为品牌蓝加粗，非关联边压淡。 */}
           <g>
             {layout.edges.map(({ edge, from, to, backEdge }) => {
               const a = rectBoundary(from, to)
               const b = rectBoundary(to, from)
               const hard = edge.relation_type === 'hard'
-              const dimmed = focusId !== null && edge.source !== focusId && edge.target !== focusId
+              const relatedEdge = focusId !== null && (edge.source === focusId || edge.target === focusId)
+              const dimmed = focusId !== null && !relatedEdge
+              const stroke = backEdge
+                ? '#ef4444'
+                : relatedEdge
+                  ? '#2563eb'
+                  : hard
+                    ? '#64748b'
+                    : '#94a3b8'
               return (
                 <line
                   key={`${edge.source}->${edge.target}`}
@@ -179,11 +221,12 @@ export function GraphCanvas({ nodes, edges, selectedId, onSelect }: GraphCanvasP
                   y1={a.y}
                   x2={b.x}
                   y2={b.y}
-                  stroke={backEdge ? '#ef4444' : hard ? '#94a3b8' : '#cbd5e1'}
-                  strokeWidth={hard ? 1.8 : 1.2}
-                  strokeDasharray={hard ? undefined : '6 4'}
-                  markerEnd={`url(#xizhi-arrow-${hard ? 'hard' : 'soft'})`}
-                  opacity={dimmed ? 0.15 : 1}
+                  stroke={stroke}
+                  strokeWidth={relatedEdge ? 2.4 : hard ? 1.8 : 1.4}
+                  strokeDasharray={backEdge ? '8 4' : hard ? undefined : '2 5'}
+                  strokeLinecap={hard && !backEdge ? 'butt' : 'round'}
+                  markerEnd={`url(#xizhi-arrow-${hard ? 'hard' : 'soft'}${relatedEdge && !backEdge ? '-active' : ''})`}
+                  opacity={dimmed ? 0.12 : 1}
                 />
               )
             })}
@@ -243,27 +286,29 @@ export function GraphCanvas({ nodes, edges, selectedId, onSelect }: GraphCanvasP
                       height={NODE_H + 12}
                       rx={18}
                       fill="none"
-                      stroke="#0f172a"
+                      stroke="#2563eb"
                       strokeWidth={2}
                       strokeDasharray="5 3"
                     />
                   )}
                   {selected && (
-                    <rect x={-3} y={-3} width={NODE_W + 6} height={NODE_H + 6} rx={16} fill="none" stroke={color} strokeWidth={3} opacity={0.35} />
+                    <rect x={-4} y={-4} width={NODE_W + 8} height={NODE_H + 8} rx={16} fill="none" stroke="#2563eb" strokeWidth={2.5} opacity={0.4} />
                   )}
+                  {/* 「地标卡」节点：白底 + 左侧难度色轨 + 难度数字徽章；
+                      待复核 = 琥珀虚线描边 + ! 角标（形态+图标+文字三重线索） */}
                   <rect
                     x={0}
                     y={0}
                     width={NODE_W}
                     height={NODE_H}
-                    rx={13}
-                    fill={color}
-                    fillOpacity={selected ? 0.28 : 0.14}
-                    stroke={color}
-                    strokeWidth={selected ? 2.5 : 1.6}
-                    strokeDasharray={node.needs_review ? '6 4' : undefined}
+                    rx={12}
+                    fill={selected ? '#eff6ff' : '#ffffff'}
+                    stroke={selected ? '#2563eb' : node.needs_review ? '#d97706' : color}
+                    strokeWidth={selected ? 2 : 1.4}
+                    strokeDasharray={node.needs_review && !selected ? '5 4' : undefined}
                   />
-                  <text x={14} y={NODE_H / 2 + 4.5} fontSize={12.5} fontWeight={500} fill="#1e293b">
+                  <rect x={5} y={7} width={4} height={NODE_H - 14} rx={2} fill={color} />
+                  <text x={17} y={NODE_H / 2 + 4.5} fontSize={12.5} fontWeight={500} fill="#0f172a">
                     {truncateName(label)}
                   </text>
                   <rect x={NODE_W - 32} y={NODE_H / 2 - 9} width={20} height={18} rx={6} fill={color} />
@@ -272,7 +317,7 @@ export function GraphCanvas({ nodes, edges, selectedId, onSelect }: GraphCanvasP
                   </text>
                   {node.needs_review && (
                     <g transform={`translate(${NODE_W - 6} -4)`}>
-                      <circle r={8.5} fill="#f59e0b" stroke="#ffffff" strokeWidth={1.5} />
+                      <circle r={8.5} fill="#d97706" stroke="#ffffff" strokeWidth={1.5} />
                       <text y={3.5} fontSize={10} fontWeight={700} fill="#ffffff" textAnchor="middle">
                         !
                       </text>
@@ -285,21 +330,21 @@ export function GraphCanvas({ nodes, edges, selectedId, onSelect }: GraphCanvasP
         </g>
       </svg>
 
-      {/* 缩放控件 */}
+      {/* 缩放控件（触控目标手机 ≥40px） */}
       <div className="absolute right-3 top-3 flex items-center gap-0.5 rounded-lg border border-slate-200 bg-white/95 p-1 shadow-card">
         <button
-          className="flex h-7 w-7 items-center justify-center rounded text-slate-500 hover:bg-slate-100 hover:text-slate-700"
+          className="flex h-10 w-10 items-center justify-center rounded text-slate-500 hover:bg-slate-100 hover:text-slate-700 sm:h-7 sm:w-7"
           onClick={() => zoomAtCenter(1 / ZOOM_STEP)}
           aria-label="缩小"
           title="缩小"
         >
           <Minus className="h-3.5 w-3.5" />
         </button>
-        <span className="w-11 text-center text-[11px] tabular-nums text-slate-500">
+        <span className="w-11 text-center text-xs tabular-nums text-slate-500">
           {Math.round(view.k * 100)}%
         </span>
         <button
-          className="flex h-7 w-7 items-center justify-center rounded text-slate-500 hover:bg-slate-100 hover:text-slate-700"
+          className="flex h-10 w-10 items-center justify-center rounded text-slate-500 hover:bg-slate-100 hover:text-slate-700 sm:h-7 sm:w-7"
           onClick={() => zoomAtCenter(ZOOM_STEP)}
           aria-label="放大"
           title="放大"
@@ -307,7 +352,7 @@ export function GraphCanvas({ nodes, edges, selectedId, onSelect }: GraphCanvasP
           <Plus className="h-3.5 w-3.5" />
         </button>
         <button
-          className="flex h-7 w-7 items-center justify-center rounded text-slate-500 hover:bg-slate-100 hover:text-slate-700"
+          className="flex h-10 w-10 items-center justify-center rounded text-slate-500 hover:bg-slate-100 hover:text-slate-700 sm:h-7 sm:w-7"
           onClick={fitView}
           aria-label="适应画布"
           title="适应画布"
@@ -316,32 +361,38 @@ export function GraphCanvas({ nodes, edges, selectedId, onSelect }: GraphCanvasP
         </button>
       </div>
 
-      <div className="pointer-events-none absolute bottom-3 right-3 rounded-md bg-white/85 px-2 py-1 text-[11px] text-slate-400">
+      <div className="pointer-events-none absolute bottom-3 right-3 hidden rounded-md bg-white/85 px-2 py-1 text-xs text-slate-400 sm:block">
         拖拽平移 · 滚轮缩放 · 点节点看详情 · Tab 遍历节点、Enter 打开
       </div>
 
-      {/* 图例 */}
+      {/* 图例：难度色 + 硬/软前置（线型 + 箭头形态双线索）+ 待复核 */}
       <div className="pointer-events-none absolute bottom-3 left-3 rounded-lg border border-slate-200 bg-white/95 px-3 py-2.5 shadow-card">
-        <div className="mb-1.5 text-[11px] font-medium text-slate-500">节点颜色 = 难度</div>
-        <div className="flex items-center gap-2.5">
+        <div className="mb-1.5 text-xs font-medium text-slate-500">节点色轨 = 难度</div>
+        <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1">
           {DIFFICULTY_LEVELS.map((level) => (
-            <span key={level} className="flex items-center gap-1 text-[11px] text-slate-600">
+            <span key={level} className="flex items-center gap-1 text-xs text-slate-600">
               <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: DIFFICULTY_COLOR[level] }} />
               {level}·{DIFFICULTY_LABEL[level]}
             </span>
           ))}
         </div>
-        <div className="mt-2 flex items-center gap-3.5 text-[11px] text-slate-600">
+        <div className="mt-2 flex flex-wrap items-center gap-x-3.5 gap-y-1 text-xs text-slate-600">
           <span className="flex items-center gap-1.5">
-            <span className="inline-block h-0 w-5 border-t-2 border-slate-400" />
-            硬前置 hard
+            <svg width="22" height="8" aria-hidden>
+              <line x1="0" y1="4" x2="16" y2="4" stroke="#64748b" strokeWidth="1.8" />
+              <path d="M15 1 L21 4 L15 7 z" fill="#64748b" />
+            </svg>
+            硬前置（实线实心箭头）
           </span>
           <span className="flex items-center gap-1.5">
-            <span className="inline-block h-0 w-5 border-t-2 border-dashed border-slate-300" />
-            软前置 soft
+            <svg width="22" height="8" aria-hidden>
+              <line x1="0" y1="4" x2="15" y2="4" stroke="#94a3b8" strokeWidth="1.4" strokeDasharray="2 4" strokeLinecap="round" />
+              <path d="M14.5 1.5 L20 4 L14.5 6.5 z" fill="#ffffff" stroke="#94a3b8" />
+            </svg>
+            软前置（点线空心箭头）
           </span>
           <span className="flex items-center gap-1.5">
-            <span className="h-3 w-3 rounded border-[1.5px] border-dashed border-amber-500 bg-amber-100" />
+            <span className="h-3 w-3 rounded border-[1.5px] border-dashed border-warning bg-warning-soft" />
             待复核
           </span>
         </div>

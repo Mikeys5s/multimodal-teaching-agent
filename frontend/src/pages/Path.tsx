@@ -88,7 +88,7 @@ export default function PathPage() {
             title="还没有选择目标知识点"
             description="在上方选一个知识点：系统会沿它的硬前置依赖反向遍历并做拓扑排序，给出「先学什么、后学什么」的有序路径，并回溯你可能卡住的更早环节。"
           />
-          <div className="flex items-center justify-center gap-1.5 pb-10 text-[11px] text-slate-400">
+          <div className="flex items-center justify-center gap-1.5 pb-10 text-xs text-slate-400">
             <Route className="h-3.5 w-3.5" aria-hidden />
             路径排序的每一步都会附上来自前置边的 reason —— 排序不是黑盒
           </div>

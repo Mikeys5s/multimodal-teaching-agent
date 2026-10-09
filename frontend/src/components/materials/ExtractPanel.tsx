@@ -295,10 +295,10 @@ export function ExtractPanel({
     if (!job) return null
     if (job.status === 'partial') {
       return (
-        <div className="rounded-lg border border-amber-200 bg-amber-50/70 px-3 py-2">
+        <div className="rounded-lg border border-warning-line bg-warning-soft px-3 py-2">
           <div className="flex items-start gap-1.5">
-            <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-amber-500" aria-hidden />
-            <div className="text-xs leading-relaxed text-amber-800">
+            <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-warning" aria-hidden />
+            <div className="text-xs leading-relaxed text-warning">
               部分成功：这批素材里只有一部分抽出了知识点，其余部分后端未能完成。
               可以先到知识图谱看已抽到的部分，再对缺口素材勾选「重新抽取」补跑一次。
             </div>
@@ -322,8 +322,8 @@ export function ExtractPanel({
 
     const summary = summarizeResult(job.result_json)
     return (
-      <div className="rounded-lg border border-emerald-100 bg-emerald-50/60 px-3 py-2">
-        <div className="text-xs leading-relaxed text-emerald-800">
+      <div className="rounded-lg border border-success-line bg-success-soft px-3 py-2">
+        <div className="text-xs leading-relaxed text-success">
           {summary ?? RESULT_FALLBACK}
         </div>
         <div className="mt-1.5 flex flex-wrap items-center gap-3 text-xs">
@@ -396,9 +396,9 @@ export function ExtractPanel({
             重新抽取（覆盖已有结果）
           </label>
         </div>
-        <div className="text-[11px] leading-relaxed text-slate-400">
+        <div className="text-xs leading-relaxed text-slate-400">
           默认不勾选「重新抽取」：只补跑缺失部分，已有结果不会被覆盖。勾选后会把这批素材已抽取的知识点
-          <span className="text-amber-600">整体覆盖重写</span>
+          <span className="text-warning">整体覆盖重写</span>
           ，仅在解析结果变了或上一轮抽得不满意时使用。
         </div>
 
@@ -416,7 +416,7 @@ export function ExtractPanel({
               <span className="min-w-0 flex-1 truncate text-xs text-slate-700" title={material.filename}>
                 {material.filename}
               </span>
-              <span className="shrink-0 text-[11px] text-slate-400">
+              <span className="shrink-0 text-xs text-slate-400">
                 {STATUS_LABEL[material.status] ?? material.status}
                 {material.page_count > 0 ? ` · ${material.page_count} 页` : ''}
               </span>
@@ -435,7 +435,7 @@ export function ExtractPanel({
           ))}
         </ul>
 
-        <div className="flex items-center justify-end gap-2 text-[11px] text-slate-400">
+        <div className="flex items-center justify-end gap-2 text-xs text-slate-400">
           <button
             className="hover:text-slate-600"
             onClick={() => setSelected(extractableIds)}
@@ -487,11 +487,11 @@ export function ExtractPanel({
       {jobError && (
         <InlineError>
           {jobError}
-          <button className="ml-2 font-medium text-red-600 hover:underline" onClick={revalidate}>
+          <button className="ml-2 font-medium text-danger hover:underline" onClick={revalidate}>
             重新获取进度
           </button>
           <button
-            className="ml-2 font-medium text-red-600 hover:underline"
+            className="ml-2 font-medium text-danger hover:underline"
             onClick={handleClearRecords}
             title="只清掉本页的任务记录，后端任务不会被取消"
           >

@@ -1,4 +1,4 @@
-import { CornerDownRight, Flag, RefreshCw } from 'lucide-react'
+import { CornerDownRight, Flag, RefreshCw, Target } from 'lucide-react'
 import { useMemo } from 'react'
 
 import { Badge } from '@/components/ui/Badge'
@@ -45,6 +45,9 @@ function summarize(steps: LearningPathStep[]): PathSummary {
  *      让「为什么它排在前面」可解释，而不是黑盒拓扑排序的结果；
  *   ③ `is_start_point` 是拓扑排序里入度为 0 的节点，用独立徽标 + 底色标出，
  *      让「这里可以零基础起步」在界面上一眼可见。
+ *
+ * 视觉：里程碑式时间线 —— 序号圆牌 + 连接线，最后一步即目标（品牌蓝描边 + 「目标」徽标），
+ * 步骤在出现时逐项淡入（prefers-reduced-motion 时直接显示）。
  */
 export function PathTimeline({ kpId, kpName, onRetarget }: PathTimelineProps) {
   const pathReq = useRequest(() => api.getLearningPath(kpId), [kpId])
@@ -56,8 +59,8 @@ export function PathTimeline({ kpId, kpName, onRetarget }: PathTimelineProps) {
     <section className="xizhi-card">
       <header className="flex items-start justify-between gap-3 border-b border-slate-100 px-4 py-3">
         <div className="min-w-0">
-          <div className="flex items-baseline gap-3">
-            <h2 className="text-sm font-semibold text-slate-800">学习路径时间线</h2>
+          <div className="flex flex-wrap items-baseline gap-x-3 gap-y-0.5">
+            <h2 className="text-base font-semibold leading-6 text-slate-800">学习路径时间线</h2>
             <span className="truncate text-xs text-slate-400" title={kpName}>
               目标：{kpName}
             </span>
@@ -106,12 +109,21 @@ export function PathTimeline({ kpId, kpName, onRetarget }: PathTimelineProps) {
           <ol className="relative space-y-2.5">
             {steps.map((step, index) => {
               const color = difficultyColor(step.difficulty)
+              const isTarget = index === steps.length - 1
               return (
-                <li key={step.kp_id} className="relative pl-11">
-                  {/* 节点序号 */}
+                <li
+                  key={step.kp_id}
+                  className="xizhi-rise relative pl-11"
+                  style={{ animationDelay: `${Math.min(index * 60, 600)}ms` }}
+                >
+                  {/* 节点序号（里程碑） */}
                   <span
                     className="absolute left-0 top-2 flex h-7 w-7 items-center justify-center rounded-full border text-xs font-semibold tabular-nums"
-                    style={{ color, backgroundColor: `${color}14`, borderColor: `${color}66` }}
+                    style={
+                      isTarget
+                        ? { color: '#ffffff', backgroundColor: '#2563eb', borderColor: '#2563eb' }
+                        : { color, backgroundColor: `${color}14`, borderColor: `${color}66` }
+                    }
                   >
                     {step.order}
                   </span>
@@ -123,7 +135,11 @@ export function PathTimeline({ kpId, kpName, onRetarget }: PathTimelineProps) {
                   <div
                     className={[
                       'rounded-lg border px-3 py-2.5',
-                      step.is_start_point ? 'border-amber-200 bg-amber-50/60' : 'border-slate-200 bg-white',
+                      isTarget
+                        ? 'border-brand-500 bg-brand-50/50 ring-1 ring-brand-200'
+                        : step.is_start_point
+                          ? 'border-warning-line bg-warning-soft'
+                          : 'border-slate-200 bg-white',
                     ].join(' ')}
                   >
                     <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
@@ -134,8 +150,13 @@ export function PathTimeline({ kpId, kpName, onRetarget }: PathTimelineProps) {
                       >
                         {kpDisplayTitle(step)}
                       </span>
+                      {isTarget && (
+                        <Badge color="#1d4ed8" dot>
+                          目标
+                        </Badge>
+                      )}
                       {step.is_start_point && (
-                        <Badge color="#f59e0b" dot>
+                        <Badge color="#92400e" dot>
                           起点
                         </Badge>
                       )}
@@ -144,7 +165,7 @@ export function PathTimeline({ kpId, kpName, onRetarget }: PathTimelineProps) {
                       </Badge>
                       <button
                         type="button"
-                        className="ml-auto inline-flex items-center gap-1 text-[11px] text-brand-600 hover:underline"
+                        className="ml-auto inline-flex min-h-11 items-center gap-1 text-xs text-brand-600 hover:underline sm:min-h-0"
                         title="以这一步为新的目标知识点，重新生成路径"
                         onClick={() => onRetarget(step.kp_id, kpDisplayTitle(step))}
                       >
@@ -163,12 +184,18 @@ export function PathTimeline({ kpId, kpName, onRetarget }: PathTimelineProps) {
                       )}
                     </p>
 
-                    <div className="mt-1 flex items-center gap-2 text-[11px] text-slate-400">
+                    <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-slate-400">
                       <span className="font-mono">{step.kp_id}</span>
                       {step.is_start_point && (
-                        <span className="inline-flex items-center gap-1 text-amber-700">
+                        <span className="inline-flex items-center gap-1 text-warning">
                           <Flag className="h-3 w-3" aria-hidden />
                           入度为 0，可从零基础起步
+                        </span>
+                      )}
+                      {isTarget && (
+                        <span className="inline-flex items-center gap-1 text-brand-700">
+                          <Target className="h-3 w-3" aria-hidden />
+                          当前学习目标
                         </span>
                       )}
                     </div>

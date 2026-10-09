@@ -88,7 +88,7 @@ export function StateMachinePanel({
                 <Badge color={SOCRATIC_STATE_COLOR[state.state]} dot>
                   {SOCRATIC_STATE_LABEL[state.state]}
                 </Badge>
-                <span className="font-mono text-[10px] text-slate-400">{state.state}</span>
+                <span className="font-mono text-xs text-slate-400">{state.state}</span>
               </div>
               <div className="text-xs text-slate-600">
                 下一步动作：<span className="font-medium">{TURN_TYPE_LABEL[state.next_action]}</span>
@@ -107,7 +107,7 @@ export function StateMachinePanel({
 
             {/* 引导阶梯 */}
             <div className="space-y-1.5">
-              <div className="text-[11px] font-medium text-slate-500">引导阶梯（首轮不给答案）</div>
+              <div className="text-xs font-medium text-slate-500">引导阶梯（首轮不给答案）</div>
               <ol className="space-y-1">
                 {SOCRATIC_LADDER.map((step, index) => {
                   const reached = reachedIndex >= 0 && index <= reachedIndex
@@ -115,7 +115,7 @@ export function StateMachinePanel({
                     <li
                       key={step.state}
                       className={[
-                        'flex items-center justify-between rounded-md border px-2 py-1 text-[11px]',
+                        'flex items-center justify-between rounded-md border px-2 py-1 text-xs',
                         index === reachedIndex
                           ? 'border-brand-200 bg-brand-50 text-brand-700'
                           : reached
@@ -135,7 +135,7 @@ export function StateMachinePanel({
 
             {/* 提示级别 */}
             <div className="flex items-center justify-between">
-              <span className="text-[11px] text-slate-500">
+              <span className="text-xs text-slate-500">
                 提示级别 hint_level
               </span>
               <div className="flex items-center gap-2">
@@ -147,21 +147,21 @@ export function StateMachinePanel({
             </div>
 
             {/* 失败计数与降级阈值 —— 明写规则，让观看者知道这是设计而非随机 */}
-            <div className="rounded-lg border border-amber-200 bg-amber-50/70 p-2.5">
-              <div className="flex items-center justify-between text-xs text-amber-800">
+            <div className="rounded-lg border border-warning-line bg-warning-soft p-2.5">
+              <div className="flex items-center justify-between text-xs text-warning">
                 <span>连续失败次数</span>
                 <span className="font-medium">
                   {state.consecutive_failures} / {state.explain_threshold}
                 </span>
               </div>
-              <p className="mt-1 text-[11px] leading-relaxed text-amber-700">
+              <p className="mt-1 text-xs leading-relaxed text-warning">
                 连续失败达到 explain_threshold（{state.explain_threshold}）次会强制降级为直接讲解 ——
                 这是代码层兜底，不依赖模型自觉。
               </p>
             </div>
 
             {state.state === 'S4_EXPLAIN' && (
-              <p className="rounded-md bg-amber-100/70 px-2 py-1.5 text-[11px] font-medium text-amber-800">
+              <p className="rounded-md bg-warning-soft px-2 py-1.5 text-xs font-medium text-warning">
                 当前已处于「直接讲解」状态：引导次数用尽，改给完整分步讲解。
               </p>
             )}
@@ -170,7 +170,7 @@ export function StateMachinePanel({
           <Spinner className="h-3.5 w-3.5" />
         )}
 
-        <p className="border-t border-slate-100 pt-2.5 text-[11px] leading-relaxed text-slate-400">
+        <p className="border-t border-slate-100 pt-2.5 text-xs leading-relaxed text-slate-400">
           「首轮只反问、不给答案」是设计要求：先暴露理解偏差，再逐级给提示；
           提示用尽才降级讲解。越界的提问直接走拒答，不生成材料外内容。
         </p>

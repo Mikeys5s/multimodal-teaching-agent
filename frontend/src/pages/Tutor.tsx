@@ -321,9 +321,9 @@ export default function Tutor() {
                     onClick={() => setQuestion(item.q)}
                     title={item.label}
                     className={
-                      'rounded-full border px-2.5 py-1 text-xs transition-colors ' +
+                      'inline-flex min-h-11 items-center rounded-full border px-3 text-xs transition-colors sm:min-h-8 ' +
                       (item.scope === 'out'
-                        ? 'border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100'
+                        ? 'border-warning-line bg-warning-soft text-warning hover:bg-warning-line/60'
                         : 'border-slate-200 bg-slate-50 text-slate-600 hover:border-brand-300 hover:text-brand-700')
                     }
                   >
@@ -351,12 +351,11 @@ export default function Tutor() {
               </span>
               <div className="flex items-center gap-2">
                 {streaming && (
-                  <Button variant="danger" size="sm" icon={<Square className="h-3.5 w-3.5" />} onClick={handleAbort}>
+                  <Button variant="danger" icon={<Square className="h-3.5 w-3.5" />} onClick={handleAbort}>
                     中断
                   </Button>
                 )}
                 <Button
-                  size="sm"
                   loading={streaming}
                   disabled={question.trim() === ''}
                   icon={<SendHorizontal className="h-3.5 w-3.5" />}

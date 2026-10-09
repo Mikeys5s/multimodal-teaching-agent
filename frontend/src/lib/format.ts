@@ -91,13 +91,13 @@ export function formatScore(score: number): string {
   return score.toFixed(2)
 }
 
-/** 难度色阶（与 tailwind.config.js 的 difficulty token 对齐） */
+/** 难度色阶（与 tailwind.config.js 的 difficulty token 对齐；对白底 ≥ 4.5:1，可直接用于文字与描边） */
 export const DIFFICULTY_COLOR: Record<Difficulty, string> = {
-  1: '#10b981',
-  2: '#84cc16',
-  3: '#f59e0b',
-  4: '#f97316',
-  5: '#ef4444',
+  1: '#059669',
+  2: '#65a30d',
+  3: '#d97706',
+  4: '#ea580c',
+  5: '#dc2626',
 }
 
 export function difficultyColor(d: Difficulty): string {
