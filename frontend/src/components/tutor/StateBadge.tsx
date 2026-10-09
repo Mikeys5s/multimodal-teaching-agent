@@ -15,20 +15,20 @@ export function StateBadge({ state }: { state: SseState }) {
       <Badge color={SOCRATIC_STATE_COLOR[state.state]} dot>
         {SOCRATIC_STATE_LABEL[state.state]}
       </Badge>
-      <span className="font-mono text-[10px] text-slate-400">{state.state}</span>
+      <span className="font-mono text-xs text-slate-400">{state.state}</span>
       <span className="text-xs text-slate-500">动作：{TURN_TYPE_LABEL[state.turn_type]}</span>
       <span className="text-xs text-slate-400">
         提示级别 {state.hint_level} / {MAX_HINT_LEVEL}
       </span>
 
       {state.turn_type === 'explain' && (
-        <span className="inline-flex items-center gap-1 rounded-md bg-amber-100/80 px-2 py-0.5 text-xs font-medium text-amber-800">
+        <span className="inline-flex items-center gap-1 rounded-md bg-warning-soft px-2 py-0.5 text-xs font-medium text-warning">
           <ArrowDownCircle className="h-3 w-3" aria-hidden />
           连续答不上来，已降级为直接讲解
         </span>
       )}
       {state.turn_type === 'refuse' && (
-        <span className="inline-flex items-center gap-1 rounded-md bg-red-100/80 px-2 py-0.5 text-xs font-medium text-red-700">
+        <span className="inline-flex items-center gap-1 rounded-md bg-danger-soft px-2 py-0.5 text-xs font-medium text-danger">
           <ShieldAlert className="h-3 w-3" aria-hidden />
           检索不到材料依据，走拒答模板
         </span>

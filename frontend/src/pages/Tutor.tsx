@@ -1,5 +1,5 @@
 import { Plus, RefreshCw, SendHorizontal, Square, Trash2, Upload } from 'lucide-react'
-import { useCallback, useRef, useState } from 'react'
+import { useCallback, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
 import { ReportPanel } from '@/components/tutor/ReportPanel'
@@ -79,6 +79,23 @@ export default function Tutor() {
   const materials = materialsReq.data?.items ?? []
   const totalMaterials = materialsReq.data?.total ?? materials.length
   const streaming = streamingKey !== null
+
+  /**
+   * 当前知识点的**可读名** —— 给状态机面板用。
+   * `GET /qa/sessions/{id}/state` 只返回 `current_kp_id`，直接渲染就是 `kp_xxx`（学生看不懂）。
+   * 从最新一轮往回找：优先卡点证据名，其次第一个命中知识点名；都没有则回落 id。
+   */
+  const currentKpName = useMemo(() => {
+    for (let index = turns.length - 1; index >= 0; index -= 1) {
+      const diagnosis = turns[index]?.diagnosis
+      if (!diagnosis) continue
+      const evidence = diagnosis.stuck_at?.evidence_kp_name?.trim()
+      if (evidence) return evidence
+      const first = diagnosis.knowledge_points?.[0]?.name?.trim()
+      if (first) return first
+    }
+    return null
+  }, [turns])
 
   const resetLocal = useCallback(() => {
     setSession(null)
@@ -304,9 +321,9 @@ export default function Tutor() {
                     onClick={() => setQuestion(item.q)}
                     title={item.label}
                     className={
-                      'rounded-full border px-2.5 py-1 text-xs transition-colors ' +
+                      'inline-flex min-h-11 items-center rounded-full border px-3 text-xs transition-colors sm:min-h-8 ' +
                       (item.scope === 'out'
-                        ? 'border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100'
+                        ? 'border-warning-line bg-warning-soft text-warning hover:bg-warning-line/60'
                         : 'border-slate-200 bg-slate-50 text-slate-600 hover:border-brand-300 hover:text-brand-700')
                     }
                   >
@@ -334,12 +351,11 @@ export default function Tutor() {
               </span>
               <div className="flex items-center gap-2">
                 {streaming && (
-                  <Button variant="danger" size="sm" icon={<Square className="h-3.5 w-3.5" />} onClick={handleAbort}>
+                  <Button variant="danger" icon={<Square className="h-3.5 w-3.5" />} onClick={handleAbort}>
                     中断
                   </Button>
                 )}
                 <Button
-                  size="sm"
                   loading={streaming}
                   disabled={question.trim() === ''}
                   icon={<SendHorizontal className="h-3.5 w-3.5" />}
@@ -391,6 +407,7 @@ export default function Tutor() {
             error={stateReq.error}
             enabled={sessionId !== null}
             onRefresh={() => void stateReq.reload()}
+            currentKpName={currentKpName}
           />
           <ReportPanel
             report={reportReq.data}

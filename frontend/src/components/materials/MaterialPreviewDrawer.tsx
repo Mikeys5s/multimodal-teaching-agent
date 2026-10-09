@@ -1,5 +1,5 @@
 import { Check, Copy, FileText, ListChecks, X } from 'lucide-react'
-import { useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 
 import { QuestionsPanel } from '@/components/materials/QuestionsPanel'
 import { Button } from '@/components/ui/Button'
@@ -38,7 +38,7 @@ function BlockView({ block }: { block: Block }) {
       )}
 
       {lowConfidence && (
-        <div className="mb-2 inline-flex items-center gap-1 rounded bg-amber-50 px-1.5 py-0.5 text-[11px] text-amber-700">
+        <div className="mb-2 inline-flex items-center gap-1 rounded bg-warning-soft px-1.5 py-0.5 text-xs text-warning">
           识别置信度 {Math.round((block.ocr_confidence ?? 0) * 100)}% · 建议人工核对
         </div>
       )}
@@ -66,6 +66,24 @@ export function MaterialPreviewDrawer({ material, onClose }: MaterialPreviewDraw
   const [copyError, setCopyError] = useState<string | null>(null)
   const [activePage, setActivePage] = useState<number | null>(null)
   const scrollRef = useRef<HTMLDivElement>(null)
+  const panelRef = useRef<HTMLDivElement>(null)
+
+  // 弹层行为契约：打开时焦点进入、Escape 关闭、关闭后焦点返回触发元素、锁定背景滚动
+  useEffect(() => {
+    const prevOverflow = document.body.style.overflow
+    const prevActive = document.activeElement instanceof HTMLElement ? document.activeElement : null
+    document.body.style.overflow = 'hidden'
+    panelRef.current?.querySelector<HTMLElement>('button')?.focus()
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose()
+    }
+    document.addEventListener('keydown', onKeyDown)
+    return () => {
+      document.body.style.overflow = prevOverflow
+      document.removeEventListener('keydown', onKeyDown)
+      prevActive?.focus()
+    }
+  }, [onClose])
 
   const blocks = blocksReq.data ?? []
 
@@ -101,7 +119,10 @@ export function MaterialPreviewDrawer({ material, onClose }: MaterialPreviewDraw
     <div className="fixed inset-0 z-40 flex justify-end" role="dialog" aria-modal="true">
       <div className="absolute inset-0 bg-slate-900/30" onClick={onClose} />
 
-      <div className="relative flex h-full w-[860px] max-w-full flex-col border-l border-slate-200 bg-white shadow-2xl">
+      <div
+        ref={panelRef}
+        className="relative flex h-full w-full flex-col border-l border-slate-200 bg-white shadow-overlay sm:w-[860px] sm:max-w-full"
+      >
         {/* 头部 */}
         <header className="flex shrink-0 items-start justify-between gap-4 border-b border-slate-200 px-5 py-3">
           <div className="min-w-0">
@@ -126,7 +147,7 @@ export function MaterialPreviewDrawer({ material, onClose }: MaterialPreviewDraw
               {copied ? '已复制' : '复制 Markdown'}
             </Button>
             <button
-              className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-600"
+              className="flex h-11 w-11 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-600 sm:h-9 sm:w-9"
               onClick={onClose}
               aria-label="关闭预览"
             >
@@ -136,7 +157,7 @@ export function MaterialPreviewDrawer({ material, onClose }: MaterialPreviewDraw
         </header>
 
         {copyError && (
-          <div className="shrink-0 border-b border-red-100 bg-red-50/70 px-5 py-2 text-xs text-red-700">
+          <div className="shrink-0 border-b border-danger-line bg-danger-soft px-5 py-2 text-xs text-danger" role="alert">
             {copyError}
           </div>
         )}
@@ -210,7 +231,7 @@ export function MaterialPreviewDrawer({ material, onClose }: MaterialPreviewDraw
 
               {/* 页码导航（点击定位） */}
               <aside className="w-[76px] shrink-0 overflow-auto border-l border-slate-200 bg-slate-50/60 py-3">
-                <div className="mb-2 px-2 text-[11px] text-slate-400">页码</div>
+                <div className="mb-2 px-2 text-xs text-slate-400">页码</div>
                 <div className="flex flex-col items-stretch gap-0.5 px-2">
                   {grouped.map(([page]) => (
                     <button

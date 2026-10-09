@@ -17,12 +17,12 @@ function CheckRow({
   ok: boolean | null
   hint?: string
 }) {
-  const color = ok === null ? '#64748b' : ok ? '#10b981' : '#ef4444'
+  const color = ok === null ? '#64748b' : ok ? '#15803d' : '#dc2626'
   return (
     <div className="flex items-start justify-between gap-3 border-b border-slate-100 py-2 last:border-b-0">
       <div className="min-w-0">
         <div className="text-xs font-medium text-slate-600">{label}</div>
-        {hint && <div className="mt-0.5 text-[11px] text-slate-400">{hint}</div>}
+        {hint && <div className="mt-0.5 text-xs text-slate-400">{hint}</div>}
       </div>
       <div className="flex shrink-0 items-center gap-1.5">
         <span className="font-mono text-xs" style={{ color }}>
@@ -30,9 +30,9 @@ function CheckRow({
         </span>
         {ok !== null &&
           (ok ? (
-            <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" aria-hidden />
+            <CheckCircle2 className="h-3.5 w-3.5 text-success" aria-hidden />
           ) : (
-            <AlertTriangle className="h-3.5 w-3.5 text-red-500" aria-hidden />
+            <AlertTriangle className="h-3.5 w-3.5 text-danger" aria-hidden />
           ))}
       </div>
     </div>
@@ -87,7 +87,7 @@ export function HealthSelfCheck() {
           <ErrorState message={error} onRetry={reloadAll} />
         </div>
       ) : (
-        <div className="grid grid-cols-2 gap-4 p-4">
+        <div className="grid grid-cols-1 gap-4 p-4 md:grid-cols-2">
           <div className="rounded-xl border border-slate-200 p-3.5">
             <div className="mb-1 flex items-center gap-1.5 text-xs font-medium text-slate-600">
               <ServerCog className="h-3.5 w-3.5" aria-hidden />
@@ -112,7 +112,7 @@ export function HealthSelfCheck() {
                 <CheckRow label="version" value={health.version} ok={null} />
               </div>
             ) : (
-              <p className="py-2 text-xs text-red-600">{healthReq.error ?? '健康检查暂无数据。'}</p>
+              <p className="py-2 text-xs text-danger">{healthReq.error ?? '健康检查暂无数据。'}</p>
             )}
           </div>
 
@@ -125,10 +125,10 @@ export function HealthSelfCheck() {
               <>
                 <div
                   className={[
-                    'mb-2 rounded-lg border px-2.5 py-2 text-[11px] font-medium',
+                    'mb-2 rounded-lg border px-2.5 py-2 text-xs font-medium',
                     foreignKeysOk
-                      ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
-                      : 'border-red-200 bg-red-50 text-red-700',
+                      ? 'border-success-line bg-success-soft text-success'
+                      : 'border-danger-line bg-danger-soft text-danger',
                   ].join(' ')}
                 >
                   {foreignKeysOk
@@ -153,13 +153,13 @@ export function HealthSelfCheck() {
                   )}
                 </div>
 
-                <div className="mt-2 flex items-center gap-1.5 border-t border-slate-100 pt-2 text-[11px] text-slate-500">
+                <div className="mt-2 flex items-center gap-1.5 border-t border-slate-100 pt-2 text-xs text-slate-500">
                   <Database className="h-3.5 w-3.5 text-slate-400" aria-hidden />
                   db_file：<span className="font-mono text-slate-700">{pragma.db_file}</span>
                 </div>
               </>
             ) : (
-              <p className="py-2 text-xs text-red-600">{pragmaReq.error ?? 'pragma 读回失败。'}</p>
+              <p className="py-2 text-xs text-danger">{pragmaReq.error ?? 'pragma 读回失败。'}</p>
             )}
           </div>
         </div>

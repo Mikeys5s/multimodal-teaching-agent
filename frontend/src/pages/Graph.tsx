@@ -1,6 +1,6 @@
 import { RefreshCw, ShieldCheck, SlidersHorizontal } from 'lucide-react'
-import { useMemo, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useEffect, useMemo, useState } from 'react'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 
 import { GraphCanvas } from '@/components/graph/GraphCanvas'
 import { GraphStatsPanel } from '@/components/graph/GraphStatsPanel'
@@ -24,12 +24,24 @@ const CHAPTER_PROBE_PAGE_SIZE = 100
  */
 export default function Graph() {
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
 
   const [chapterId, setChapterId] = useState('')
   const [maxNodes, setMaxNodes] = useState(200)
   const [reviewOnly, setReviewOnly] = useState(false)
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [reviewOpen, setReviewOpen] = useState(false)
+  /** 手机端筛选面板折叠（桌面常驻展开） */
+  const [filtersOpen, setFiltersOpen] = useState(false)
+
+  /**
+   * 深链：`/graph?kp_id=xxx` —— 首页「从这看起 · 看我们怎么处理重复数据」用它直达某个知识点。
+   * 抽屉是按 id 单独拉详情的，**不依赖该节点是否落在当前 200 个之内**，所以这里直接开抽屉。
+   */
+  const deepLinkKpId = searchParams.get('kp_id')
+  useEffect(() => {
+    if (deepLinkKpId) setSelectedId(deepLinkKpId)
+  }, [deepLinkKpId])
 
   const graphReq = useRequest(
     () => api.getKnowledgeGraph({ chapter_id: chapterId || undefined, max_nodes: maxNodes }),
@@ -76,90 +88,105 @@ export default function Graph() {
 
   return (
     <div className="mx-auto max-w-6xl space-y-5">
-      {/* 筛选栏 */}
-      <section className="xizhi-card flex flex-wrap items-center gap-x-5 gap-y-3 px-4 py-3">
-        <div className="flex items-center gap-1.5 text-xs font-medium text-slate-600">
-          <SlidersHorizontal className="h-3.5 w-3.5" aria-hidden />
-          筛选
+      {/* 筛选栏：手机折叠为可展开面板，桌面常驻 */}
+      <section className="xizhi-card px-4 py-3">
+        <div className="flex items-center justify-between gap-3">
+          <button
+            type="button"
+            className="flex min-h-11 items-center gap-1.5 text-xs font-medium text-slate-600 sm:min-h-0"
+            onClick={() => setFiltersOpen((prev) => !prev)}
+            aria-expanded={filtersOpen}
+            aria-controls="graph-filters"
+          >
+            <SlidersHorizontal className="h-3.5 w-3.5" aria-hidden />
+            筛选
+            {filtered && <span className="rounded-full bg-brand-50 px-1.5 py-0.5 text-xs text-brand-700">已启用</span>}
+            <span className="text-slate-400 sm:hidden">{filtersOpen ? '▲' : '▼'}</span>
+          </button>
+
+          {/* 人工校验入口 —— 主创新点「AI 预抽取 + 人工校验」的可点击证据（见 ReviewDrawer 注释） */}
+          <button
+            type="button"
+            onClick={() => setReviewOpen(true)}
+            className="inline-flex min-h-11 items-center gap-1.5 rounded-lg border border-brand-200 bg-brand-50 px-3 py-1.5 text-xs font-medium text-brand-700 hover:bg-brand-100 sm:min-h-0"
+          >
+            <ShieldCheck className="h-3.5 w-3.5" aria-hidden />
+            人工校验
+            {pendingReviewCount > 0 && (
+              <span className="rounded-full bg-brand-600 px-1.5 py-0.5 text-xs leading-none text-white">
+                {pendingReviewCount}
+              </span>
+            )}
+          </button>
         </div>
 
-        <label className="flex items-center gap-2 text-xs text-slate-500">
-          章节
-          <select
-            value={chapterId}
-            onChange={(event) => {
-              setChapterId(event.target.value)
-              setSelectedId(null)
-            }}
-            className="h-8 rounded-lg border border-slate-300 bg-white px-2 text-xs text-slate-700"
-          >
-            <option value="">全部章节</option>
-            {chapterOptions.map(([id, label]) => (
-              <option key={id} value={id}>
-                {label}
-              </option>
-            ))}
-          </select>
-        </label>
-
-        <label className="flex items-center gap-2 text-xs text-slate-500">
-          节点上限
-          <select
-            value={maxNodes}
-            onChange={(event) => {
-              setMaxNodes(Number(event.target.value))
-              setSelectedId(null)
-            }}
-            className="h-8 rounded-lg border border-slate-300 bg-white px-2 text-xs text-slate-700"
-          >
-            {MAX_NODES_OPTIONS.map((value) => (
-              <option key={value} value={value}>
-                {value}
-              </option>
-            ))}
-          </select>
-        </label>
-
-        <label className="flex cursor-pointer items-center gap-2 text-xs text-slate-600">
-          <input
-            type="checkbox"
-            checked={reviewOnly}
-            onChange={(event) => {
-              setReviewOnly(event.target.checked)
-              setSelectedId(null)
-            }}
-            className="h-3.5 w-3.5 accent-amber-500"
-          />
-          只看待复核节点（{reviewCount}）
-        </label>
-
-        {/* 人工校验入口 —— 主创新点「AI 预抽取 + 人工校验」的可点击证据（见 ReviewDrawer 注释） */}
-        <button
-          type="button"
-          onClick={() => setReviewOpen(true)}
-          className="ml-auto inline-flex items-center gap-1.5 rounded-lg border border-brand-200 bg-brand-50 px-2.5 py-1.5 text-xs font-medium text-brand-700 hover:bg-brand-100"
+        <div
+          id="graph-filters"
+          className={`flex-wrap items-center gap-x-5 gap-y-3 ${filtersOpen ? 'mt-3 flex' : 'hidden'} sm:mt-3 sm:flex`}
         >
-          <ShieldCheck className="h-3.5 w-3.5" aria-hidden />
-          人工校验
-          {pendingReviewCount > 0 && (
-            <span className="rounded-full bg-brand-600 px-1.5 py-0.5 text-[11px] leading-none text-white">
-              {pendingReviewCount}
-            </span>
-          )}
-        </button>
+          <label className="flex w-full items-center gap-2 text-xs text-slate-500 sm:w-auto">
+            章节
+            <select
+              value={chapterId}
+              onChange={(event) => {
+                setChapterId(event.target.value)
+                setSelectedId(null)
+              }}
+              className="h-11 min-w-0 flex-1 rounded-lg border border-slate-300 bg-white px-2 text-xs text-slate-700 sm:h-8 sm:max-w-[260px]"
+            >
+              <option value="">全部章节</option>
+              {chapterOptions.map(([id, label]) => (
+                <option key={id} value={id}>
+                  {label}
+                </option>
+              ))}
+            </select>
+          </label>
 
-        {filtered && (
-          <button
-            className="text-xs text-brand-600 hover:underline"
-            onClick={() => {
-              setChapterId('')
-              setReviewOnly(false)
-              setSelectedId(null)
-            }}
-          >
-            清空筛选
-          </button>
-        )}
+          <label className="flex items-center gap-2 text-xs text-slate-500">
+            节点上限
+            <select
+              value={maxNodes}
+              onChange={(event) => {
+                setMaxNodes(Number(event.target.value))
+                setSelectedId(null)
+              }}
+              className="h-11 rounded-lg border border-slate-300 bg-white px-2 text-xs text-slate-700 sm:h-8"
+            >
+              {MAX_NODES_OPTIONS.map((value) => (
+                <option key={value} value={value}>
+                  {value}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <label className="flex min-h-11 cursor-pointer items-center gap-2 text-xs text-slate-600 sm:min-h-0">
+            <input
+              type="checkbox"
+              checked={reviewOnly}
+              onChange={(event) => {
+                setReviewOnly(event.target.checked)
+                setSelectedId(null)
+              }}
+              className="h-4 w-4 accent-brand-600"
+            />
+            只看待复核节点（{reviewCount}）
+          </label>
+
+          {filtered && (
+            <button
+              className="min-h-11 text-xs text-brand-600 hover:underline sm:min-h-0"
+              onClick={() => {
+                setChapterId('')
+                setReviewOnly(false)
+                setSelectedId(null)
+              }}
+            >
+              清空筛选
+            </button>
+          )}
+        </div>
       </section>
 
       {graphReq.error && graph && <InlineError>{graphReq.error}</InlineError>}
@@ -200,9 +227,9 @@ export default function Graph() {
           />
 
           <section className="xizhi-card overflow-hidden">
-            <header className="flex items-center justify-between border-b border-slate-100 px-4 py-3">
-              <div className="flex items-baseline gap-3">
-                <h2 className="text-sm font-semibold text-slate-800">知识点依赖 DAG</h2>
+            <header className="flex items-center justify-between gap-3 border-b border-slate-100 px-4 py-3">
+              <div className="flex min-w-0 flex-wrap items-baseline gap-x-3 gap-y-0.5">
+                <h2 className="text-base font-semibold leading-6 text-slate-800">知识点依赖 DAG</h2>
                 <span className="text-xs text-slate-400">
                   节点按拓扑层级自左向右排布（先修在左）· 当前视图 {viewNodes.length} 个知识点 /{' '}
                   {viewEdges.length} 条边
@@ -219,7 +246,8 @@ export default function Graph() {
               </Button>
             </header>
 
-            <div className="h-[560px] w-full">
+            {/* 画布是本页核心区域：高度跟随视口，工具栏浮于画布角落不遮挡图 */}
+            <div className="h-[62vh] min-h-[420px] w-full">
               <GraphCanvas
                 nodes={viewNodes}
                 edges={viewEdges}

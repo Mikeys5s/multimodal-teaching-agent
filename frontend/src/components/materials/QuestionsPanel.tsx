@@ -48,12 +48,12 @@ function parseOptions(raw: string | null): { options: string[] | null; broken: b
  */
 function MissingAnswerNotice() {
   return (
-    <div className="mt-2 rounded-lg border border-amber-300 border-l-4 bg-amber-50 px-3 py-2.5">
+    <div className="mt-2 rounded-lg border border-warning-line border-l-4 bg-warning-soft px-3 py-2.5">
       <div className="flex items-start gap-2">
-        <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-500" aria-hidden />
+        <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-warning" aria-hidden />
         <div className="min-w-0">
-          <div className="text-sm font-semibold text-amber-900">材料原文未给出答案</div>
-          <div className="mt-0.5 text-xs leading-relaxed text-amber-700">
+          <div className="text-sm font-semibold text-warning">材料原文未给出答案</div>
+          <div className="mt-0.5 text-xs leading-relaxed text-warning">
             这道题在素材原文里就没有答案，我们不做推测补全 —— 宁可留白，也不编一个看起来合理的答案。
           </div>
         </div>
@@ -70,7 +70,7 @@ function AnswerGap() {
         <CircleDashed className="mt-0.5 h-3.5 w-3.5 shrink-0 text-slate-400" aria-hidden />
         <div className="min-w-0">
           <div className="text-xs font-medium text-slate-500">答案字段为空</div>
-          <div className="mt-0.5 text-[11px] leading-relaxed text-slate-400">
+          <div className="mt-0.5 text-xs leading-relaxed text-slate-400">
             该题未被标记为「材料未给答案」，属数据异常，建议重新解析后再核对。
           </div>
         </div>
@@ -81,8 +81,8 @@ function AnswerGap() {
 
 function AnswerBlock({ answerMd }: { answerMd: string }) {
   return (
-    <div className="mt-2 rounded-lg border border-emerald-100 bg-emerald-50/50 px-3 py-2">
-      <div className="mb-1 flex items-center gap-1.5 text-xs font-medium text-emerald-700">
+    <div className="mt-2 rounded-lg border border-success-line bg-success-soft px-3 py-2">
+      <div className="mb-1 flex items-center gap-1.5 text-xs font-medium text-success">
         <ShieldCheck className="h-3.5 w-3.5" aria-hidden />
         答案（来自材料原文）
       </div>
@@ -100,7 +100,7 @@ function QuestionCard({ question, index }: { question: Question; index: number }
   return (
     <article className="rounded-xl border border-slate-200 bg-white p-3.5 shadow-card">
       <header className="mb-2 flex flex-wrap items-center gap-2">
-        <span className="flex h-5 w-5 items-center justify-center rounded bg-slate-100 text-[11px] font-medium tabular-nums text-slate-500">
+        <span className="flex h-5 w-5 items-center justify-center rounded bg-slate-100 text-xs font-medium tabular-nums text-slate-500">
           {index + 1}
         </span>
         <span className="rounded-md bg-brand-50 px-2 py-0.5 text-xs font-medium text-brand-700">
@@ -110,11 +110,11 @@ function QuestionCard({ question, index }: { question: Question; index: number }
           {question.source_page !== null ? `第 ${question.source_page} 页` : '未标注页码'}
         </span>
         {lowConfidence && (
-          <span className="rounded bg-amber-50 px-1.5 py-0.5 text-[11px] text-amber-700">
+          <span className="rounded bg-warning-soft px-1.5 py-0.5 text-xs text-warning">
             抽取置信度 {Math.round((question.extraction_confidence ?? 0) * 100)}% · 建议人工核对
           </span>
         )}
-        <span className="ml-auto text-[11px] text-slate-300">{question.id}</span>
+        <span className="ml-auto text-xs text-slate-300">{question.id}</span>
       </header>
 
       <div className="whitespace-pre-wrap text-sm leading-relaxed text-slate-800">{question.stem_md}</div>
@@ -133,7 +133,7 @@ function QuestionCard({ question, index }: { question: Question; index: number }
       )}
 
       {broken && (
-        <div className="mt-2 text-[11px] text-amber-700">
+        <div className="mt-2 text-xs text-warning">
           选项数据无法解析（options_json 不是合法 JSON 数组），此处不展示选项。
         </div>
       )}
@@ -174,11 +174,11 @@ export function QuestionsPanel({ materialId }: QuestionsPanelProps) {
     <div className="space-y-3">
       <div className="flex items-center justify-between gap-3">
         {stats.missing > 0 ? (
-          <div className="flex items-start gap-1.5 text-xs text-amber-700">
-            <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-amber-500" aria-hidden />
+          <div className="flex items-start gap-1.5 text-xs text-warning">
+            <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-warning" aria-hidden />
             <span>
               共 {stats.total} 题，其中{' '}
-              <span className="font-semibold text-amber-800">{stats.missing} 题材料未给答案</span>
+              <span className="font-semibold text-warning">{stats.missing} 题材料未给答案</span>
               （不推测补全）
             </span>
           </div>

@@ -70,7 +70,7 @@ export function TurnCard({ turn, active }: { turn: TurnView; active: boolean }) 
     <article className="space-y-2">
       {/* 学生提问 */}
       <div className="flex justify-end">
-        <div className="max-w-[75%] rounded-2xl rounded-br-sm bg-brand-600 px-3.5 py-2 text-sm leading-relaxed text-white">
+        <div className="max-w-[88%] rounded-2xl rounded-br-sm bg-brand-600 px-3.5 py-2 text-sm leading-relaxed text-white sm:max-w-[75%]">
           {turn.question}
         </div>
       </div>
@@ -103,14 +103,14 @@ export function TurnCard({ turn, active }: { turn: TurnView; active: boolean }) 
           )}
 
           {turn.stopped && (
-            <div className="mt-2 inline-flex items-center gap-1.5 rounded-md bg-amber-100/80 px-2 py-0.5 text-xs font-medium text-amber-800">
+            <div className="mt-2 inline-flex items-center gap-1.5 rounded-md bg-warning-soft px-2 py-0.5 text-xs font-medium text-warning">
               <Ban className="h-3 w-3" aria-hidden />
               已手动中断本轮回答
             </div>
           )}
 
           {turn.incomplete && (
-            <div className="mt-2 flex items-start gap-1.5 rounded-md bg-amber-100/80 px-2 py-1 text-xs font-medium text-amber-800">
+            <div className="mt-2 flex items-start gap-1.5 rounded-md bg-warning-soft px-2 py-1 text-xs font-medium text-warning">
               <AlertTriangle className="mt-0.5 h-3 w-3 shrink-0" aria-hidden />
               <span>
                 流已结束，但本轮始终没有收到结束事件（done），回答可能不完整。可重新提问，
@@ -126,7 +126,7 @@ export function TurnCard({ turn, active }: { turn: TurnView; active: boolean }) 
 
       {/* 完成信息 */}
       {turn.done && (
-        <footer className="flex flex-wrap items-center gap-3 px-1 text-[11px] text-slate-400">
+        <footer className="flex flex-wrap items-center gap-3 px-1 text-xs text-slate-400">
           <span>本轮结束</span>
           <span className="font-mono">{turn.done.turn_id}</span>
           <span>耗时 {formatLatency(turn.done.latency_ms)}</span>

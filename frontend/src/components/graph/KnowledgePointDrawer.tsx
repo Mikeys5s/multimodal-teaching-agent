@@ -1,4 +1,5 @@
-import { AlertTriangle, BookOpen, GitBranch, Link2, X } from 'lucide-react'
+import { AlertTriangle, BookOpen, GitBranch, Layers, Link2, X } from 'lucide-react'
+import { useEffect, useRef } from 'react'
 import type { ReactNode } from 'react'
 
 import { DifficultyBadge } from '@/components/ui/Badge'
@@ -6,6 +7,7 @@ import { EmptyState, ErrorState, LoadingState } from '@/components/ui/Feedback'
 import { useRequest } from '@/hooks/useRequest'
 import { api } from '@/lib/endpoints'
 import { formatPercent, formatScore } from '@/lib/format'
+import { dupNotice, kpDisplayTitle, kpTitleAttr } from '@/lib/kpTitle'
 import type { Example, KpType, Misconception, Prerequisite, RelationType } from '@/lib/types'
 
 const RELATION_LABEL: Record<RelationType, string> = {
@@ -39,7 +41,7 @@ const MISCONCEPTION_SOURCE_LABEL: Record<string, string> = {
 
 /** 例题来源徽章的文案与样式。 */
 const EXAMPLE_SOURCE_BADGE: Record<string, { label: string; className: string }> = {
-  human: { label: '人工精选', className: 'bg-emerald-100 text-emerald-700' },
+  human: { label: '人工精选', className: 'bg-success-soft text-success' },
   derived: { label: '由原文派生', className: 'bg-slate-100 text-slate-500' },
 }
 
@@ -69,7 +71,7 @@ function PrerequisiteItem({ item }: { item: Prerequisite }) {
         <span className="text-sm font-medium text-slate-700">{item.name}</span>
         <span
           className={[
-            'shrink-0 rounded-full px-2 py-0.5 text-[11px]',
+            'shrink-0 rounded-full px-2 py-0.5 text-xs',
             hard ? 'bg-brand-50 text-brand-700' : 'bg-slate-100 text-slate-500',
           ].join(' ')}
         >
@@ -77,7 +79,7 @@ function PrerequisiteItem({ item }: { item: Prerequisite }) {
         </span>
       </div>
       {item.reason && <p className="mt-1 text-xs leading-relaxed text-slate-500">{item.reason}</p>}
-      <div className="mt-1 text-[11px] text-slate-400">置信度 {formatScore(item.confidence)}</div>
+      <div className="mt-1 text-xs text-slate-400">置信度 {formatScore(item.confidence)}</div>
     </li>
   )
 }
@@ -86,16 +88,16 @@ function ExampleItem({ item, index }: { item: Example; index: number }) {
   return (
     <li className="rounded-lg border border-slate-200 p-2.5">
       <div className="mb-1.5 flex items-center gap-2">
-        <span className="text-[11px] font-medium text-slate-400">例 {index + 1}</span>
+        <span className="text-xs font-medium text-slate-400">例 {index + 1}</span>
         <DifficultyBadge difficulty={item.difficulty} />
         {item.source_page != null && item.source_page > 0 && (
-          <span className="text-[11px] text-slate-400">第 {item.source_page} 页</span>
+          <span className="text-xs text-slate-400">第 {item.source_page} 页</span>
         )}
         {(() => {
           const badge = EXAMPLE_SOURCE_BADGE[item.source ?? 'human']
           if (!badge) return null
           return (
-            <span className={`rounded-full px-1.5 py-0.5 text-[11px] ${badge.className}`}>
+            <span className={`rounded-full px-1.5 py-0.5 text-xs ${badge.className}`}>
               {badge.label}
             </span>
           )
@@ -111,13 +113,13 @@ function ExampleItem({ item, index }: { item: Example; index: number }) {
           ))}
         </ul>
       )}
-      <div className="mt-2 rounded-md bg-emerald-50/70 px-2 py-1.5">
-        <div className="text-[11px] font-medium text-emerald-700">答案</div>
-        <p className="whitespace-pre-wrap text-xs leading-relaxed text-emerald-900">{item.answer_md}</p>
+      <div className="mt-2 rounded-md bg-success-soft px-2 py-1.5">
+        <div className="text-xs font-medium text-success">答案</div>
+        <p className="whitespace-pre-wrap text-xs leading-relaxed text-slate-700">{item.answer_md}</p>
       </div>
       {item.analysis_md && (
         <div className="mt-1.5 rounded-md bg-slate-50 px-2 py-1.5">
-          <div className="text-[11px] font-medium text-slate-500">解析</div>
+          <div className="text-xs font-medium text-slate-500">解析</div>
           <p className="whitespace-pre-wrap text-xs leading-relaxed text-slate-600">{item.analysis_md}</p>
         </div>
       )}
@@ -127,26 +129,26 @@ function ExampleItem({ item, index }: { item: Example; index: number }) {
 
 function MisconceptionItem({ item }: { item: Misconception }) {
   return (
-    <li className="rounded-lg border border-amber-200 bg-amber-50/40 p-2.5">
+    <li className="rounded-lg border border-warning-line bg-warning-soft p-2.5">
       <div className="flex items-start justify-between gap-2">
-        <span className="text-sm font-medium text-amber-900">{item.description}</span>
-        <span className="shrink-0 rounded-full bg-white px-2 py-0.5 text-[11px] text-amber-700">
+        <span className="text-sm font-medium text-warning">{item.description}</span>
+        <span className="shrink-0 rounded-full bg-white px-2 py-0.5 text-xs text-warning">
           {MISCONCEPTION_SOURCE_LABEL[item.source] ?? item.source}
         </span>
       </div>
       {item.cause && (
-        <p className="mt-1 text-xs leading-relaxed text-amber-800">
+        <p className="mt-1 text-xs leading-relaxed text-warning">
           <span className="font-medium">成因：</span>
           {item.cause}
         </p>
       )}
       {item.remedy && (
-        <p className="mt-0.5 text-xs leading-relaxed text-amber-800">
+        <p className="mt-0.5 text-xs leading-relaxed text-warning">
           <span className="font-medium">纠正：</span>
           {item.remedy}
         </p>
       )}
-      <div className="mt-1 text-[11px] text-amber-700/70">置信度 {formatScore(item.confidence)}</div>
+      <div className="mt-1 text-xs text-warning">置信度 {formatScore(item.confidence)}</div>
     </li>
   )
 }
@@ -160,21 +162,56 @@ export interface KnowledgePointDrawerProps {
 export function KnowledgePointDrawer({ kpId, onClose }: KnowledgePointDrawerProps) {
   const detailReq = useRequest(() => api.getKnowledgePoint(kpId), [kpId])
   const detail = detailReq.data
+  const panelRef = useRef<HTMLDivElement>(null)
+
+  // 弹层行为契约：焦点进入、Escape 关闭、关闭后焦点返回、锁定背景滚动
+  useEffect(() => {
+    const prevOverflow = document.body.style.overflow
+    const prevActive = document.activeElement instanceof HTMLElement ? document.activeElement : null
+    document.body.style.overflow = 'hidden'
+    panelRef.current?.querySelector<HTMLElement>('button')?.focus()
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose()
+    }
+    document.addEventListener('keydown', onKeyDown)
+    return () => {
+      document.body.style.overflow = prevOverflow
+      document.removeEventListener('keydown', onKeyDown)
+      prevActive?.focus()
+    }
+  }, [onClose])
+  /**
+   * 决赛任务 1「重复组前端呈现」。
+   * `null` = 后端未给字段 / 该点是独立知识点（组内只有它自己）→ 界面**不出现任何提示**，
+   * 避免给独立点也挂一句「已合并显示」。
+   */
+  const dupHint = detail ? dupNotice(detail) : null
 
   return (
-    <div className="fixed inset-0 z-40 flex justify-end" role="dialog" aria-modal="true">
+    <div className="fixed inset-0 z-40 flex items-end justify-center sm:items-stretch sm:justify-end" role="dialog" aria-modal="true">
       <div className="absolute inset-0 bg-slate-900/30" onClick={onClose} />
 
-      <div className="relative flex h-full w-[460px] max-w-full flex-col border-l border-slate-200 bg-white shadow-2xl">
+      {/* 桌面：右侧 360px 抽屉；手机：底部抽屉（不遮关闭控件） */}
+      <div
+        ref={panelRef}
+        className="relative flex max-h-[88vh] w-full flex-col rounded-t-2xl border-t border-slate-200 bg-white shadow-overlay sm:h-full sm:max-h-none sm:w-[360px] sm:rounded-none sm:border-l sm:border-t-0"
+      >
         <header className="flex shrink-0 items-start justify-between gap-3 border-b border-slate-200 px-5 py-3">
           <div className="min-w-0">
-            <h2 className="truncate text-sm font-semibold text-slate-800" title={detail?.name ?? kpId}>
-              {detail?.name ?? '知识点详情'}
+            {/*
+              决赛任务 2「可读标题显示」：优先用后端 `display_title`，没有就回落 `name`。
+              拿到可读标题时，把**原始句片段**收进 `title` 属性 —— 悬停可见，溯源不丢。
+            */}
+            <h2
+              className="truncate text-sm font-semibold text-slate-800"
+              title={detail ? kpTitleAttr(detail) : undefined}
+            >
+              {detail ? kpDisplayTitle(detail) : '知识点详情'}
             </h2>
             {detail && (
               <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-slate-400">
                 <DifficultyBadge difficulty={detail.difficulty} />
-                <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] text-slate-600">
+                <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-600">
                   {KP_TYPE_LABEL[detail.kp_type] ?? detail.kp_type}
                 </span>
                 <span>
@@ -185,7 +222,7 @@ export function KnowledgePointDrawer({ kpId, onClose }: KnowledgePointDrawerProp
             )}
           </div>
           <button
-            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-600"
+            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-600 sm:h-9 sm:w-9"
             onClick={onClose}
             aria-label="关闭详情"
           >
@@ -202,8 +239,27 @@ export function KnowledgePointDrawer({ kpId, onClose }: KnowledgePointDrawerProp
 
           {detail && (
             <div className="space-y-5">
+              {/*
+                决赛任务 1：重复组提示。
+                ⚠️ 措辞由 lib/kpTitle.ts 的 dupNotice() 统一产出 —— **只标注、不去重**，
+                   任何地方都不得出现「已去重」。
+              */}
+              {dupHint && (
+                <div className="flex items-start gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600">
+                  <Layers className="mt-0.5 h-3.5 w-3.5 shrink-0 text-slate-400" aria-hidden />
+                  <div className="min-w-0">
+                    <p>{dupHint}</p>
+                    {detail.is_duplicate && detail.duplicate_of && (
+                      <p className="mt-1 font-mono text-xs text-slate-400">
+                        代表点：{detail.duplicate_of}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              )}
+
               {detail.needs_review && (
-                <div className="flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50/70 px-3 py-2 text-xs text-amber-800">
+                <div className="flex items-start gap-2 rounded-lg border border-warning-line bg-warning-soft px-3 py-2 text-xs text-warning">
                   <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden />
                   <span>该知识点被标记为「待复核」，前置关系或字段存在不确定处，建议人工确认。</span>
                 </div>
@@ -286,7 +342,7 @@ export function KnowledgePointDrawer({ kpId, onClose }: KnowledgePointDrawerProp
                     {detail.source.quote}
                   </p>
                 )}
-                <div className="mt-1.5 text-[11px] text-slate-400">
+                <div className="mt-1.5 text-xs text-slate-400">
                   抽取置信度 {formatPercent(detail.confidence)} · 例题 {detail.example_count} · 前置{' '}
                   {detail.prerequisite_count} · 误区 {detail.misconception_count}
                 </div>

@@ -1,5 +1,5 @@
 import { AlertTriangle, Check, GitBranch, ShieldCheck, X } from 'lucide-react'
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 
 import { Button } from '@/components/ui/Button'
 import { EmptyState, ErrorState, LoadingState } from '@/components/ui/Feedback'
@@ -66,6 +66,24 @@ export function ReviewDrawer({ onClose, onDecided }: ReviewDrawerProps) {
   const [done, setDone] = useState<Record<string, ReviewDecision>>({})
   const [acceptedCount, setAcceptedCount] = useState(0)
   const [rejectedCount, setRejectedCount] = useState(0)
+  const panelRef = useRef<HTMLDivElement>(null)
+
+  // 弹层行为契约：焦点进入、Escape 关闭、关闭后焦点返回、锁定背景滚动
+  useEffect(() => {
+    const prevOverflow = document.body.style.overflow
+    const prevActive = document.activeElement instanceof HTMLElement ? document.activeElement : null
+    document.body.style.overflow = 'hidden'
+    panelRef.current?.querySelector<HTMLElement>('button')?.focus()
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose()
+    }
+    document.addEventListener('keydown', onKeyDown)
+    return () => {
+      document.body.style.overflow = prevOverflow
+      document.removeEventListener('keydown', onKeyDown)
+      prevActive?.focus()
+    }
+  }, [onClose])
 
   const keyOf = (item: ReviewEdgeItem) => `${item.prereq_kp_id}->${item.kp_id}`
 
@@ -103,10 +121,14 @@ export function ReviewDrawer({ onClose, onDecided }: ReviewDrawerProps) {
   }
 
   return (
-    <div className="fixed inset-0 z-40 flex justify-end" role="dialog" aria-modal="true">
+    <div className="fixed inset-0 z-40 flex items-end justify-center sm:items-stretch sm:justify-end" role="dialog" aria-modal="true">
       <div className="absolute inset-0 bg-slate-900/30" onClick={onClose} />
 
-      <div className="relative flex h-full w-[560px] max-w-full flex-col border-l border-slate-200 bg-white shadow-2xl">
+      {/* 桌面：右侧 560px 抽屉；手机：底部抽屉 */}
+      <div
+        ref={panelRef}
+        className="relative flex max-h-[92vh] w-full flex-col rounded-t-2xl border-t border-slate-200 bg-white shadow-overlay sm:h-full sm:max-h-none sm:w-[560px] sm:rounded-none sm:border-l sm:border-t-0"
+      >
         <header className="flex shrink-0 items-start justify-between gap-3 border-b border-slate-200 px-5 py-3">
           <div className="min-w-0">
             <h2 className="flex items-center gap-1.5 text-sm font-semibold text-slate-800">
@@ -118,7 +140,7 @@ export function ReviewDrawer({ onClose, onDecided }: ReviewDrawerProps) {
             </p>
           </div>
           <button
-            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-600"
+            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-600 sm:h-9 sm:w-9"
             onClick={onClose}
             aria-label="关闭复核队列"
           >
@@ -129,8 +151,8 @@ export function ReviewDrawer({ onClose, onDecided }: ReviewDrawerProps) {
         {/* 本次会话的裁决统计 —— 视频里一眼能看到「人做了几次判断」 */}
         {(acceptedCount > 0 || rejectedCount > 0) && (
           <div className="flex shrink-0 items-center gap-4 border-b border-slate-100 bg-slate-50/70 px-5 py-2 text-xs">
-            <span className="text-emerald-700">本次已采纳 {acceptedCount} 条</span>
-            <span className="text-rose-700">本次已驳回 {rejectedCount} 条</span>
+            <span className="text-success">本次已采纳 {acceptedCount} 条</span>
+            <span className="text-danger">本次已驳回 {rejectedCount} 条</span>
             <span className="text-slate-400">图与学习路径已随之刷新</span>
           </div>
         )}
@@ -167,7 +189,7 @@ export function ReviewDrawer({ onClose, onDecided }: ReviewDrawerProps) {
               </div>
 
               {error && (
-                <div className="mb-3 flex items-start gap-2 rounded-lg bg-rose-50 px-3 py-2 text-xs text-rose-700">
+                <div className="mb-3 flex items-start gap-2 rounded-lg bg-danger-soft px-3 py-2 text-xs text-danger">
                   <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden />
                   <span>裁决失败：{error}</span>
                 </div>
@@ -184,9 +206,9 @@ export function ReviewDrawer({ onClose, onDecided }: ReviewDrawerProps) {
                       className={[
                         'rounded-xl border p-3 transition',
                         decided === 'accept'
-                          ? 'border-emerald-200 bg-emerald-50/50'
+                          ? 'border-success-line bg-success-soft'
                           : decided === 'reject'
-                            ? 'border-rose-200 bg-rose-50/40'
+                            ? 'border-danger-line bg-danger-soft'
                             : 'border-slate-200',
                       ].join(' ')}
                     >
@@ -197,7 +219,7 @@ export function ReviewDrawer({ onClose, onDecided }: ReviewDrawerProps) {
                         <span className="font-medium text-slate-700">{item.kp_name || item.kp_id}</span>
                         <span
                           className={[
-                            'ml-1 rounded-full px-2 py-0.5 text-[11px]',
+                            'ml-1 rounded-full px-2 py-0.5 text-xs',
                             item.relation_type === 'hard'
                               ? 'bg-brand-50 text-brand-700'
                               : 'bg-slate-100 text-slate-500',
@@ -210,12 +232,12 @@ export function ReviewDrawer({ onClose, onDecided }: ReviewDrawerProps) {
                       <p className="mt-1.5 text-xs leading-relaxed text-slate-600">{item.reason || '（无理由）'}</p>
 
                       {item.evidence_quote && (
-                        <blockquote className="mt-1.5 border-l-2 border-slate-200 pl-2 text-[11px] leading-relaxed text-slate-500">
+                        <blockquote className="mt-1.5 border-l-2 border-slate-200 pl-2 text-xs leading-relaxed text-slate-500">
                           {item.evidence_quote}
                         </blockquote>
                       )}
 
-                      <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-slate-400">
+                      <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-400">
                         <span className="inline-flex items-center gap-1">
                           <GitBranch className="h-3 w-3" aria-hidden />
                           {CHANNEL_LABEL[item.source_channel] ?? item.source_channel}
@@ -230,7 +252,7 @@ export function ReviewDrawer({ onClose, onDecided }: ReviewDrawerProps) {
                         <p
                           className={[
                             'mt-2 text-xs font-medium',
-                            decided === 'accept' ? 'text-emerald-700' : 'text-rose-700',
+                            decided === 'accept' ? 'text-success' : 'text-danger',
                           ].join(' ')}
                         >
                           {decided === 'accept'
@@ -248,7 +270,7 @@ export function ReviewDrawer({ onClose, onDecided }: ReviewDrawerProps) {
                             采纳进正式图
                           </Button>
                           <Button
-                            variant="secondary"
+                            variant="danger"
                             size="sm"
                             disabled={busy}
                             icon={<X className="h-3.5 w-3.5" />}
@@ -262,7 +284,8 @@ export function ReviewDrawer({ onClose, onDecided }: ReviewDrawerProps) {
                               setNotes((prev) => ({ ...prev, [key]: event.target.value }))
                             }
                             placeholder="驳回原因（可选，会写进理由里便于追溯）"
-                            className="h-8 min-w-[200px] flex-1 rounded-lg border border-slate-300 px-2 text-xs text-slate-700"
+                            aria-label={`驳回原因：${item.prereq_name || item.prereq_kp_id} → ${item.kp_name || item.kp_id}`}
+                            className="h-11 min-w-[200px] flex-1 rounded-lg border border-slate-300 px-2 text-xs text-slate-700 sm:h-8"
                           />
                         </div>
                       )}
@@ -274,7 +297,7 @@ export function ReviewDrawer({ onClose, onDecided }: ReviewDrawerProps) {
           )}
         </div>
 
-        <footer className="shrink-0 border-t border-slate-100 px-5 py-3 text-[11px] leading-relaxed text-slate-400">
+        <footer className="shrink-0 border-t border-slate-100 px-5 py-3 text-xs leading-relaxed text-slate-400">
           导入时已做环校验：会让依赖图成环的候选边整批拒收，所以这里采纳任何一条都不会引入环
           —— 「教学依赖图必须无环」是工程不变量，不靠人工把关。
         </footer>

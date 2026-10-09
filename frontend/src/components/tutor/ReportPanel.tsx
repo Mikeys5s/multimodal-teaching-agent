@@ -51,7 +51,7 @@ export function ReportPanel({
         ) : report ? (
           <>
             <div>
-              <div className="mb-1.5 flex items-center gap-1.5 text-[11px] font-medium text-slate-500">
+              <div className="mb-1.5 flex items-center gap-1.5 text-xs font-medium text-slate-500">
                 <Repeat className="h-3 w-3" aria-hidden />
                 卡点汇总（出现次数）
               </div>
@@ -62,34 +62,51 @@ export function ReportPanel({
                       key={point.kp_id}
                       className="flex items-center justify-between rounded-md border border-slate-200 px-2 py-1.5"
                     >
-                      <span className="min-w-0 truncate text-xs text-slate-700" title={point.name}>
-                        {point.name}
+                      <span
+                        className="min-w-0 truncate text-xs text-slate-700"
+                        title={point.kp_id ? `知识点 id：${point.kp_id}` : point.name}
+                      >
+                        {/* 后端偶发 `name` 为空（会话报告是聚合出来的）—— 不要留一个空行 */}
+                        {point.name?.trim() || '（未命名知识点）'}
                       </span>
-                      <span className="shrink-0 text-[11px] text-slate-500">
+                      <span className="shrink-0 text-xs text-slate-500">
                         ×{point.occurrences}
                       </span>
                     </li>
                   ))}
                 </ul>
               ) : (
-                <p className="text-[11px] text-slate-400">本场还没有记录到卡点。</p>
+                <p className="text-xs text-slate-400">本场还没有记录到卡点。</p>
               )}
             </div>
 
             <div>
-              <div className="mb-1.5 text-[11px] font-medium text-slate-500">建议练习汇总</div>
+              <div className="mb-1.5 text-xs font-medium text-slate-500">建议练习汇总</div>
               {/* ⚠️ 字段名是 suggested_practices（复数）—— 写成单数会静默拿到 undefined 并崩在这里 */}
               {report.suggested_practices.length > 0 ? (
                 <ul className="space-y-1.5">
-                  {report.suggested_practices.map((item, index) => (
-                    <li key={`${item.kp_id}-${index}`} className="space-y-1">
-                      <p className="text-xs leading-relaxed text-slate-700">{item.task}</p>
-                      <Tag>{item.kp_id}</Tag>
-                    </li>
-                  ))}
+                  {report.suggested_practices.map((item, index) => {
+                    /**
+                     * 本端点的 `kp_name` **目前不存在**（`diagnosis` 事件已有，会话报告没跟上）。
+                     * 所以：有名字就显示名字；没有就**不渲染裸 `kp_id`** ——
+                     * `task` 本身已经说清要练什么，id 只留在 tooltip 里供核对。
+                     */
+                    const name = item.kp_name?.trim()
+                    return (
+                      <li key={`${item.kp_id}-${index}`} className="space-y-1">
+                        <p
+                          className="text-xs leading-relaxed text-slate-700"
+                          title={`知识点 id：${item.kp_id}`}
+                        >
+                          {item.task}
+                        </p>
+                        {name && <Tag title={`知识点 id：${item.kp_id}`}>{name}</Tag>}
+                      </li>
+                    )
+                  })}
                 </ul>
               ) : (
-                <p className="text-[11px] text-slate-400">本场还没有建议练习。</p>
+                <p className="text-xs text-slate-400">本场还没有建议练习。</p>
               )}
             </div>
           </>

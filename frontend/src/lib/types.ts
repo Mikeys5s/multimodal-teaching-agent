@@ -331,6 +331,42 @@ export interface KnowledgePoint {
   misconception_count: number
   needs_review: boolean
   confidence: number
+
+  /* ---------------- 决赛期新增字段（P3 重复组呈现 / 可读标题） ---------------- */
+
+  /**
+   * 重复组字段 —— **后端已提供**（2026-10-08 对线上实例 `http://120.77.177.171:8000`
+   * 逐字段核对：629/629 条都带这三个键）。
+   *
+   * 语义：
+   * - `duplicate_group_size`：**组内点数**（含代表点本身）；单点组为 `1`。
+   * - `is_duplicate`：该点是同组内容的**副本**。
+   * - `duplicate_of`：副本指向的**代表点** id；代表点为 `null`。
+   *
+   * ⚠️ **文案纪律**：我们只做「**标注**」，**没有做物理去重**，629 条一条都没删 ——
+   * 所以界面上**不得出现「已去重」**三个字。措辞统一走 `lib/kpTitle.ts` 的 `dupNotice()`，
+   * 不要在组件里各写一套。
+   *
+   * 声明为可选：这样在老后端 / 契约收口期都不会硬崩，缺失时界面自动不提示。
+   */
+  is_duplicate?: boolean | null
+  duplicate_of?: string | null
+  duplicate_group_size?: number | null
+
+  /**
+   * 可读标题（如 `Routing Information Protocol (RIP)`）。
+   *
+   * ⚠️ **后端目前尚未提供**（2026-10-08 实测：629 条里出现次数 = 0）。
+   * 前端已经按「有就用、没有就回落到 `name`」写好，**改契约不用再动组件**；
+   * 字段名与 Issue「【P1】小节标题映射」一致（`section_heading` / `first_sentence` 两条来源）。
+   */
+  display_title?: string | null
+  /**
+   * 抽取出来的原始名（句片段，如 `This last fact` / `The objective` / `TCP`）。
+   * 线上属于 `name`；`raw_name` 是它在可读标题落地后的**别名** —— 溯源不能丢，
+   * 拿到可读标题时要把它收进 tooltip 让人能看到原值。
+   */
+  raw_name?: string | null
 }
 
 export interface KnowledgePointQuery extends PageQuery {
@@ -407,6 +443,17 @@ export interface GraphNode {
   chapter_id: string
   section_id: string
   needs_review: boolean
+  /**
+   * ⚠️ **`GET /api/knowledge-graph` 目前不返回可读标题、也不返回重复组字段**
+   * （2026-10-08 实测节点字段只有 `id / name / difficulty / chapter_id / section_id / needs_review`），
+   * 而 `GET /api/knowledge-points` 已经有重复组三件套。
+   * 这里把字段声明为可选并**提前支持**：等后端把节点字段补齐，图谱与路径页无需再改一行。
+   */
+  display_title?: string | null
+  raw_name?: string | null
+  is_duplicate?: boolean | null
+  duplicate_of?: string | null
+  duplicate_group_size?: number | null
 }
 
 export interface GraphEdge {
@@ -493,6 +540,9 @@ export interface LearningPathStep {
   /** 来自前置边的 reason（P10 产出），前端逐条展示 —— 让排序可解释 */
   reason: string
   is_start_point: boolean
+  /** 见 `GraphNode.display_title` 的说明 —— 目前线上不返回，前端已提前支持 */
+  display_title?: string | null
+  raw_name?: string | null
 }
 
 /**
@@ -644,13 +694,26 @@ export interface DiagnosisKnowledgePoint {
 export interface DiagnosisStuckAt {
   step: string
   evidence_kp_id: string | null
+  /**
+   * ⭐ 后端新增（2026-10-08 上线）：证据知识点的**可读名**。
+   * 此前界面只能显示 `kp_ada1063f_000_000_035` 这种 id，学生看不懂。
+   * `evidence_kp_id` 保留 —— 它仍是有用的定位锚点（收进 tooltip，不再当正文渲染）。
+   */
+  evidence_kp_name?: string | null
   evidence_misconception_id: string | null
+}
+
+/** 下一步 / 建议练习项 —— `kp_name` 为后端新增字段 */
+export interface NextPracticeItem {
+  kp_id: string
+  kp_name?: string | null
+  task: string
 }
 
 export interface Diagnosis {
   knowledge_points: DiagnosisKnowledgePoint[]
   stuck_at: DiagnosisStuckAt
-  next_practice: { kp_id: string; task: string }[]
+  next_practice: NextPracticeItem[]
 }
 
 /**
@@ -714,8 +777,15 @@ export interface SessionReportOut {
   /** 基于材料的比例 —— **分母不含拒答轮次**（拒答是能力，不是缺陷） */
   grounded_rate: number
   stuck_points: { kp_id: string; name: string; occurrences: number }[]
-  /** ⚠️ 是**复数** —— 不是 `suggested_practice`；写成单数会静默拿到 `undefined` */
-  suggested_practices: { kp_id: string; task: string }[]
+  /**
+   * ⚠️ 是**复数** —— 不是 `suggested_practice`；写成单数会静默拿到 `undefined`。
+   *
+   * ⚠️ 2026-10-09 实测：本端点的 `suggested_practices[]` **还没有 `kp_name`**
+   * （`diagnosis` 事件已经有，会话报告没跟上）—— 所以界面上**不渲染裸 `kp_id`**，
+   * 只显示 `task` 并把 id 收进 tooltip；后端补上 `kp_name` 后会自动显示名字。
+   * 已在 Issue IKJVBE 请 P2 把 `NextPracticeOut`（`backend/app/schemas/qa.py`）补上该字段。
+   */
+  suggested_practices: NextPracticeItem[]
   summary_md: string
 }
 
@@ -739,6 +809,12 @@ export interface SessionReportOut {
 export interface SseRetrieved {
   seq: number
   kp_ids: string[]
+  /**
+   * ⭐ 后端新增（2026-10-08 上线）：命中的知识点**可读名**，**与 `kp_ids` 一一对应**。
+   * ⚠️ 按下标取，**不要按名字反查 id**（名字可能重复，也可能为句片段）。
+   * 缺失时前端回落到 `kp_ids`，行为与改动前一致。
+   */
+  kp_names?: string[]
   block_ids: string[]
   /** 越界时为 true，此时后续 delta 必须是拒答模板 */
   is_out_of_scope: boolean
@@ -760,7 +836,7 @@ export interface SseDiagnosis {
   seq: number
   knowledge_points: DiagnosisKnowledgePoint[]
   stuck_at: DiagnosisStuckAt | null
-  next_practice: { kp_id: string; task: string }[]
+  next_practice: NextPracticeItem[]
 }
 
 export interface SseDone {
