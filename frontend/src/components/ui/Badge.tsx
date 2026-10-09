@@ -73,9 +73,16 @@ export function SeverityBadge({ severity }: { severity: Severity }) {
   return <Badge color={SEVERITY_COLOR[severity] ?? '#94a3b8'}>{SEVERITY_LABEL[severity]}风险</Badge>
 }
 
-export function Tag({ children }: { children: ReactNode }) {
+/**
+ * 灰色小标签。`title` 可选 —— 用于把「机器标识」（如 `kp_ada1063f_000_000_035`）
+ * 收进悬停提示：学生看名字，需要核对的人仍能拿到 id。
+ */
+export function Tag({ children, title }: { children: ReactNode; title?: string }) {
   return (
-    <span className="inline-flex items-center rounded-md bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-600">
+    <span
+      className="inline-flex items-center rounded-md bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-600"
+      title={title}
+    >
       {children}
     </span>
   )

@@ -8,6 +8,7 @@ import { EmptyState, ErrorState, LoadingState } from '@/components/ui/Feedback'
 import { useRequest } from '@/hooks/useRequest'
 import { api } from '@/lib/endpoints'
 import { DIFFICULTY_LABEL } from '@/lib/format'
+import { kpDisplayTitle, kpTitleAttr } from '@/lib/kpTitle'
 import type { Difficulty, KnowledgePoint } from '@/lib/types'
 
 const DIFFICULTY_OPTIONS: Difficulty[] = [1, 2, 3, 4, 5]
@@ -206,8 +207,12 @@ export function TargetPicker({ selectedId, onSelect }: TargetPickerProps) {
                     ].join(' ')}
                   >
                     <div className="min-w-0">
-                      <div className="truncate text-sm font-medium text-slate-700" title={kp.name}>
-                        {kp.name}
+                      {/* 决赛任务 2：目标选择列表也走可读标题；原名收进 title 悬停可见 */}
+                      <div
+                        className="truncate text-sm font-medium text-slate-700"
+                        title={kpTitleAttr(kp) ?? kp.name}
+                      >
+                        {kpDisplayTitle(kp)}
                       </div>
                       <div className="mt-0.5 truncate text-xs text-slate-400">
                         {kp.chapter.number} {kp.chapter.title}

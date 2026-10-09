@@ -1,6 +1,6 @@
 import { RefreshCw, ShieldCheck, SlidersHorizontal } from 'lucide-react'
-import { useMemo, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useEffect, useMemo, useState } from 'react'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 
 import { GraphCanvas } from '@/components/graph/GraphCanvas'
 import { GraphStatsPanel } from '@/components/graph/GraphStatsPanel'
@@ -24,12 +24,22 @@ const CHAPTER_PROBE_PAGE_SIZE = 100
  */
 export default function Graph() {
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
 
   const [chapterId, setChapterId] = useState('')
   const [maxNodes, setMaxNodes] = useState(200)
   const [reviewOnly, setReviewOnly] = useState(false)
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [reviewOpen, setReviewOpen] = useState(false)
+
+  /**
+   * 深链：`/graph?kp_id=xxx` —— 首页「从这看起 · 看我们怎么处理重复数据」用它直达某个知识点。
+   * 抽屉是按 id 单独拉详情的，**不依赖该节点是否落在当前 200 个之内**，所以这里直接开抽屉。
+   */
+  const deepLinkKpId = searchParams.get('kp_id')
+  useEffect(() => {
+    if (deepLinkKpId) setSelectedId(deepLinkKpId)
+  }, [deepLinkKpId])
 
   const graphReq = useRequest(
     () => api.getKnowledgeGraph({ chapter_id: chapterId || undefined, max_nodes: maxNodes }),

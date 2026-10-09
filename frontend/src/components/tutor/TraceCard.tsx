@@ -22,6 +22,15 @@ export function TraceCard({ retrieved, pending }: { retrieved: SseRetrieved | nu
 
   const outOfScope = retrieved.is_out_of_scope
   const pendingTail = pending && retrieved.kp_ids.length === 0 && retrieved.block_ids.length === 0
+  /**
+   * ⭐ 展示可读名（`kp_names` 与 `kp_ids` 按下标一一对应）。
+   * 后端没给 `kp_names` 时回落 `kp_ids` —— 老会话记录 / 字段未上线时行为与改前一致。
+   * 不再把 `kp_xxx` 当正文渲染：学生看不懂（这是 2026-10-08 修的显示问题）。
+   */
+  const kpItems = retrieved.kp_ids.map((id, index) => ({
+    id,
+    name: retrieved.kp_names?.[index] || null,
+  }))
 
   return (
     <div
@@ -53,8 +62,12 @@ export function TraceCard({ retrieved, pending }: { retrieved: SseRetrieved | nu
       <div className="mt-2 space-y-1">
         <div className="flex flex-wrap items-center gap-1">
           <span className="text-slate-500">知识点</span>
-          {retrieved.kp_ids.length > 0 ? (
-            retrieved.kp_ids.map((id) => <Tag key={id}>{id}</Tag>)
+          {kpItems.length > 0 ? (
+            kpItems.map((item) => (
+              <Tag key={item.id} title={item.name ? `知识点 id：${item.id}` : undefined}>
+                {item.name ?? item.id}
+              </Tag>
+            ))
           ) : (
             <span className="text-slate-400">未命中</span>
           )}

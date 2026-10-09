@@ -1,4 +1,4 @@
-import { AlertTriangle, BookOpen, GitBranch, Link2, X } from 'lucide-react'
+import { AlertTriangle, BookOpen, GitBranch, Layers, Link2, X } from 'lucide-react'
 import type { ReactNode } from 'react'
 
 import { DifficultyBadge } from '@/components/ui/Badge'
@@ -6,6 +6,7 @@ import { EmptyState, ErrorState, LoadingState } from '@/components/ui/Feedback'
 import { useRequest } from '@/hooks/useRequest'
 import { api } from '@/lib/endpoints'
 import { formatPercent, formatScore } from '@/lib/format'
+import { dupNotice, kpDisplayTitle, kpTitleAttr } from '@/lib/kpTitle'
 import type { Example, KpType, Misconception, Prerequisite, RelationType } from '@/lib/types'
 
 const RELATION_LABEL: Record<RelationType, string> = {
@@ -160,6 +161,12 @@ export interface KnowledgePointDrawerProps {
 export function KnowledgePointDrawer({ kpId, onClose }: KnowledgePointDrawerProps) {
   const detailReq = useRequest(() => api.getKnowledgePoint(kpId), [kpId])
   const detail = detailReq.data
+  /**
+   * 决赛任务 1「重复组前端呈现」。
+   * `null` = 后端未给字段 / 该点是独立知识点（组内只有它自己）→ 界面**不出现任何提示**，
+   * 避免给独立点也挂一句「已合并显示」。
+   */
+  const dupHint = detail ? dupNotice(detail) : null
 
   return (
     <div className="fixed inset-0 z-40 flex justify-end" role="dialog" aria-modal="true">
@@ -168,8 +175,15 @@ export function KnowledgePointDrawer({ kpId, onClose }: KnowledgePointDrawerProp
       <div className="relative flex h-full w-[460px] max-w-full flex-col border-l border-slate-200 bg-white shadow-2xl">
         <header className="flex shrink-0 items-start justify-between gap-3 border-b border-slate-200 px-5 py-3">
           <div className="min-w-0">
-            <h2 className="truncate text-sm font-semibold text-slate-800" title={detail?.name ?? kpId}>
-              {detail?.name ?? '知识点详情'}
+            {/*
+              决赛任务 2「可读标题显示」：优先用后端 `display_title`，没有就回落 `name`。
+              拿到可读标题时，把**原始句片段**收进 `title` 属性 —— 悬停可见，溯源不丢。
+            */}
+            <h2
+              className="truncate text-sm font-semibold text-slate-800"
+              title={detail ? kpTitleAttr(detail) : undefined}
+            >
+              {detail ? kpDisplayTitle(detail) : '知识点详情'}
             </h2>
             {detail && (
               <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-slate-400">
@@ -202,6 +216,25 @@ export function KnowledgePointDrawer({ kpId, onClose }: KnowledgePointDrawerProp
 
           {detail && (
             <div className="space-y-5">
+              {/*
+                决赛任务 1：重复组提示。
+                ⚠️ 措辞由 lib/kpTitle.ts 的 dupNotice() 统一产出 —— **只标注、不去重**，
+                   任何地方都不得出现「已去重」。
+              */}
+              {dupHint && (
+                <div className="flex items-start gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600">
+                  <Layers className="mt-0.5 h-3.5 w-3.5 shrink-0 text-slate-400" aria-hidden />
+                  <div className="min-w-0">
+                    <p>{dupHint}</p>
+                    {detail.is_duplicate && detail.duplicate_of && (
+                      <p className="mt-1 font-mono text-[11px] text-slate-400">
+                        代表点：{detail.duplicate_of}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              )}
+
               {detail.needs_review && (
                 <div className="flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50/70 px-3 py-2 text-xs text-amber-800">
                   <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden />

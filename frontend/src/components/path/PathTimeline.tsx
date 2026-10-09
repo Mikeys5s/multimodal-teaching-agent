@@ -7,6 +7,7 @@ import { EmptyState, ErrorState, LoadingState } from '@/components/ui/Feedback'
 import { useRequest } from '@/hooks/useRequest'
 import { api } from '@/lib/endpoints'
 import { DIFFICULTY_LABEL, difficultyColor } from '@/lib/format'
+import { kpDisplayTitle, kpTitleAttr } from '@/lib/kpTitle'
 import type { Difficulty, LearningPathStep } from '@/lib/types'
 
 export interface PathTimelineProps {
@@ -126,7 +127,13 @@ export function PathTimeline({ kpId, kpName, onRetarget }: PathTimelineProps) {
                     ].join(' ')}
                   >
                     <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-                      <span className="text-sm font-medium text-slate-800">{step.name}</span>
+                      {/* 决赛任务 2：路径步骤名同样走可读标题；原名收进 title 悬停可见 */}
+                      <span
+                        className="text-sm font-medium text-slate-800"
+                        title={kpTitleAttr(step)}
+                      >
+                        {kpDisplayTitle(step)}
+                      </span>
                       {step.is_start_point && (
                         <Badge color="#f59e0b" dot>
                           起点
@@ -139,7 +146,7 @@ export function PathTimeline({ kpId, kpName, onRetarget }: PathTimelineProps) {
                         type="button"
                         className="ml-auto inline-flex items-center gap-1 text-[11px] text-brand-600 hover:underline"
                         title="以这一步为新的目标知识点，重新生成路径"
-                        onClick={() => onRetarget(step.kp_id, step.name)}
+                        onClick={() => onRetarget(step.kp_id, kpDisplayTitle(step))}
                       >
                         <CornerDownRight className="h-3 w-3" aria-hidden />
                         设为目标

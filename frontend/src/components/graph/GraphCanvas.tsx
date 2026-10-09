@@ -3,6 +3,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { PointerEvent as ReactPointerEvent } from 'react'
 
 import { DIFFICULTY_COLOR, DIFFICULTY_LABEL } from '@/lib/format'
+import { dupBadgeLabel, kpDisplayTitle, kpRawName, shouldExposeRawName } from '@/lib/kpTitle'
 import type { GraphEdge, GraphNode } from '@/lib/types'
 import { NODE_H, NODE_W, layoutGraph, rectBoundary } from './dagLayout'
 
@@ -195,6 +196,11 @@ export function GraphCanvas({ nodes, edges, selectedId, onSelect }: GraphCanvasP
               const selected = node.id === selectedId
               const focused = node.id === keyboardId
               const dimmed = focusId !== null && !related.has(node.id)
+              // 决赛任务 2：节点标签用可读标题（后端未提供时回落 name，行为与改前一致）
+              const label = kpDisplayTitle(node)
+              const rawName = shouldExposeRawName(node) ? kpRawName(node) : null
+              // 决赛任务 1：重复组角标。节点接口当前不带该字段 → 拿不到时为 null，不显示
+              const dupLabel = dupBadgeLabel(node)
               return (
                 <g
                   key={node.id}
@@ -205,9 +211,11 @@ export function GraphCanvas({ nodes, edges, selectedId, onSelect }: GraphCanvasP
                   role="button"
                   tabIndex={0}
                   aria-pressed={selected}
-                  aria-label={`知识点 ${node.name}，难度 ${node.difficulty}（${
+                  aria-label={`知识点 ${label}，难度 ${node.difficulty}（${
                     DIFFICULTY_LABEL[node.difficulty]
-                  }）${node.needs_review ? '，待复核' : ''}，查看前置与例题`}
+                  }）${node.needs_review ? '，待复核' : ''}${
+                    dupLabel ? `，${dupLabel}，已合并显示` : ''
+                  }，查看前置与例题`}
                   onClick={() => onSelect(node.id)}
                   onKeyDown={(event) => {
                     // Enter / 空格 —— 与原生 button 一致（否则键盘用户点不开详情）
@@ -222,8 +230,10 @@ export function GraphCanvas({ nodes, edges, selectedId, onSelect }: GraphCanvasP
                   onPointerLeave={() => setHoverId((prev) => (prev === node.id ? null : prev))}
                 >
                   <title>
-                    {node.name} · 难度 {node.difficulty}（{DIFFICULTY_LABEL[node.difficulty]}）
-                    {node.needs_review ? ' · 待复核' : ''}（点击查看前置与例题）
+                    {label} · 难度 {node.difficulty}（{DIFFICULTY_LABEL[node.difficulty]}）
+                    {node.needs_review ? ' · 待复核' : ''}
+                    {dupLabel ? ` · ${dupLabel}，已合并显示` : ''}
+                    {rawName ? ` · 原名：${rawName}` : ''}（点击查看前置与例题）
                   </title>
                   {focused && (
                     <rect
@@ -254,7 +264,7 @@ export function GraphCanvas({ nodes, edges, selectedId, onSelect }: GraphCanvasP
                     strokeDasharray={node.needs_review ? '6 4' : undefined}
                   />
                   <text x={14} y={NODE_H / 2 + 4.5} fontSize={12.5} fontWeight={500} fill="#1e293b">
-                    {truncateName(node.name)}
+                    {truncateName(label)}
                   </text>
                   <rect x={NODE_W - 32} y={NODE_H / 2 - 9} width={20} height={18} rx={6} fill={color} />
                   <text x={NODE_W - 22} y={NODE_H / 2 + 4} fontSize={11} fontWeight={600} fill="#ffffff" textAnchor="middle">

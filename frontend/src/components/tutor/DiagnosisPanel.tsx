@@ -3,10 +3,24 @@ import { Compass, Lightbulb, ListChecks } from 'lucide-react'
 import { DifficultyBadge, Tag } from '@/components/ui/Badge'
 import type { DiagnosisStuckAt, SseDiagnosis } from '@/lib/types'
 
-/** 卡点来源证据：evidence_kp_id / evidence_misconception_id（都可能是 null） */
+/**
+ * 卡点来源证据。
+ *
+ * ⭐ 2026-10-08 改：**优先显示可读名**（`evidence_kp_name`），
+ * 只有拿到 name 时才把 `evidence_kp_id` 收进 tooltip —— 此前直接把 id 当正文渲染，
+ * 界面上会出现 `kp_ada1063f_000_000_035`，学生看不懂。
+ * 后端没给 name 时（老会话记录）回落 id，行为与改前一致。
+ */
 function StuckAt({ stuckAt }: { stuckAt: DiagnosisStuckAt }) {
-  const evidence: { label: string; value: string }[] = []
-  if (stuckAt.evidence_kp_id) evidence.push({ label: '知识点', value: stuckAt.evidence_kp_id })
+  const evidence: { label: string; value: string; hint?: string }[] = []
+  if (stuckAt.evidence_kp_id) {
+    const name = stuckAt.evidence_kp_name?.trim()
+    evidence.push({
+      label: '知识点',
+      value: name || stuckAt.evidence_kp_id,
+      hint: name ? `知识点 id：${stuckAt.evidence_kp_id}` : undefined,
+    })
+  }
   if (stuckAt.evidence_misconception_id)
     evidence.push({ label: '误区', value: stuckAt.evidence_misconception_id })
 
@@ -17,7 +31,7 @@ function StuckAt({ stuckAt }: { stuckAt: DiagnosisStuckAt }) {
         <span className="text-[11px] text-slate-400">来源证据</span>
         {evidence.length > 0 ? (
           evidence.map((item) => (
-            <Tag key={`${item.label}-${item.value}`}>
+            <Tag key={`${item.label}-${item.value}`} title={item.hint}>
               {item.label} {item.value}
             </Tag>
           ))
@@ -54,10 +68,15 @@ export function DiagnosisPanel({ diagnosis }: { diagnosis: SseDiagnosis }) {
             <ul className="space-y-1.5">
               {kps.map((kp) => (
                 <li key={kp.kp_id} className="space-y-1">
-                  <div className="text-xs text-slate-800">{kp.name}</div>
+                  {/*
+                    ⭐ 只渲染名字，`kp_id` 收进 tooltip ——
+                    此前这里是「名字 + id」两行，id 对使用者没有意义（2026-10-08 修正）。
+                  */}
+                  <div className="text-xs text-slate-800" title={`知识点 id：${kp.kp_id}`}>
+                    {kp.name}
+                  </div>
                   <div className="flex flex-wrap items-center gap-1">
                     <DifficultyBadge difficulty={kp.difficulty} />
-                    <Tag>{kp.kp_id}</Tag>
                   </div>
                 </li>
               ))}
@@ -91,7 +110,8 @@ export function DiagnosisPanel({ diagnosis }: { diagnosis: SseDiagnosis }) {
               {nextPractice.map((item, index) => (
                 <li key={`${item.kp_id}-${index}`} className="space-y-1">
                   <p className="text-xs leading-relaxed text-slate-700">{item.task}</p>
-                  <Tag>{item.kp_id}</Tag>
+                  {/* ⭐ 优先可读名，id 收进 tooltip（同 ② 的处理） */}
+                  <Tag title={`知识点 id：${item.kp_id}`}>{item.kp_name?.trim() || item.kp_id}</Tag>
                 </li>
               ))}
             </ul>

@@ -1,5 +1,5 @@
 import { Plus, RefreshCw, SendHorizontal, Square, Trash2, Upload } from 'lucide-react'
-import { useCallback, useRef, useState } from 'react'
+import { useCallback, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
 import { ReportPanel } from '@/components/tutor/ReportPanel'
@@ -79,6 +79,23 @@ export default function Tutor() {
   const materials = materialsReq.data?.items ?? []
   const totalMaterials = materialsReq.data?.total ?? materials.length
   const streaming = streamingKey !== null
+
+  /**
+   * 当前知识点的**可读名** —— 给状态机面板用。
+   * `GET /qa/sessions/{id}/state` 只返回 `current_kp_id`，直接渲染就是 `kp_xxx`（学生看不懂）。
+   * 从最新一轮往回找：优先卡点证据名，其次第一个命中知识点名；都没有则回落 id。
+   */
+  const currentKpName = useMemo(() => {
+    for (let index = turns.length - 1; index >= 0; index -= 1) {
+      const diagnosis = turns[index]?.diagnosis
+      if (!diagnosis) continue
+      const evidence = diagnosis.stuck_at?.evidence_kp_name?.trim()
+      if (evidence) return evidence
+      const first = diagnosis.knowledge_points?.[0]?.name?.trim()
+      if (first) return first
+    }
+    return null
+  }, [turns])
 
   const resetLocal = useCallback(() => {
     setSession(null)
@@ -391,6 +408,7 @@ export default function Tutor() {
             error={stateReq.error}
             enabled={sessionId !== null}
             onRefresh={() => void stateReq.reload()}
+            currentKpName={currentKpName}
           />
           <ReportPanel
             report={reportReq.data}

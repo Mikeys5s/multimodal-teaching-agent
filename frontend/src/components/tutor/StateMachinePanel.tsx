@@ -36,12 +36,21 @@ export function StateMachinePanel({
   error,
   enabled,
   onRefresh,
+  currentKpName = null,
 }: {
   state: QaState | null
   loading: boolean
   error: string | null
   enabled: boolean
   onRefresh: () => void
+  /**
+   * 当前知识点的**可读名**（来自最新一轮 `diagnosis.stuck_at.evidence_kp_name`
+   * 或 `knowledge_points[0].name`）。
+   * ⭐ 2026-10-08 新增：`/state` 只给 `current_kp_id`，直接渲染会出现
+   * `kp_ada1063f_000_000_035`。传了名字就显示名字、id 收进 tooltip；
+   * 没传则回落 id（行为与改前一致）。
+   */
+  currentKpName?: string | null
 }) {
   const reachedIndex = state ? SOCRATIC_LADDER.findIndex((step) => step.state === state.state) : -1
 
@@ -85,7 +94,14 @@ export function StateMachinePanel({
                 下一步动作：<span className="font-medium">{TURN_TYPE_LABEL[state.next_action]}</span>
               </div>
               <div className="text-xs text-slate-500">
-                当前知识点：<span className="font-mono">{state.current_kp_id ?? '未命中'}</span>
+                当前知识点：
+                {/* 有可读名就显示名字；id 收进 tooltip（评审/排查时仍拿得到） */}
+                <span
+                  className={currentKpName ? '' : 'font-mono'}
+                  title={state.current_kp_id ? `知识点 id：${state.current_kp_id}` : undefined}
+                >
+                  {currentKpName?.trim() || state.current_kp_id || '未命中'}
+                </span>
               </div>
             </div>
 
