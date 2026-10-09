@@ -79,6 +79,12 @@ class LearningPathStepOut(BaseModel):
     order: int = Field(description="从 1 开始的序号")
     kp_id: str
     name: str
+    display_title: str | None = Field(
+        default=None,
+        description="**给人看的名字**（可读标题）。前端应优先显示它，"
+                    "`kp_id` 收进 tooltip（**别隐藏 id** —— 它是溯源锚点）。"
+                    "⚠️ 为 null 表示没有可读标题 ⇒ 前端退回 `name`（**不编**）",
+    )
     difficulty: int
     reason: str | None = Field(
         default=None, description="排在这一步的理由，源自前置边的 reason；起点为 null"

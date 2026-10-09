@@ -64,8 +64,8 @@
     {
       "kp_id": "kp_ada1063f_000_000_001",
       "raw_name": "Problem: Not All Networks are",
-      "display_title": null,
-      "source": null,
+      "display_title": "Problem: Not All Networks are Directly Connected",
+      "source": "summary_first_sentence",
       "confidence": null,
       "section": "Problem: Not All Networks are Directly Connected",
       "readable_raw": false
@@ -82,8 +82,8 @@
     {
       "kp_id": "kp_cf6fcaa0_000_000_002",
       "raw_name": "how fast sources",
-      "display_title": null,
-      "source": null,
+      "display_title": "how fast sources are allowed to send packets.",
+      "source": "summary_first_sentence",
       "confidence": null,
       "section": "287",
       "readable_raw": false
@@ -91,8 +91,8 @@
     {
       "kp_id": "kp_42b16cd4_000_000_002",
       "raw_name": "Problem: Getting Processes to",
-      "display_title": null,
-      "source": null,
+      "display_title": "Problem: Getting Processes to Communicate",
+      "source": "summary_first_sentence",
       "confidence": null,
       "section": "Problem: Getting Processes to Communicate",
       "readable_raw": false
@@ -100,8 +100,8 @@
     {
       "kp_id": "kp_ada1063f_000_000_002",
       "raw_name": "The core job of a switch",
-      "display_title": null,
-      "source": null,
+      "display_title": "The core job of a switch is to take packets",
+      "source": "summary_first_sentence",
       "confidence": null,
       "section": "Problem: Not All Networks are Directly Connected",
       "readable_raw": false
@@ -118,8 +118,8 @@
     {
       "kp_id": "kp_42b16cd4_000_000_003",
       "raw_name": "Such a network",
-      "display_title": null,
-      "source": null,
+      "display_title": "Such a network is said to provide a best-effort",
+      "source": "summary_first_sentence",
       "confidence": null,
       "section": "229",
       "readable_raw": false
@@ -163,8 +163,8 @@
     {
       "kp_id": "kp_cf6fcaa0_000_000_005",
       "raw_name": "Note that congestion control",
-      "display_title": null,
-      "source": null,
+      "display_title": "Note that congestion control is a different",
+      "source": "summary_first_sentence",
       "confidence": null,
       "section": "288",
       "readable_raw": false
@@ -181,8 +181,8 @@
     {
       "kp_id": "kp_ada1063f_000_000_005",
       "raw_name": "One thing that",
-      "display_title": null,
-      "source": null,
+      "display_title": "One thing that is common to all networks is",
+      "source": "summary_first_sentence",
       "confidence": null,
       "section": "104",
       "readable_raw": false
@@ -199,8 +199,8 @@
     {
       "kp_id": "kp_42b16cd4_000_000_006",
       "raw_name": "The next issue",
-      "display_title": null,
-      "source": null,
+      "display_title": "The next issue is how a process learns the port",
+      "source": "summary_first_sentence",
       "confidence": null,
       "section": "230",
       "readable_raw": false
@@ -208,8 +208,8 @@
     {
       "kp_id": "kp_ada1063f_000_000_006",
       "raw_name": "Another assumption that we nee",
-      "display_title": null,
-      "source": null,
+      "display_title": "Another assumption that we need to make is that",
+      "source": "summary_first_sentence",
       "confidence": null,
       "section": "104",
       "readable_raw": false
@@ -244,8 +244,8 @@
     {
       "kp_id": "kp_cf6fcaa0_000_000_008",
       "raw_name": "There",
-      "display_title": null,
-      "source": null,
+      "display_title": "There are countless ways in which resource",
+      "source": "summary_first_sentence",
       "confidence": null,
       "section": "290",
       "readable_raw": false
@@ -289,8 +289,8 @@
     {
       "kp_id": "kp_ada1063f_000_000_009",
       "raw_name": "The idea behind datagrams",
-      "display_title": null,
-      "source": null,
+      "display_title": "The idea behind datagrams is incredibly simple",
+      "source": "summary_first_sentence",
       "confidence": null,
       "section": "105",
       "readable_raw": false
@@ -316,8 +316,8 @@
     {
       "kp_id": "kp_ada1063f_000_000_010",
       "raw_name": "This last fact",
-      "display_title": null,
-      "source": null,
+      "display_title": "This last fact is particularly important to the",
+      "source": "summary_first_sentence",
       "confidence": null,
       "section": "106",
       "readable_raw": false
@@ -334,8 +334,8 @@
     {
       "kp_id": "kp_42b16cd4_000_000_011",
       "raw_name": "At the heart of TCP",
-      "display_title": null,
-      "source": null,
+      "display_title": "At the heart of TCP is the sliding window",
+      "source": "summary_first_sentence",
       "confidence": null,
       "section": "232",
       "readable_raw": false
@@ -352,8 +352,8 @@
     {
       "kp_id": "kp_cf6fcaa0_000_000_012",
       "raw_name": "Note that it",
-      "display_title": null,
-      "source": null,
+      "display_title": "Note that it is not obvious that power is the",
+      "source": "summary_first_sentence",
       "confidence": null,
       "section": "293",
       "readable_raw": false
@@ -406,8 +406,8 @@
     {
       "kp_id": "kp_cf6fcaa0_000_000_014",
       "raw_name": "Since this",
-      "display_title": null,
-      "source": null,
+      "display_title": "Since this is not a queuing theory book, we",
+      "source": "summary_first_sentence",
       "confidence": null,
       "section": "293",
       "readable_raw": false
@@ -415,8 +415,8 @@
     {
       "kp_id": "kp_42b16cd4_000_000_014",
       "raw_name": "The problem with this latter a",
-      "display_title": null,
-      "source": null,
+      "display_title": "The problem with this latter approach is that a",
+      "source": "summary_first_sentence",
       "confidence": null,
       "section": "234",
       "readable_raw": false
@@ -451,8 +451,8 @@
     {
       "kp_id": "kp_ada1063f_000_000_015",
       "raw_name": "There",
-      "display_title": null,
-      "source": null,
+      "display_title": "There are two broad approaches to establishing",
+      "source": "summary_first_sentence",
       "confidence": null,
       "section": "107",
       "readable_raw": false
@@ -505,8 +505,8 @@
     {
       "kp_id": "kp_ada1063f_000_000_017",
       "raw_name": "There",
-      "display_title": null,
-      "source": null,
+      "display_title": "There are several things to note about virtual",
+      "source": "summary_first_sentence",
       "confidence": null,
       "section": "110",
       "readable_raw": false
@@ -514,8 +514,8 @@
     {
       "kp_id": "kp_cf6fcaa0_000_000_018",
       "raw_name": "Note that tail drop and FIFO",
-      "display_title": null,
-      "source": null,
+      "display_title": "Note that tail drop and FIFO are two separable",
+      "source": "summary_first_sentence",
       "confidence": null,
       "section": "295",
       "readable_raw": false
@@ -559,8 +559,8 @@
     {
       "kp_id": "kp_ada1063f_000_000_019",
       "raw_name": "There",
-      "display_title": null,
-      "source": null,
+      "display_title": "There is another good argument in favor of",
+      "source": "summary_first_sentence",
       "confidence": null,
       "section": "112",
       "readable_raw": false
@@ -568,8 +568,8 @@
     {
       "kp_id": "kp_cf6fcaa0_000_000_020",
       "raw_name": "One situation in which priorit",
-      "display_title": null,
-      "source": null,
+      "display_title": "One situation in which priority queuing is used",
+      "source": "summary_first_sentence",
       "confidence": null,
       "section": "296",
       "readable_raw": false
@@ -622,8 +622,8 @@
     {
       "kp_id": "kp_cf6fcaa0_000_000_022",
       "raw_name": "The main problem with FIFO que",
-      "display_title": null,
-      "source": null,
+      "display_title": "The main problem with FIFO queuing is that it",
+      "source": "summary_first_sentence",
       "confidence": null,
       "section": "296",
       "readable_raw": false
@@ -631,8 +631,8 @@
     {
       "kp_id": "kp_42b16cd4_000_000_022",
       "raw_name": "There",
-      "display_title": null,
-      "source": null,
+      "display_title": "There are three things to notice about the",
+      "source": "summary_first_sentence",
       "confidence": null,
       "section": "238",
       "readable_raw": false
@@ -640,8 +640,8 @@
     {
       "kp_id": "kp_ada1063f_000_000_022",
       "raw_name": "There",
-      "display_title": null,
-      "source": null,
+      "display_title": "There are various ways to implement source",
+      "source": "summary_first_sentence",
       "confidence": null,
       "section": "113",
       "readable_raw": false
@@ -676,8 +676,8 @@
     {
       "kp_id": "kp_cf6fcaa0_000_000_024",
       "raw_name": "What we really want",
-      "display_title": null,
-      "source": null,
+      "display_title": "What we really want is bit-by-bit round-robin",
+      "source": "summary_first_sentence",
       "confidence": null,
       "section": "297",
       "readable_raw": false
@@ -685,8 +685,8 @@
     {
       "kp_id": "kp_42b16cd4_000_000_024",
       "raw_name": "There",
-      "display_title": null,
-      "source": null,
+      "display_title": "There is actually a fourth, although rare",
+      "source": "summary_first_sentence",
       "confidence": null,
       "section": "240",
       "readable_raw": false
@@ -730,8 +730,8 @@
     {
       "kp_id": "kp_cf6fcaa0_000_000_026",
       "raw_name": "There",
-      "display_title": null,
-      "source": null,
+      "display_title": "There are two things to notice about fair",
+      "source": "summary_first_sentence",
       "confidence": null,
       "section": "299",
       "readable_raw": false
@@ -757,8 +757,8 @@
     {
       "kp_id": "kp_cf6fcaa0_000_000_027",
       "raw_name": "The second thing to notice",
-      "display_title": null,
-      "source": null,
+      "display_title": "The second thing to notice is that if the link",
+      "source": "summary_first_sentence",
       "confidence": null,
       "section": "299",
       "readable_raw": false
@@ -766,8 +766,8 @@
     {
       "kp_id": "kp_42b16cd4_000_000_027",
       "raw_name": "Most of the above discussion",
-      "display_title": null,
-      "source": null,
+      "display_title": "Most of the above discussion is similar to that",
+      "source": "summary_first_sentence",
       "confidence": null,
       "section": "242",
       "readable_raw": false
@@ -784,8 +784,8 @@
     {
       "kp_id": "kp_cf6fcaa0_000_000_028",
       "raw_name": "Because FQ",
-      "display_title": null,
-      "source": null,
+      "display_title": "Because FQ is work conserving, any bandwidth",
+      "source": "summary_first_sentence",
       "confidence": null,
       "section": "299",
       "readable_raw": false
@@ -820,8 +820,8 @@
     {
       "kp_id": "kp_42b16cd4_000_000_029",
       "raw_name": "All the while this",
-      "display_title": null,
-      "source": null,
+      "display_title": "All the while this is going on, the send side",
+      "source": "summary_first_sentence",
       "confidence": null,
       "section": "243",
       "readable_raw": false
@@ -829,8 +829,8 @@
     {
       "kp_id": "kp_ada1063f_000_000_029",
       "raw_name": "The rest of this and the next",
-      "display_title": null,
-      "source": null,
+      "display_title": "The rest of this and the next chapter are about",
+      "source": "summary_first_sentence",
       "confidence": null,
       "section": "126",
       "readable_raw": false
@@ -847,8 +847,8 @@
     {
       "kp_id": "kp_42b16cd4_000_000_030",
       "raw_name": "There",
-      "display_title": null,
-      "source": null,
+      "display_title": "There is only one remaining detail that must be",
+      "source": "summary_first_sentence",
       "confidence": null,
       "section": "243",
       "readable_raw": false
@@ -856,8 +856,8 @@
     {
       "kp_id": "kp_ada1063f_000_000_030",
       "raw_name": "The good news",
-      "display_title": null,
-      "source": null,
+      "display_title": "The good news is that when you fully understand",
+      "source": "summary_first_sentence",
       "confidence": null,
       "section": "126",
       "readable_raw": false
@@ -874,8 +874,8 @@
     {
       "kp_id": "kp_42b16cd4_000_000_031",
       "raw_name": "Note that these 1-byte message",
-      "display_title": null,
-      "source": null,
+      "display_title": "Note that these 1-byte messages are called Zero",
+      "source": "summary_first_sentence",
       "confidence": null,
       "section": "244",
       "readable_raw": false
@@ -892,8 +892,8 @@
     {
       "kp_id": "kp_cf6fcaa0_000_000_032",
       "raw_name": "Although CongestionWindow",
-      "display_title": null,
-      "source": null,
+      "display_title": "Although CongestionWindow is deﬁned in terms of",
+      "source": "summary_first_sentence",
       "confidence": null,
       "section": "301",
       "readable_raw": false
@@ -955,8 +955,8 @@
     {
       "kp_id": "kp_42b16cd4_000_000_034",
       "raw_name": "Note that the silly window syn",
-      "display_title": null,
-      "source": null,
+      "display_title": "Note that the silly window syndrome is only a",
+      "source": "summary_first_sentence",
       "confidence": null,
       "section": "246",
       "readable_raw": false
@@ -973,8 +973,8 @@
     {
       "kp_id": "kp_cf6fcaa0_000_000_035",
       "raw_name": "There",
-      "display_title": null,
-      "source": null,
+      "display_title": "There are actually two different situations in",
+      "source": "summary_first_sentence",
       "confidence": null,
       "section": "303",
       "readable_raw": false
@@ -1027,8 +1027,8 @@
     {
       "kp_id": "kp_cf6fcaa0_000_000_037",
       "raw_name": "The second situation in which",
-      "display_title": null,
-      "source": null,
+      "display_title": "The second situation in which slow start is",
+      "source": "summary_first_sentence",
       "confidence": null,
       "section": "305",
       "readable_raw": false
@@ -1054,8 +1054,8 @@
     {
       "kp_id": "kp_cf6fcaa0_000_000_038",
       "raw_name": "Although the source",
-      "display_title": null,
-      "source": null,
+      "display_title": "Although the source is using slow start again",
+      "source": "summary_first_sentence",
       "confidence": null,
       "section": "305",
       "readable_raw": false
@@ -1072,8 +1072,8 @@
     {
       "kp_id": "kp_ada1063f_000_000_038",
       "raw_name": "Observe that the fragmentation",
-      "display_title": null,
-      "source": null,
+      "display_title": "Observe that the fragmentation process is done",
+      "source": "summary_first_sentence",
       "confidence": null,
       "section": "132",
       "readable_raw": false
@@ -1081,8 +1081,8 @@
     {
       "kp_id": "kp_cf6fcaa0_000_000_039",
       "raw_name": "There",
-      "display_title": null,
-      "source": null,
+      "display_title": "There are several things to notice about this",
+      "source": "summary_first_sentence",
       "confidence": null,
       "section": "305",
       "readable_raw": false
@@ -1135,8 +1135,8 @@
     {
       "kp_id": "kp_cf6fcaa0_000_000_041",
       "raw_name": "There",
-      "display_title": null,
-      "source": null,
+      "display_title": "There is not enough detail in the trace to see",
+      "source": "summary_first_sentence",
       "confidence": null,
       "section": "306",
       "readable_raw": false
@@ -1171,8 +1171,8 @@
     {
       "kp_id": "kp_42b16cd4_000_000_042",
       "raw_name": "There",
-      "display_title": null,
-      "source": null,
+      "display_title": "There are two items of note regarding the",
+      "source": "summary_first_sentence",
       "confidence": null,
       "section": "250",
       "readable_raw": false
@@ -1225,8 +1225,8 @@
     {
       "kp_id": "kp_42b16cd4_000_000_044",
       "raw_name": "The second point of note",
-      "display_title": null,
-      "source": null,
+      "display_title": "The second point of note is that the",
+      "source": "summary_first_sentence",
       "confidence": null,
       "section": "251",
       "readable_raw": false
@@ -1252,8 +1252,8 @@
     {
       "kp_id": "kp_42b16cd4_000_000_045",
       "raw_name": "There",
-      "display_title": null,
-      "source": null,
+      "display_title": "There is one other point to make about",
+      "source": "summary_first_sentence",
       "confidence": null,
       "section": "251",
       "readable_raw": false
@@ -1261,8 +1261,8 @@
     {
       "kp_id": "kp_ada1063f_000_000_045",
       "raw_name": "If the node",
-      "display_title": null,
-      "source": null,
+      "display_title": "If the node is not connected to the same",
+      "source": "summary_first_sentence",
       "confidence": null,
       "section": "134",
       "readable_raw": false
@@ -1306,8 +1306,8 @@
     {
       "kp_id": "kp_42b16cd4_000_000_047",
       "raw_name": "Since TCP",
-      "display_title": null,
-      "source": null,
+      "display_title": "Since TCP is a byte-stream protocol, the number",
+      "source": "summary_first_sentence",
       "confidence": null,
       "section": "251",
       "readable_raw": false
@@ -1315,8 +1315,8 @@
     {
       "kp_id": "kp_ada1063f_000_000_047",
       "raw_name": "Note that it",
-      "display_title": null,
-      "source": null,
+      "display_title": "Note that it is possible to include the",
+      "source": "summary_first_sentence",
       "confidence": null,
       "section": "135",
       "readable_raw": false
@@ -1333,8 +1333,8 @@
     {
       "kp_id": "kp_42b16cd4_000_000_048",
       "raw_name": "Even though TCP",
-      "display_title": null,
-      "source": null,
+      "display_title": "Even though TCP is a byte-stream protocol, it",
+      "source": "summary_first_sentence",
       "confidence": null,
       "section": "251",
       "readable_raw": false
@@ -1378,8 +1378,8 @@
     {
       "kp_id": "kp_cf6fcaa0_000_000_050",
       "raw_name": "The second important aspect of",
-      "display_title": null,
-      "source": null,
+      "display_title": "The second important aspect of CUBIC is its use",
+      "source": "summary_first_sentence",
       "confidence": null,
       "section": "309",
       "readable_raw": false
@@ -1423,8 +1423,8 @@
     {
       "kp_id": "kp_ada1063f_000_000_051",
       "raw_name": "What subnetting means to a hos",
-      "display_title": null,
-      "source": null,
+      "display_title": "What subnetting means to a host is that it is",
+      "source": "summary_first_sentence",
       "confidence": null,
       "section": "137",
       "readable_raw": false
@@ -1459,8 +1459,8 @@
     {
       "kp_id": "kp_cf6fcaa0_001_001_053",
       "raw_name": "Note that congestion control",
-      "display_title": null,
-      "source": null,
+      "display_title": "Note that congestion control is a different",
+      "source": "summary_first_sentence",
       "confidence": null,
       "section": "Issues in Resource Allocation",
       "readable_raw": false
@@ -1477,8 +1477,8 @@
     {
       "kp_id": "kp_ada1063f_000_000_053",
       "raw_name": "if NextHop",
-      "display_title": null,
-      "source": null,
+      "display_title": "if NextHop is an interface",
+      "source": "summary_first_sentence",
       "confidence": null,
       "section": "139",
       "readable_raw": false
@@ -1540,8 +1540,8 @@
     {
       "kp_id": "kp_cf6fcaa0_001_001_056",
       "raw_name": "There",
-      "display_title": null,
-      "source": null,
+      "display_title": "There are countless ways in which resource",
+      "source": "summary_first_sentence",
       "confidence": null,
       "section": "Taxonomy",
       "readable_raw": false
@@ -1576,8 +1576,8 @@
     {
       "kp_id": "kp_42b16cd4_000_000_057",
       "raw_name": "If network latency",
-      "display_title": null,
-      "source": null,
+      "display_title": "If network latency is high—in the hundreds of",
+      "source": "summary_first_sentence",
       "confidence": null,
       "section": "258",
       "readable_raw": false
@@ -1648,8 +1648,8 @@
     {
       "kp_id": "kp_cf6fcaa0_001_001_060",
       "raw_name": "Note that it",
-      "display_title": null,
-      "source": null,
+      "display_title": "Note that it is not obvious that power is the",
+      "source": "summary_first_sentence",
       "confidence": null,
       "section": "Evaluation Criteria",
       "readable_raw": false
@@ -1666,8 +1666,8 @@
     {
       "kp_id": "kp_ada1063f_000_000_060",
       "raw_name": "Since the goal of DHCP",
-      "display_title": null,
-      "source": null,
+      "display_title": "Since the goal of DHCP is to minimize the",
+      "source": "summary_first_sentence",
       "confidence": null,
       "section": "144",
       "readable_raw": false
@@ -1702,8 +1702,8 @@
     {
       "kp_id": "kp_cf6fcaa0_001_001_062",
       "raw_name": "Since this",
-      "display_title": null,
-      "source": null,
+      "display_title": "Since this is not a queuing theory book, we",
+      "source": "summary_first_sentence",
       "confidence": null,
       "section": "Evaluation Criteria",
       "readable_raw": false
@@ -1711,8 +1711,8 @@
     {
       "kp_id": "kp_42b16cd4_001_001_062",
       "raw_name": "The next issue",
-      "display_title": null,
-      "source": null,
+      "display_title": "The next issue is how a process learns the port",
+      "source": "summary_first_sentence",
       "confidence": null,
       "section": "Simple Demultiplexor (UDP)",
       "readable_raw": false
@@ -1774,8 +1774,8 @@
     {
       "kp_id": "kp_ada1063f_000_000_064",
       "raw_name": "The next issue",
-      "display_title": null,
-      "source": null,
+      "display_title": "The next issue is how the Internet treats",
+      "source": "summary_first_sentence",
       "confidence": null,
       "section": "146",
       "readable_raw": false
@@ -1810,8 +1810,8 @@
     {
       "kp_id": "kp_cf6fcaa0_001_001_066",
       "raw_name": "Note that tail drop and FIFO",
-      "display_title": null,
-      "source": null,
+      "display_title": "Note that tail drop and FIFO are two separable",
+      "source": "summary_first_sentence",
       "confidence": null,
       "section": "Queuing Disciplines",
       "readable_raw": false
@@ -1846,8 +1846,8 @@
     {
       "kp_id": "kp_42b16cd4_001_001_067",
       "raw_name": "At the heart of TCP",
-      "display_title": null,
-      "source": null,
+      "display_title": "At the heart of TCP is the sliding window",
+      "source": "summary_first_sentence",
       "confidence": null,
       "section": "Reliable Byte Stream (TCP)",
       "readable_raw": false
@@ -1864,8 +1864,8 @@
     {
       "kp_id": "kp_cf6fcaa0_001_001_068",
       "raw_name": "One situation in which priorit",
-      "display_title": null,
-      "source": null,
+      "display_title": "One situation in which priority queuing is used",
+      "source": "summary_first_sentence",
       "confidence": null,
       "section": "Queuing Disciplines",
       "readable_raw": false
@@ -1909,8 +1909,8 @@
     {
       "kp_id": "kp_ada1063f_000_000_069",
       "raw_name": "While R2",
-      "display_title": null,
-      "source": null,
+      "display_title": "While R2 is acting as the endpoint of the",
+      "source": "summary_first_sentence",
       "confidence": null,
       "section": "149",
       "readable_raw": false
@@ -1918,8 +1918,8 @@
     {
       "kp_id": "kp_cf6fcaa0_001_001_070",
       "raw_name": "The main problem with FIFO que",
-      "display_title": null,
-      "source": null,
+      "display_title": "The main problem with FIFO queuing is that it",
+      "source": "summary_first_sentence",
       "confidence": null,
       "section": "Fair Queuing",
       "readable_raw": false
@@ -1927,8 +1927,8 @@
     {
       "kp_id": "kp_42b16cd4_001_001_070",
       "raw_name": "The problem with this latter a",
-      "display_title": null,
-      "source": null,
+      "display_title": "The problem with this latter approach is that a",
+      "source": "summary_first_sentence",
       "confidence": null,
       "section": "Reliable Byte Stream (TCP)",
       "readable_raw": false
@@ -1972,8 +1972,8 @@
     {
       "kp_id": "kp_cf6fcaa0_001_001_072",
       "raw_name": "What we really want",
-      "display_title": null,
-      "source": null,
+      "display_title": "What we really want is bit-by-bit round-robin",
+      "source": "summary_first_sentence",
       "confidence": null,
       "section": "Fair Queuing",
       "readable_raw": false
@@ -2026,8 +2026,8 @@
     {
       "kp_id": "kp_cf6fcaa0_001_001_074",
       "raw_name": "There",
-      "display_title": null,
-      "source": null,
+      "display_title": "There are two things to notice about fair",
+      "source": "summary_first_sentence",
       "confidence": null,
       "section": "Queuing Disciplines",
       "readable_raw": false
@@ -2053,8 +2053,8 @@
     {
       "kp_id": "kp_cf6fcaa0_001_001_075",
       "raw_name": "The second thing to notice",
-      "display_title": null,
-      "source": null,
+      "display_title": "The second thing to notice is that if the link",
+      "source": "summary_first_sentence",
       "confidence": null,
       "section": "Queuing Disciplines",
       "readable_raw": false
@@ -2080,8 +2080,8 @@
     {
       "kp_id": "kp_cf6fcaa0_001_001_076",
       "raw_name": "Because FQ",
-      "display_title": null,
-      "source": null,
+      "display_title": "Because FQ is work conserving, any bandwidth",
+      "source": "summary_first_sentence",
       "confidence": null,
       "section": "Queuing Disciplines",
       "readable_raw": false
@@ -2098,8 +2098,8 @@
     {
       "kp_id": "kp_ada1063f_000_000_076",
       "raw_name": "The next step in distance-vect",
-      "display_title": null,
-      "source": null,
+      "display_title": "The next step in distance-vector routing is",
+      "source": "summary_first_sentence",
       "confidence": null,
       "section": "154",
       "readable_raw": false
@@ -2125,8 +2125,8 @@
     {
       "kp_id": "kp_ada1063f_000_000_077",
       "raw_name": "There",
-      "display_title": null,
-      "source": null,
+      "display_title": "There are a few details to ﬁll in before our",
+      "source": "summary_first_sentence",
       "confidence": null,
       "section": "154",
       "readable_raw": false
@@ -2143,8 +2143,8 @@
     {
       "kp_id": "kp_42b16cd4_001_001_078",
       "raw_name": "There",
-      "display_title": null,
-      "source": null,
+      "display_title": "There are three things to notice about the",
+      "source": "summary_first_sentence",
       "confidence": null,
       "section": "Connection Establishment and Termination",
       "readable_raw": false
@@ -2179,8 +2179,8 @@
     {
       "kp_id": "kp_ada1063f_000_000_079",
       "raw_name": "There",
-      "display_title": null,
-      "source": null,
+      "display_title": "There are several partial solutions to this",
+      "source": "summary_first_sentence",
       "confidence": null,
       "section": "155",
       "readable_raw": false
@@ -2188,8 +2188,8 @@
     {
       "kp_id": "kp_cf6fcaa0_001_001_080",
       "raw_name": "Although CongestionWindow",
-      "display_title": null,
-      "source": null,
+      "display_title": "Although CongestionWindow is deﬁned in terms of",
+      "source": "summary_first_sentence",
       "confidence": null,
       "section": "TCP Congestion Control",
       "readable_raw": false
@@ -2197,8 +2197,8 @@
     {
       "kp_id": "kp_42b16cd4_001_001_080",
       "raw_name": "There",
-      "display_title": null,
-      "source": null,
+      "display_title": "There is actually a fourth, although rare",
+      "source": "summary_first_sentence",
       "confidence": null,
       "section": "Reliable Byte Stream (TCP)",
       "readable_raw": false
@@ -2206,8 +2206,8 @@
     {
       "kp_id": "kp_ada1063f_000_000_080",
       "raw_name": "The code that implements this",
-      "display_title": null,
-      "source": null,
+      "display_title": "The code that implements this algorithm is very",
+      "source": "summary_first_sentence",
       "confidence": null,
       "section": "156",
       "readable_raw": false
@@ -2269,8 +2269,8 @@
     {
       "kp_id": "kp_cf6fcaa0_001_001_083",
       "raw_name": "There",
-      "display_title": null,
-      "source": null,
+      "display_title": "There are actually two different situations in",
+      "source": "summary_first_sentence",
       "confidence": null,
       "section": "Slow Start",
       "readable_raw": false
@@ -2278,8 +2278,8 @@
     {
       "kp_id": "kp_42b16cd4_001_001_083",
       "raw_name": "Most of the above discussion",
-      "display_title": null,
-      "source": null,
+      "display_title": "Most of the above discussion is similar to that",
+      "source": "summary_first_sentence",
       "confidence": null,
       "section": "Sliding Window Revisited",
       "readable_raw": false
@@ -2323,8 +2323,8 @@
     {
       "kp_id": "kp_cf6fcaa0_001_001_085",
       "raw_name": "The second situation in which",
-      "display_title": null,
-      "source": null,
+      "display_title": "The second situation in which slow start is",
+      "source": "summary_first_sentence",
       "confidence": null,
       "section": "TCP Congestion Control",
       "readable_raw": false
@@ -2332,8 +2332,8 @@
     {
       "kp_id": "kp_42b16cd4_001_001_085",
       "raw_name": "All the while this",
-      "display_title": null,
-      "source": null,
+      "display_title": "All the while this is going on, the send side",
+      "source": "summary_first_sentence",
       "confidence": null,
       "section": "Reliable Byte Stream (TCP)",
       "readable_raw": false
@@ -2350,8 +2350,8 @@
     {
       "kp_id": "kp_cf6fcaa0_001_001_086",
       "raw_name": "Although the source",
-      "display_title": null,
-      "source": null,
+      "display_title": "Although the source is using slow start again",
+      "source": "summary_first_sentence",
       "confidence": null,
       "section": "TCP Congestion Control",
       "readable_raw": false
@@ -2359,8 +2359,8 @@
     {
       "kp_id": "kp_42b16cd4_001_001_086",
       "raw_name": "There",
-      "display_title": null,
-      "source": null,
+      "display_title": "There is only one remaining detail that must be",
+      "source": "summary_first_sentence",
       "confidence": null,
       "section": "Reliable Byte Stream (TCP)",
       "readable_raw": false
@@ -2377,8 +2377,8 @@
     {
       "kp_id": "kp_cf6fcaa0_001_001_087",
       "raw_name": "There",
-      "display_title": null,
-      "source": null,
+      "display_title": "There are several things to notice about this",
+      "source": "summary_first_sentence",
       "confidence": null,
       "section": "TCP Congestion Control",
       "readable_raw": false
@@ -2386,8 +2386,8 @@
     {
       "kp_id": "kp_42b16cd4_001_001_087",
       "raw_name": "Note that these 1-byte message",
-      "display_title": null,
-      "source": null,
+      "display_title": "Note that these 1-byte messages are called Zero",
+      "source": "summary_first_sentence",
       "confidence": null,
       "section": "Reliable Byte Stream (TCP)",
       "readable_raw": false
@@ -2395,8 +2395,8 @@
     {
       "kp_id": "kp_ada1063f_000_000_087",
       "raw_name": "One easy way to reduce overhea",
-      "display_title": null,
-      "source": null,
+      "display_title": "One easy way to reduce overhead is to avoid",
+      "source": "summary_first_sentence",
       "confidence": null,
       "section": "161",
       "readable_raw": false
@@ -2467,8 +2467,8 @@
     {
       "kp_id": "kp_42b16cd4_001_001_090",
       "raw_name": "Note that the silly window syn",
-      "display_title": null,
-      "source": null,
+      "display_title": "Note that the silly window syndrome is only a",
+      "source": "summary_first_sentence",
       "confidence": null,
       "section": "Triggering Transmission",
       "readable_raw": false
@@ -2476,8 +2476,8 @@
     {
       "kp_id": "kp_ada1063f_000_000_090",
       "raw_name": "Since D",
-      "display_title": null,
-      "source": null,
+      "display_title": "Since D is the only new member of the conﬁrmed",
+      "source": "summary_first_sentence",
       "confidence": null,
       "section": "1",
       "readable_raw": false
@@ -2557,8 +2557,8 @@
     {
       "kp_id": "kp_ada1063f_000_000_093",
       "raw_name": "There",
-      "display_title": null,
-      "source": null,
+      "display_title": "There are several different types of OSPF",
+      "source": "summary_first_sentence",
       "confidence": null,
       "section": "164",
       "readable_raw": false
@@ -2674,8 +2674,8 @@
     {
       "kp_id": "kp_cf6fcaa0_002_002_098",
       "raw_name": "Note that congestion control",
-      "display_title": null,
-      "source": null,
+      "display_title": "Note that congestion control is a different",
+      "source": "summary_first_sentence",
       "confidence": null,
       "section": "Network Model",
       "readable_raw": false
@@ -2683,8 +2683,8 @@
     {
       "kp_id": "kp_42b16cd4_001_001_098",
       "raw_name": "There",
-      "display_title": null,
-      "source": null,
+      "display_title": "There are two items of note regarding the",
+      "source": "summary_first_sentence",
       "confidence": null,
       "section": "Adaptive Retransmission",
       "readable_raw": false
@@ -2719,8 +2719,8 @@
     {
       "kp_id": "kp_ada1063f_000_000_099",
       "raw_name": "All of these factors mean that",
-      "display_title": null,
-      "source": null,
+      "display_title": "All of these factors mean that a link is much",
+      "source": "summary_first_sentence",
       "confidence": null,
       "section": "167",
       "readable_raw": false
@@ -2737,8 +2737,8 @@
     {
       "kp_id": "kp_42b16cd4_001_001_100",
       "raw_name": "The second point of note",
-      "display_title": null,
-      "source": null,
+      "display_title": "The second point of note is that the",
+      "source": "summary_first_sentence",
       "confidence": null,
       "section": "Reliable Byte Stream (TCP)",
       "readable_raw": false
@@ -2755,8 +2755,8 @@
     {
       "kp_id": "kp_cf6fcaa0_002_002_101",
       "raw_name": "There",
-      "display_title": null,
-      "source": null,
+      "display_title": "There are countless ways in which resource",
+      "source": "summary_first_sentence",
       "confidence": null,
       "section": "Network Model",
       "readable_raw": false
@@ -2764,8 +2764,8 @@
     {
       "kp_id": "kp_42b16cd4_001_001_101",
       "raw_name": "There",
-      "display_title": null,
-      "source": null,
+      "display_title": "There is one other point to make about",
+      "source": "summary_first_sentence",
       "confidence": null,
       "section": "Reliable Byte Stream (TCP)",
       "readable_raw": false
@@ -2800,8 +2800,8 @@
     {
       "kp_id": "kp_ada1063f_001_001_102",
       "raw_name": "One thing that",
-      "display_title": null,
-      "source": null,
+      "display_title": "One thing that is common to all networks is",
+      "source": "summary_first_sentence",
       "confidence": null,
       "section": "Switching Basics",
       "readable_raw": false
@@ -2818,8 +2818,8 @@
     {
       "kp_id": "kp_42b16cd4_001_001_103",
       "raw_name": "Since TCP",
-      "display_title": null,
-      "source": null,
+      "display_title": "Since TCP is a byte-stream protocol, the number",
+      "source": "summary_first_sentence",
       "confidence": null,
       "section": "Record Boundaries",
       "readable_raw": false
@@ -2827,8 +2827,8 @@
     {
       "kp_id": "kp_ada1063f_001_001_103",
       "raw_name": "Another assumption that we nee",
-      "display_title": null,
-      "source": null,
+      "display_title": "Another assumption that we need to make is that",
+      "source": "summary_first_sentence",
       "confidence": null,
       "section": "Switching Basics",
       "readable_raw": false
@@ -2845,8 +2845,8 @@
     {
       "kp_id": "kp_42b16cd4_001_001_104",
       "raw_name": "Even though TCP",
-      "display_title": null,
-      "source": null,
+      "display_title": "Even though TCP is a byte-stream protocol, it",
+      "source": "summary_first_sentence",
       "confidence": null,
       "section": "Record Boundaries",
       "readable_raw": false
@@ -2863,8 +2863,8 @@
     {
       "kp_id": "kp_cf6fcaa0_002_002_105",
       "raw_name": "Note that it",
-      "display_title": null,
-      "source": null,
+      "display_title": "Note that it is not obvious that power is the",
+      "source": "summary_first_sentence",
       "confidence": null,
       "section": "Issues in Resource Allocation",
       "readable_raw": false
@@ -2908,8 +2908,8 @@
     {
       "kp_id": "kp_ada1063f_001_001_106",
       "raw_name": "The idea behind datagrams",
-      "display_title": null,
-      "source": null,
+      "display_title": "The idea behind datagrams is incredibly simple",
+      "source": "summary_first_sentence",
       "confidence": null,
       "section": "Datagrams",
       "readable_raw": false
@@ -2917,8 +2917,8 @@
     {
       "kp_id": "kp_cf6fcaa0_002_002_107",
       "raw_name": "Since this",
-      "display_title": null,
-      "source": null,
+      "display_title": "Since this is not a queuing theory book, we",
+      "source": "summary_first_sentence",
       "confidence": null,
       "section": "Issues in Resource Allocation",
       "readable_raw": false
@@ -2935,8 +2935,8 @@
     {
       "kp_id": "kp_ada1063f_001_001_107",
       "raw_name": "This last fact",
-      "display_title": null,
-      "source": null,
+      "display_title": "This last fact is particularly important to the",
+      "source": "summary_first_sentence",
       "confidence": null,
       "section": "Datagrams",
       "readable_raw": false
@@ -2998,8 +2998,8 @@
     {
       "kp_id": "kp_cf6fcaa0_002_002_110",
       "raw_name": "Note that tail drop and FIFO",
-      "display_title": null,
-      "source": null,
+      "display_title": "Note that tail drop and FIFO are two separable",
+      "source": "summary_first_sentence",
       "confidence": null,
       "section": "FIFO",
       "readable_raw": false
@@ -3052,8 +3052,8 @@
     {
       "kp_id": "kp_cf6fcaa0_002_002_112",
       "raw_name": "One situation in which priorit",
-      "display_title": null,
-      "source": null,
+      "display_title": "One situation in which priority queuing is used",
+      "source": "summary_first_sentence",
       "confidence": null,
       "section": "FIFO",
       "readable_raw": false
@@ -3070,8 +3070,8 @@
     {
       "kp_id": "kp_ada1063f_001_001_112",
       "raw_name": "There",
-      "display_title": null,
-      "source": null,
+      "display_title": "There are two broad approaches to establishing",
+      "source": "summary_first_sentence",
       "confidence": null,
       "section": "Virtual Circuit Switching",
       "readable_raw": false
@@ -3088,8 +3088,8 @@
     {
       "kp_id": "kp_42b16cd4_001_001_113",
       "raw_name": "If network latency",
-      "display_title": null,
-      "source": null,
+      "display_title": "If network latency is high—in the hundreds of",
+      "source": "summary_first_sentence",
       "confidence": null,
       "section": "Alternative Design Choices (SCTP, QUIC)",
       "readable_raw": false
@@ -3106,8 +3106,8 @@
     {
       "kp_id": "kp_cf6fcaa0_002_002_114",
       "raw_name": "The main problem with FIFO que",
-      "display_title": null,
-      "source": null,
+      "display_title": "The main problem with FIFO queuing is that it",
+      "source": "summary_first_sentence",
       "confidence": null,
       "section": "FIFO",
       "readable_raw": false
@@ -3124,8 +3124,8 @@
     {
       "kp_id": "kp_ada1063f_001_001_114",
       "raw_name": "There",
-      "display_title": null,
-      "source": null,
+      "display_title": "There are several things to note about virtual",
+      "source": "summary_first_sentence",
       "confidence": null,
       "section": "Switching Basics",
       "readable_raw": false
@@ -3160,8 +3160,8 @@
     {
       "kp_id": "kp_cf6fcaa0_002_002_116",
       "raw_name": "What we really want",
-      "display_title": null,
-      "source": null,
+      "display_title": "What we really want is bit-by-bit round-robin",
+      "source": "summary_first_sentence",
       "confidence": null,
       "section": "Queuing Disciplines",
       "readable_raw": false
@@ -3178,8 +3178,8 @@
     {
       "kp_id": "kp_ada1063f_001_001_116",
       "raw_name": "There",
-      "display_title": null,
-      "source": null,
+      "display_title": "There is another good argument in favor of",
+      "source": "summary_first_sentence",
       "confidence": null,
       "section": "Switching Basics",
       "readable_raw": false
@@ -3187,8 +3187,8 @@
     {
       "kp_id": "kp_cf6fcaa0_002_002_117",
       "raw_name": "There",
-      "display_title": null,
-      "source": null,
+      "display_title": "There are two things to notice about fair",
+      "source": "summary_first_sentence",
       "confidence": null,
       "section": "Queuing Disciplines",
       "readable_raw": false
@@ -3196,8 +3196,8 @@
     {
       "kp_id": "kp_42b16cd4_002_002_117",
       "raw_name": "At the heart of TCP",
-      "display_title": null,
-      "source": null,
+      "display_title": "At the heart of TCP is the sliding window",
+      "source": "summary_first_sentence",
       "confidence": null,
       "section": "End-to-End Issues",
       "readable_raw": false
@@ -3214,8 +3214,8 @@
     {
       "kp_id": "kp_cf6fcaa0_002_002_118",
       "raw_name": "The second thing to notice",
-      "display_title": null,
-      "source": null,
+      "display_title": "The second thing to notice is that if the link",
+      "source": "summary_first_sentence",
       "confidence": null,
       "section": "Queuing Disciplines",
       "readable_raw": false
@@ -3241,8 +3241,8 @@
     {
       "kp_id": "kp_cf6fcaa0_002_002_119",
       "raw_name": "Because FQ",
-      "display_title": null,
-      "source": null,
+      "display_title": "Because FQ is work conserving, any bandwidth",
+      "source": "summary_first_sentence",
       "confidence": null,
       "section": "Queuing Disciplines",
       "readable_raw": false
@@ -3259,8 +3259,8 @@
     {
       "kp_id": "kp_ada1063f_001_001_119",
       "raw_name": "There",
-      "display_title": null,
-      "source": null,
+      "display_title": "There are various ways to implement source",
+      "source": "summary_first_sentence",
       "confidence": null,
       "section": "Source Routing",
       "readable_raw": false
@@ -3277,8 +3277,8 @@
     {
       "kp_id": "kp_42b16cd4_002_002_120",
       "raw_name": "The problem with this latter a",
-      "display_title": null,
-      "source": null,
+      "display_title": "The problem with this latter approach is that a",
+      "source": "summary_first_sentence",
       "confidence": null,
       "section": "End-to-End Issues",
       "readable_raw": false
@@ -3349,8 +3349,8 @@
     {
       "kp_id": "kp_cf6fcaa0_003_003_123",
       "raw_name": "Although CongestionWindow",
-      "display_title": null,
-      "source": null,
+      "display_title": "Although CongestionWindow is deﬁned in terms of",
+      "source": "summary_first_sentence",
       "confidence": null,
       "section": "TCP Congestion Control",
       "readable_raw": false
@@ -3403,8 +3403,8 @@
     {
       "kp_id": "kp_cf6fcaa0_003_003_125",
       "raw_name": "There",
-      "display_title": null,
-      "source": null,
+      "display_title": "There are actually two different situations in",
+      "source": "summary_first_sentence",
       "confidence": null,
       "section": "TCP Congestion Control",
       "readable_raw": false
@@ -3430,8 +3430,8 @@
     {
       "kp_id": "kp_cf6fcaa0_003_003_126",
       "raw_name": "The second situation in which",
-      "display_title": null,
-      "source": null,
+      "display_title": "The second situation in which slow start is",
+      "source": "summary_first_sentence",
       "confidence": null,
       "section": "TCP Congestion Control",
       "readable_raw": false
@@ -3448,8 +3448,8 @@
     {
       "kp_id": "kp_ada1063f_001_001_126",
       "raw_name": "The rest of this and the next",
-      "display_title": null,
-      "source": null,
+      "display_title": "The rest of this and the next chapter are about",
+      "source": "summary_first_sentence",
       "confidence": null,
       "section": "Internet (IP)",
       "readable_raw": false
@@ -3457,8 +3457,8 @@
     {
       "kp_id": "kp_cf6fcaa0_003_003_127",
       "raw_name": "Although the source",
-      "display_title": null,
-      "source": null,
+      "display_title": "Although the source is using slow start again",
+      "source": "summary_first_sentence",
       "confidence": null,
       "section": "TCP Congestion Control",
       "readable_raw": false
@@ -3466,8 +3466,8 @@
     {
       "kp_id": "kp_42b16cd4_002_002_127",
       "raw_name": "There",
-      "display_title": null,
-      "source": null,
+      "display_title": "There are three things to notice about the",
+      "source": "summary_first_sentence",
       "confidence": null,
       "section": "Reliable Byte Stream (TCP)",
       "readable_raw": false
@@ -3475,8 +3475,8 @@
     {
       "kp_id": "kp_ada1063f_001_001_127",
       "raw_name": "The good news",
-      "display_title": null,
-      "source": null,
+      "display_title": "The good news is that when you fully understand",
+      "source": "summary_first_sentence",
       "confidence": null,
       "section": "Internet (IP)",
       "readable_raw": false
@@ -3520,8 +3520,8 @@
     {
       "kp_id": "kp_42b16cd4_002_002_129",
       "raw_name": "Most of the above discussion",
-      "display_title": null,
-      "source": null,
+      "display_title": "Most of the above discussion is similar to that",
+      "source": "summary_first_sentence",
       "confidence": null,
       "section": "Reliable Byte Stream (TCP)",
       "readable_raw": false
@@ -3547,8 +3547,8 @@
     {
       "kp_id": "kp_42b16cd4_002_002_130",
       "raw_name": "All the while this",
-      "display_title": null,
-      "source": null,
+      "display_title": "All the while this is going on, the send side",
+      "source": "summary_first_sentence",
       "confidence": null,
       "section": "Reliable Byte Stream (TCP)",
       "readable_raw": false
@@ -3574,8 +3574,8 @@
     {
       "kp_id": "kp_42b16cd4_002_002_131",
       "raw_name": "Note that these 1-byte message",
-      "display_title": null,
-      "source": null,
+      "display_title": "Note that these 1-byte messages are called Zero",
+      "source": "summary_first_sentence",
       "confidence": null,
       "section": "Reliable Byte Stream (TCP)",
       "readable_raw": false
@@ -3628,8 +3628,8 @@
     {
       "kp_id": "kp_42b16cd4_002_002_133",
       "raw_name": "Note that the silly window syn",
-      "display_title": null,
-      "source": null,
+      "display_title": "Note that the silly window syndrome is only a",
+      "source": "summary_first_sentence",
       "confidence": null,
       "section": "Reliable Byte Stream (TCP)",
       "readable_raw": false
@@ -3673,8 +3673,8 @@
     {
       "kp_id": "kp_cf6fcaa0_003_003_135",
       "raw_name": "The second important aspect of",
-      "display_title": null,
-      "source": null,
+      "display_title": "The second important aspect of CUBIC is its use",
+      "source": "summary_first_sentence",
       "confidence": null,
       "section": "TCP Congestion Control",
       "readable_raw": false
@@ -3691,8 +3691,8 @@
     {
       "kp_id": "kp_ada1063f_001_001_135",
       "raw_name": "Observe that the fragmentation",
-      "display_title": null,
-      "source": null,
+      "display_title": "Observe that the fragmentation process is done",
+      "source": "summary_first_sentence",
       "confidence": null,
       "section": "Internet (IP)",
       "readable_raw": false
@@ -3790,8 +3790,8 @@
     {
       "kp_id": "kp_42b16cd4_002_002_141",
       "raw_name": "There",
-      "display_title": null,
-      "source": null,
+      "display_title": "There are two items of note regarding the",
+      "source": "summary_first_sentence",
       "confidence": null,
       "section": "Reliable Byte Stream (TCP)",
       "readable_raw": false
@@ -3808,8 +3808,8 @@
     {
       "kp_id": "kp_42b16cd4_002_002_142",
       "raw_name": "The second point of note",
-      "display_title": null,
-      "source": null,
+      "display_title": "The second point of note is that the",
+      "source": "summary_first_sentence",
       "confidence": null,
       "section": "Reliable Byte Stream (TCP)",
       "readable_raw": false
@@ -3817,8 +3817,8 @@
     {
       "kp_id": "kp_ada1063f_001_001_142",
       "raw_name": "If the node",
-      "display_title": null,
-      "source": null,
+      "display_title": "If the node is not connected to the same",
+      "source": "summary_first_sentence",
       "confidence": null,
       "section": "Datagram Forwarding in IP",
       "readable_raw": false
@@ -3844,8 +3844,8 @@
     {
       "kp_id": "kp_42b16cd4_002_002_144",
       "raw_name": "Since TCP",
-      "display_title": null,
-      "source": null,
+      "display_title": "Since TCP is a byte-stream protocol, the number",
+      "source": "summary_first_sentence",
       "confidence": null,
       "section": "Reliable Byte Stream (TCP)",
       "readable_raw": false
@@ -3853,8 +3853,8 @@
     {
       "kp_id": "kp_ada1063f_001_001_144",
       "raw_name": "Note that it",
-      "display_title": null,
-      "source": null,
+      "display_title": "Note that it is possible to include the",
+      "source": "summary_first_sentence",
       "confidence": null,
       "section": "Datagram Forwarding in IP",
       "readable_raw": false
@@ -3862,8 +3862,8 @@
     {
       "kp_id": "kp_42b16cd4_002_002_145",
       "raw_name": "Even though TCP",
-      "display_title": null,
-      "source": null,
+      "display_title": "Even though TCP is a byte-stream protocol, it",
+      "source": "summary_first_sentence",
       "confidence": null,
       "section": "Reliable Byte Stream (TCP)",
       "readable_raw": false
@@ -3925,8 +3925,8 @@
     {
       "kp_id": "kp_ada1063f_001_001_148",
       "raw_name": "What subnetting means to a hos",
-      "display_title": null,
-      "source": null,
+      "display_title": "What subnetting means to a host is that it is",
+      "source": "summary_first_sentence",
       "confidence": null,
       "section": "Subnetting and Classless Addressing",
       "readable_raw": false
@@ -3961,8 +3961,8 @@
     {
       "kp_id": "kp_ada1063f_001_001_150",
       "raw_name": "if NextHop",
-      "display_title": null,
-      "source": null,
+      "display_title": "if NextHop is an interface",
+      "source": "summary_first_sentence",
       "confidence": null,
       "section": "Internet (IP)",
       "readable_raw": false
@@ -4024,8 +4024,8 @@
     {
       "kp_id": "kp_42b16cd4_003_003_154",
       "raw_name": "The problem with this latter a",
-      "display_title": null,
-      "source": null,
+      "display_title": "The problem with this latter approach is that a",
+      "source": "summary_first_sentence",
       "confidence": null,
       "section": "Reliable Byte Stream (TCP)",
       "readable_raw": false
@@ -4087,8 +4087,8 @@
     {
       "kp_id": "kp_ada1063f_001_001_157",
       "raw_name": "Since the goal of DHCP",
-      "display_title": null,
-      "source": null,
+      "display_title": "Since the goal of DHCP is to minimize the",
+      "source": "summary_first_sentence",
       "confidence": null,
       "section": "Host Conﬁguration (DHCP)",
       "readable_raw": false
@@ -4114,8 +4114,8 @@
     {
       "kp_id": "kp_42b16cd4_003_003_159",
       "raw_name": "There",
-      "display_title": null,
-      "source": null,
+      "display_title": "There are three things to notice about the",
+      "source": "summary_first_sentence",
       "confidence": null,
       "section": "Reliable Byte Stream (TCP)",
       "readable_raw": false
@@ -4150,8 +4150,8 @@
     {
       "kp_id": "kp_42b16cd4_003_003_161",
       "raw_name": "Most of the above discussion",
-      "display_title": null,
-      "source": null,
+      "display_title": "Most of the above discussion is similar to that",
+      "source": "summary_first_sentence",
       "confidence": null,
       "section": "Reliable Byte Stream (TCP)",
       "readable_raw": false
@@ -4159,8 +4159,8 @@
     {
       "kp_id": "kp_ada1063f_001_001_161",
       "raw_name": "The next issue",
-      "display_title": null,
-      "source": null,
+      "display_title": "The next issue is how the Internet treats",
+      "source": "summary_first_sentence",
       "confidence": null,
       "section": "Error Reporting (ICMP)",
       "readable_raw": false
@@ -4168,8 +4168,8 @@
     {
       "kp_id": "kp_42b16cd4_003_003_162",
       "raw_name": "All the while this",
-      "display_title": null,
-      "source": null,
+      "display_title": "All the while this is going on, the send side",
+      "source": "summary_first_sentence",
       "confidence": null,
       "section": "Reliable Byte Stream (TCP)",
       "readable_raw": false
@@ -4186,8 +4186,8 @@
     {
       "kp_id": "kp_42b16cd4_003_003_163",
       "raw_name": "Note that these 1-byte message",
-      "display_title": null,
-      "source": null,
+      "display_title": "Note that these 1-byte messages are called Zero",
+      "source": "summary_first_sentence",
       "confidence": null,
       "section": "Reliable Byte Stream (TCP)",
       "readable_raw": false
@@ -4222,8 +4222,8 @@
     {
       "kp_id": "kp_42b16cd4_003_003_165",
       "raw_name": "Note that the silly window syn",
-      "display_title": null,
-      "source": null,
+      "display_title": "Note that the silly window syndrome is only a",
+      "source": "summary_first_sentence",
       "confidence": null,
       "section": "Reliable Byte Stream (TCP)",
       "readable_raw": false
@@ -4249,8 +4249,8 @@
     {
       "kp_id": "kp_ada1063f_001_001_166",
       "raw_name": "While R2",
-      "display_title": null,
-      "source": null,
+      "display_title": "While R2 is acting as the endpoint of the",
+      "source": "summary_first_sentence",
       "confidence": null,
       "section": "Internet (IP)",
       "readable_raw": false
@@ -4312,8 +4312,8 @@
     {
       "kp_id": "kp_42b16cd4_003_003_170",
       "raw_name": "The second point of note",
-      "display_title": null,
-      "source": null,
+      "display_title": "The second point of note is that the",
+      "source": "summary_first_sentence",
       "confidence": null,
       "section": "Reliable Byte Stream (TCP)",
       "readable_raw": false
@@ -4348,8 +4348,8 @@
     {
       "kp_id": "kp_42b16cd4_003_003_172",
       "raw_name": "Since TCP",
-      "display_title": null,
-      "source": null,
+      "display_title": "Since TCP is a byte-stream protocol, the number",
+      "source": "summary_first_sentence",
       "confidence": null,
       "section": "Reliable Byte Stream (TCP)",
       "readable_raw": false
@@ -4366,8 +4366,8 @@
     {
       "kp_id": "kp_42b16cd4_003_003_173",
       "raw_name": "Even though TCP",
-      "display_title": null,
-      "source": null,
+      "display_title": "Even though TCP is a byte-stream protocol, it",
+      "source": "summary_first_sentence",
       "confidence": null,
       "section": "Reliable Byte Stream (TCP)",
       "readable_raw": false
@@ -4375,8 +4375,8 @@
     {
       "kp_id": "kp_ada1063f_001_001_173",
       "raw_name": "The next step in distance-vect",
-      "display_title": null,
-      "source": null,
+      "display_title": "The next step in distance-vector routing is",
+      "source": "summary_first_sentence",
       "confidence": null,
       "section": "Distance-Vector (RIP)",
       "readable_raw": false
@@ -4393,8 +4393,8 @@
     {
       "kp_id": "kp_ada1063f_001_001_174",
       "raw_name": "There",
-      "display_title": null,
-      "source": null,
+      "display_title": "There are a few details to ﬁll in before our",
+      "source": "summary_first_sentence",
       "confidence": null,
       "section": "Distance-Vector (RIP)",
       "readable_raw": false
@@ -4429,8 +4429,8 @@
     {
       "kp_id": "kp_ada1063f_001_001_176",
       "raw_name": "There",
-      "display_title": null,
-      "source": null,
+      "display_title": "There are several partial solutions to this",
+      "source": "summary_first_sentence",
       "confidence": null,
       "section": "Routing",
       "readable_raw": false
@@ -4447,8 +4447,8 @@
     {
       "kp_id": "kp_ada1063f_001_001_177",
       "raw_name": "The code that implements this",
-      "display_title": null,
-      "source": null,
+      "display_title": "The code that implements this algorithm is very",
+      "source": "summary_first_sentence",
       "confidence": null,
       "section": "Routing",
       "readable_raw": false
@@ -4474,8 +4474,8 @@
     {
       "kp_id": "kp_42b16cd4_003_003_179",
       "raw_name": "If network latency",
-      "display_title": null,
-      "source": null,
+      "display_title": "If network latency is high—in the hundreds of",
+      "source": "summary_first_sentence",
       "confidence": null,
       "section": "Reliable Byte Stream (TCP)",
       "readable_raw": false
@@ -4537,8 +4537,8 @@
     {
       "kp_id": "kp_ada1063f_001_001_184",
       "raw_name": "One easy way to reduce overhea",
-      "display_title": null,
-      "source": null,
+      "display_title": "One easy way to reduce overhead is to avoid",
+      "source": "summary_first_sentence",
       "confidence": null,
       "section": "Routing",
       "readable_raw": false
@@ -4564,8 +4564,8 @@
     {
       "kp_id": "kp_ada1063f_001_001_187",
       "raw_name": "Since D",
-      "display_title": null,
-      "source": null,
+      "display_title": "Since D is the only new member of the conﬁrmed",
+      "source": "summary_first_sentence",
       "confidence": null,
       "section": "Routing",
       "readable_raw": false
@@ -4591,8 +4591,8 @@
     {
       "kp_id": "kp_ada1063f_001_001_190",
       "raw_name": "There",
-      "display_title": null,
-      "source": null,
+      "display_title": "There are several different types of OSPF",
+      "source": "summary_first_sentence",
       "confidence": null,
       "section": "Routing",
       "readable_raw": false
@@ -4663,8 +4663,8 @@
     {
       "kp_id": "kp_ada1063f_002_002_198",
       "raw_name": "There",
-      "display_title": null,
-      "source": null,
+      "display_title": "There are two broad approaches to establishing",
+      "source": "summary_first_sentence",
       "confidence": null,
       "section": "Switching Basics",
       "readable_raw": false
@@ -4726,8 +4726,8 @@
     {
       "kp_id": "kp_ada1063f_002_002_205",
       "raw_name": "The rest of this and the next",
-      "display_title": null,
-      "source": null,
+      "display_title": "The rest of this and the next chapter are about",
+      "source": "summary_first_sentence",
       "confidence": null,
       "section": "What Is an Internetwork?",
       "readable_raw": false
@@ -4735,8 +4735,8 @@
     {
       "kp_id": "kp_ada1063f_002_002_206",
       "raw_name": "The good news",
-      "display_title": null,
-      "source": null,
+      "display_title": "The good news is that when you fully understand",
+      "source": "summary_first_sentence",
       "confidence": null,
       "section": "What Is an Internetwork?",
       "readable_raw": false
@@ -4789,8 +4789,8 @@
     {
       "kp_id": "kp_ada1063f_002_002_212",
       "raw_name": "Observe that the fragmentation",
-      "display_title": null,
-      "source": null,
+      "display_title": "Observe that the fragmentation process is done",
+      "source": "summary_first_sentence",
       "confidence": null,
       "section": "Internet (IP)",
       "readable_raw": false
@@ -4852,8 +4852,8 @@
     {
       "kp_id": "kp_ada1063f_002_002_219",
       "raw_name": "If the node",
-      "display_title": null,
-      "source": null,
+      "display_title": "If the node is not connected to the same",
+      "source": "summary_first_sentence",
       "confidence": null,
       "section": "Internet (IP)",
       "readable_raw": false
@@ -4870,8 +4870,8 @@
     {
       "kp_id": "kp_ada1063f_002_002_221",
       "raw_name": "Note that it",
-      "display_title": null,
-      "source": null,
+      "display_title": "Note that it is possible to include the",
+      "source": "summary_first_sentence",
       "confidence": null,
       "section": "Internet (IP)",
       "readable_raw": false
@@ -4906,8 +4906,8 @@
     {
       "kp_id": "kp_ada1063f_002_002_225",
       "raw_name": "What subnetting means to a hos",
-      "display_title": null,
-      "source": null,
+      "display_title": "What subnetting means to a host is that it is",
+      "source": "summary_first_sentence",
       "confidence": null,
       "section": "Internet (IP)",
       "readable_raw": false
@@ -4915,8 +4915,8 @@
     {
       "kp_id": "kp_ada1063f_002_002_226",
       "raw_name": "if NextHop",
-      "display_title": null,
-      "source": null,
+      "display_title": "if NextHop is an interface",
+      "source": "summary_first_sentence",
       "confidence": null,
       "section": "Internet (IP)",
       "readable_raw": false
@@ -4960,8 +4960,8 @@
     {
       "kp_id": "kp_ada1063f_002_002_231",
       "raw_name": "Since the goal of DHCP",
-      "display_title": null,
-      "source": null,
+      "display_title": "Since the goal of DHCP is to minimize the",
+      "source": "summary_first_sentence",
       "confidence": null,
       "section": "Internet (IP)",
       "readable_raw": false
@@ -4987,8 +4987,8 @@
     {
       "kp_id": "kp_ada1063f_002_002_234",
       "raw_name": "The next issue",
-      "display_title": null,
-      "source": null,
+      "display_title": "The next issue is how the Internet treats",
+      "source": "summary_first_sentence",
       "confidence": null,
       "section": "Internet (IP)",
       "readable_raw": false
@@ -5023,8 +5023,8 @@
     {
       "kp_id": "kp_ada1063f_002_002_238",
       "raw_name": "While R2",
-      "display_title": null,
-      "source": null,
+      "display_title": "While R2 is acting as the endpoint of the",
+      "source": "summary_first_sentence",
       "confidence": null,
       "section": "Internet (IP)",
       "readable_raw": false
@@ -5086,8 +5086,8 @@
     {
       "kp_id": "kp_ada1063f_002_002_245",
       "raw_name": "The next step in distance-vect",
-      "display_title": null,
-      "source": null,
+      "display_title": "The next step in distance-vector routing is",
+      "source": "summary_first_sentence",
       "confidence": null,
       "section": "Routing",
       "readable_raw": false
@@ -5095,8 +5095,8 @@
     {
       "kp_id": "kp_ada1063f_002_002_246",
       "raw_name": "There",
-      "display_title": null,
-      "source": null,
+      "display_title": "There are a few details to ﬁll in before our",
+      "source": "summary_first_sentence",
       "confidence": null,
       "section": "Routing",
       "readable_raw": false
@@ -5104,8 +5104,8 @@
     {
       "kp_id": "kp_ada1063f_002_002_247",
       "raw_name": "The code that implements this",
-      "display_title": null,
-      "source": null,
+      "display_title": "The code that implements this algorithm is very",
+      "source": "summary_first_sentence",
       "confidence": null,
       "section": "Routing",
       "readable_raw": false
@@ -5140,8 +5140,8 @@
     {
       "kp_id": "kp_ada1063f_002_002_251",
       "raw_name": "One easy way to reduce overhea",
-      "display_title": null,
-      "source": null,
+      "display_title": "One easy way to reduce overhead is to avoid",
+      "source": "summary_first_sentence",
       "confidence": null,
       "section": "Routing",
       "readable_raw": false
@@ -5158,8 +5158,8 @@
     {
       "kp_id": "kp_ada1063f_002_002_253",
       "raw_name": "Since D",
-      "display_title": null,
-      "source": null,
+      "display_title": "Since D is the only new member of the conﬁrmed",
+      "source": "summary_first_sentence",
       "confidence": null,
       "section": "Routing",
       "readable_raw": false
@@ -5239,8 +5239,8 @@
     {
       "kp_id": "kp_ada1063f_003_003_262",
       "raw_name": "The rest of this and the next",
-      "display_title": null,
-      "source": null,
+      "display_title": "The rest of this and the next chapter are about",
+      "source": "summary_first_sentence",
       "confidence": null,
       "section": "Internet (IP)",
       "readable_raw": false
@@ -5248,8 +5248,8 @@
     {
       "kp_id": "kp_ada1063f_003_003_263",
       "raw_name": "The good news",
-      "display_title": null,
-      "source": null,
+      "display_title": "The good news is that when you fully understand",
+      "source": "summary_first_sentence",
       "confidence": null,
       "section": "Internet (IP)",
       "readable_raw": false
@@ -5293,8 +5293,8 @@
     {
       "kp_id": "kp_ada1063f_003_003_268",
       "raw_name": "Observe that the fragmentation",
-      "display_title": null,
-      "source": null,
+      "display_title": "Observe that the fragmentation process is done",
+      "source": "summary_first_sentence",
       "confidence": null,
       "section": "Internet (IP)",
       "readable_raw": false
@@ -5347,8 +5347,8 @@
     {
       "kp_id": "kp_ada1063f_003_003_274",
       "raw_name": "If the node",
-      "display_title": null,
-      "source": null,
+      "display_title": "If the node is not connected to the same",
+      "source": "summary_first_sentence",
       "confidence": null,
       "section": "Internet (IP)",
       "readable_raw": false
@@ -5356,8 +5356,8 @@
     {
       "kp_id": "kp_ada1063f_003_003_275",
       "raw_name": "Note that it",
-      "display_title": null,
-      "source": null,
+      "display_title": "Note that it is possible to include the",
+      "source": "summary_first_sentence",
       "confidence": null,
       "section": "Internet (IP)",
       "readable_raw": false
@@ -5383,8 +5383,8 @@
     {
       "kp_id": "kp_ada1063f_003_003_278",
       "raw_name": "What subnetting means to a hos",
-      "display_title": null,
-      "source": null,
+      "display_title": "What subnetting means to a host is that it is",
+      "source": "summary_first_sentence",
       "confidence": null,
       "section": "Internet (IP)",
       "readable_raw": false
@@ -5392,8 +5392,8 @@
     {
       "kp_id": "kp_ada1063f_003_003_279",
       "raw_name": "if NextHop",
-      "display_title": null,
-      "source": null,
+      "display_title": "if NextHop is an interface",
+      "source": "summary_first_sentence",
       "confidence": null,
       "section": "Internet (IP)",
       "readable_raw": false
@@ -5428,8 +5428,8 @@
     {
       "kp_id": "kp_ada1063f_003_003_283",
       "raw_name": "Since the goal of DHCP",
-      "display_title": null,
-      "source": null,
+      "display_title": "Since the goal of DHCP is to minimize the",
+      "source": "summary_first_sentence",
       "confidence": null,
       "section": "Internet (IP)",
       "readable_raw": false
@@ -5455,8 +5455,8 @@
     {
       "kp_id": "kp_ada1063f_003_003_286",
       "raw_name": "The next issue",
-      "display_title": null,
-      "source": null,
+      "display_title": "The next issue is how the Internet treats",
+      "source": "summary_first_sentence",
       "confidence": null,
       "section": "Internet (IP)",
       "readable_raw": false
@@ -5482,8 +5482,8 @@
     {
       "kp_id": "kp_ada1063f_003_003_289",
       "raw_name": "While R2",
-      "display_title": null,
-      "source": null,
+      "display_title": "While R2 is acting as the endpoint of the",
+      "source": "summary_first_sentence",
       "confidence": null,
       "section": "Internet (IP)",
       "readable_raw": false
@@ -5536,8 +5536,8 @@
     {
       "kp_id": "kp_ada1063f_003_003_295",
       "raw_name": "The next step in distance-vect",
-      "display_title": null,
-      "source": null,
+      "display_title": "The next step in distance-vector routing is",
+      "source": "summary_first_sentence",
       "confidence": null,
       "section": "Internet (IP)",
       "readable_raw": false
@@ -5545,8 +5545,8 @@
     {
       "kp_id": "kp_ada1063f_003_003_296",
       "raw_name": "There",
-      "display_title": null,
-      "source": null,
+      "display_title": "There are a few details to ﬁll in before our",
+      "source": "summary_first_sentence",
       "confidence": null,
       "section": "Internet (IP)",
       "readable_raw": false
@@ -5554,8 +5554,8 @@
     {
       "kp_id": "kp_ada1063f_003_003_297",
       "raw_name": "The code that implements this",
-      "display_title": null,
-      "source": null,
+      "display_title": "The code that implements this algorithm is very",
+      "source": "summary_first_sentence",
       "confidence": null,
       "section": "Internet (IP)",
       "readable_raw": false
@@ -5590,8 +5590,8 @@
     {
       "kp_id": "kp_ada1063f_003_003_301",
       "raw_name": "One easy way to reduce overhea",
-      "display_title": null,
-      "source": null,
+      "display_title": "One easy way to reduce overhead is to avoid",
+      "source": "summary_first_sentence",
       "confidence": null,
       "section": "Internet (IP)",
       "readable_raw": false
@@ -5608,8 +5608,8 @@
     {
       "kp_id": "kp_ada1063f_003_003_303",
       "raw_name": "Since D",
-      "display_title": null,
-      "source": null,
+      "display_title": "Since D is the only new member of the conﬁrmed",
+      "source": "summary_first_sentence",
       "confidence": null,
       "section": "Internet (IP)",
       "readable_raw": false
@@ -5662,8 +5662,8 @@
     {
       "kp_id": "kp_ada1063f_003_003_309",
       "raw_name": "All of these factors mean that",
-      "display_title": null,
-      "source": null,
+      "display_title": "All of these factors mean that a link is much",
+      "source": "summary_first_sentence",
       "confidence": null,
       "section": "Internet (IP)",
       "readable_raw": false

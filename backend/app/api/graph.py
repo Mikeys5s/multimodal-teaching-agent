@@ -209,6 +209,12 @@ def get_learning_path(
             order=i + 1,
             kp_id=s["knowledge_point"],
             name=(by_id[s["knowledge_point"]].name if s["knowledge_point"] in by_id else ""),
+            # ⭐ **可读标题**（前端优先显示这个）
+            #    补标题前：`There` / `Because FQ`（读不通）
+            #    补标题后：`There are two things to notice about fair`
+            #    ⚠️ `kp_id` **不要隐藏** —— 它是"从界面回到材料"的溯源锚点，
+            #       前端应把它收进 tooltip，而不是删掉。
+            display_title=_load_titles().get(s["knowledge_point"]),
             difficulty=(
                 by_id[s["knowledge_point"]].difficulty
                 if s["knowledge_point"] in by_id
