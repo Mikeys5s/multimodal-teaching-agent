@@ -32,6 +32,13 @@ HEADER_Y = 40.0  # 页眉基线 → top ≈ 31（0.09 × 842 = 75.8 以内）
 FOOTER_Y = 810.0  # 页脚基线 → top ≈ 801（0.91 × 842 = 766.2 以外）
 BODY_Y = 200.0  # 正文基线 → top ≈ 190（在版心里）
 
+#: 用于「压住字号直方图」的正文。`body_size` 取的是字符数主导项，
+#: 正文太少时主导项会落到标题上，`is_large` 就不成立 —— 见下面那条用例的说明。
+_BODY = (
+    "正文内容，用来定正文字号。这里需要足够多的正文，否则字号直方图的主导项会"
+    "落在大字号的标题上，body_size 就不是真正的正文字号，字号闸也就不成立了。"
+)
+
 
 def _w(page: pymupdf.Page, x: float, y: float, text: str, size: float = 10) -> None:
     page.insert_text((x, y), text, fontname=CJK_FONT, fontsize=size)
@@ -301,6 +308,64 @@ def test_bare_number_line_is_not_a_heading(tmp_path: Path) -> None:
     assert by_text["1 Introduction"].block_type == "heading", (
         "带标题文字的单级编号被否决规则误伤了"
     )
+
+
+def test_bare_number_with_heading_font_is_not_a_heading(tmp_path: Path) -> None:
+    """★ 纯页码**字号偏大**时也不得成为 heading（第五批：堵住字号路径）。
+
+    上面那条用例把孤立数字写成了**正文字号**（10pt），于是只走过"编号路径"就被
+    否决了，看起来是绿的。但 `_classify` 在否决编号之后**继续往下走**，
+    又会被 `is_large` 那道闸提升成 heading —— 线上 `section.title` 有 31.2%
+    是纯页码（`287` / `229`），成因就在这里。
+
+    ⚠️ 这条用例有两处**必须照抄**的构造，否则会变成"假绿"：
+      1. 数字要写在**版心内**（y 靠中间）。写在页眉/页脚会被去噪那四道位置信号
+         先删掉，根本走不到分类 —— 那样测的是去噪，不是这条否决。
+      2. **正文要发够多**（下面 `_BODY` 连发 6 行）。`body_size` 是按字符数取的
+         直方图主导项；正文太少时主导项会落在大字号的标题上，`is_large` 就不成立了。
+    两处我都先写错过一次：当时"把补丁关掉也照样通过"，等于没测。
+    """
+    doc = pymupdf.open()
+    page = doc.new_page()
+    _w(page, 300, 200, "287", 13)  # ← 版心内的孤立数字，字号偏大
+    _w(page, 300, 230, "229", 13)  # ← 同上
+    _w(page, 72, 140, "第2章 网络层", 18)  # 真章标题（字号更大）
+    _w(page, 72, 280, "3.1 Routing basics", 13)  # 真节标题（同字号）
+    _w(page, 72, 320, "1 Introduction", 13)  # 单级编号 + 标题文字 → 仍是标题
+    for index in range(6):  # 正文发够量，压住字号直方图
+        _w(page, 72, 400 + index * 16, _BODY, 10)
+    path = _save(doc, tmp_path / "number_with_heading_font.pdf")
+
+    parsed = parse_pdf(path)
+    by_text = {b.content_md: b for b in parsed.blocks}
+
+    for number in ("287", "229"):
+        assert number in by_text, f"{number} 被去噪删掉了 —— 用例没打到分类那一步"
+        assert by_text[number].block_type == "paragraph", (
+            f"字号偏大的页码 {number} 不该成为 heading"
+        )
+        assert by_text[number].heading_level is None
+
+    # 反面对照：同字号/更大字号的**真标题**必须照旧判成 heading，
+    # 说明这条否决没有扩大化。
+    assert by_text["第2章 网络层"].block_type == "heading"
+    assert by_text["第2章 网络层"].heading_level == 1
+    assert by_text["3.1 Routing basics"].block_type == "heading"
+    assert by_text["3.1 Routing basics"].heading_level == 2
+    assert by_text["1 Introduction"].block_type == "heading"
+
+    # 端到端：页码不得造出"章"。
+    # 注意不要断言"章列表 == [第2章]" —— `1 Introduction` 是 depth=1 且**带标题
+    # 文字**的编号，本来就该自成一位；首位还会有一个 `number=None` 的"前言"。
+    # 这里钉真正的**不变量**：目录里不出现"只有编号、没有标题"的章。
+    chapters = split_outline(parsed)
+    fake = [
+        (c.number, c.title)
+        for c in chapters
+        if (c.number or "").strip().isdigit() and not (c.title or "").strip()
+    ]
+    assert not fake, f"页码造出了假的章：{fake}"
+    assert any(c.number == "第2章" for c in chapters), "真章标题被弄丢了"
 
 
 def test_heading_veto_collapses_the_outline_to_real_structure(tmp_path: Path) -> None:

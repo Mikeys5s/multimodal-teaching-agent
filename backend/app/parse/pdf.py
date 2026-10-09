@@ -220,6 +220,12 @@ EDGE_ISOLATION_RATIO = 1.4
 PAGE_NUMBER_MAX_CHARS = 8
 #: 页码形态：1–4 个数字，或 1–4 个罗马数字字母（`i` / `ii` / `xiv`）。
 _PAGE_NUMBER_RE = re.compile(r"^(?:\d{1,4}|[ivxlcdmIVXLCDM]{1,4})$")
+#: **标题否决**用的页码形态：只认纯十进制数字（1–4 位）。
+#:
+#: 为什么比 `_PAGE_NUMBER_RE` 更严：那条是给去噪用的，去噪还有「块在页边」这条
+#: 位置信号兜底；而标题否决是**无位置信息**的，用宽松的罗马字母字符集会误伤真标题
+#: —— `mid` / `mild` / `dim` 都能被 `[ivxlcdmIVXLCDM]{1,4}` 匹配上。
+HEADING_PAGE_NUMBER_RE = re.compile(r"^\d{1,4}$")
 #: 目录页判定：一页里含这么多个"前导点"行（`. . . . .`）就当目录页。
 #: 取 4 是因为正文里不会连续出现 4 行前导点；少于它的排版（如只有 2 条目录行）
 #: 会漏判 —— 漏判只是目录页码多留几个块，方向仍是"宁漏勿误"。
@@ -1170,6 +1176,18 @@ def _classify(
         and CAPTION_LABEL_RE.match(raw.text)
     ):
         return "image_caption", None
+
+    # ★ 否决规则（第五批）：**纯页码永远不是标题**，哪怕它的字号比正文大。
+    #
+    # 第二批的否决（下面 `number.depth == 1 and not number.title`）**只挡住了
+    # "编号路径"，没挡住"字号路径"** —— 它把 `number` 置成 None 之后就继续往下走，
+    # 而 `is_large` 那道闸只按字号放行，于是同一个孤立数字又被提升成 heading。
+    #
+    # 线上实测后果：`chapter.title` / `section.title` 里有 **196/629 = 31.2%**
+    # 是纯页码（`287` / `229` 这种）—— 教材的页眉/页脚页码恰好常用略大字号排版。
+    # 这里直接早退，把它彻底挡在所有 heading 路径之外。
+    if HEADING_PAGE_NUMBER_RE.match(raw.text.strip()):
+        return "paragraph", None
 
     number: HeadingNumber | None = None
     if len(raw.text) <= HEADING_MAX_CHARS and raw.line_count == 1:
