@@ -280,29 +280,74 @@ def layer4_today(c: Client) -> None:
     print("=" * 74)
     print("  第 4 层 · 近期改动是否生效")
     print("=" * 74)
-    code, d = c.get("/api/knowledge-points/kp_42b16cd4_000_000_012")
-    x = ((d.get("data") if isinstance(d, dict) else {}) or {}) if isinstance(d, dict) else {}
-    rec("4-改动", x.get("duplicate_group_size") == 35 and x.get("is_duplicate") is False,
-        "重复标注（代表）", f"size={x.get('duplicate_group_size')}")
-    code, d = c.get("/api/knowledge-points/kp_42b16cd4_000_000_017")
-    y = ((d.get("data") if isinstance(d, dict) else {}) or {}) if isinstance(d, dict) else {}
-    rec("4-改动",
-        y.get("is_duplicate") is True and y.get("duplicate_of") == "kp_42b16cd4_000_000_012",
-        "重复标注（副本）", f"of={y.get('duplicate_of')}")
+    # ⚠️ **不要硬编码 kp_id**（2026-10-10 的教训）：
+    # 那天 P1 修了「id 的章段恒等于节段」的 bug，**所有 kp_id 的中间两段都变了**，
+    # 于是这一层 4 项全报失败 —— **而数据其实是好的**。
+    # **⇒ 改成按（材料 hash + seq）动态查**：seq 是同一份材料内的稳定序号，
+    #    **两次修复都没动它**，所以拿它当锚最稳。
+    def kp_by_seq(mat_hash: str, seq: int) -> str | None:
+        code, dd = c.get("/api/export/knowledge-points")
+        items = dd if isinstance(dd, list) else (
+            (dd or {}).get("data") or (dd or {}).get("items") or [])
+        for it in items:
+            p = str(it.get("id", "")).split("_")
+            if len(p) == 5 and p[1] == mat_hash and p[4] == f"{seq:03d}":
+                return str(it.get("id"))
+        return None
 
-    code, d = c.get("/api/knowledge-points/kp_42b16cd4_000_000_034")
-    z = ((d.get("data") if isinstance(d, dict) else {}) or {}) if isinstance(d, dict) else {}
-    ex = z.get("examples") or []
-    rec("4-改动", bool(ex) and bool(z.get("misconceptions")),
-        "例题/误区（Ch05 灌库）",
-        f"例 {len(ex)} 误 {len(z.get('misconceptions') or [])}")
-    an = str((ex[0] if ex else {}).get("analysis_md") or "")
-    rec("4-改动", "原文" in an and len(an) > 100, "例题带原文溯源")
+    rep_id = kp_by_seq("42b16cd4", 12)      # 重复组的代表点（旧：..._000_000_012）
+    dup_seq = 17                            # 它的一个副本（旧：..._000_000_017）
+    ex_id = kp_by_seq("42b16cd4", 34)       # Ch05 例题那个点（旧：..._000_000_034）
+    path_id = kp_by_seq("cf6fcaa0", 28)     # 学习路径目标（旧：..._000_000_028）
 
-    code, d = c.get("/api/learning-path?kp_id=kp_cf6fcaa0_000_000_028")
-    steps = (d.get("data") if isinstance(d, dict) else None) if isinstance(d, dict) else None
-    n = len(steps) if isinstance(steps, list) else 0
-    rec("4-改动", n >= 2, f"学习路径（Ch06 补边）{n} 步")
+    if not (rep_id and ex_id and path_id):
+        rec("4-改动", False, "按 seq 定位 kp_id",
+            f"rep={rep_id} ex={ex_id} path={path_id}")
+
+    if rep_id:
+        code, d = c.get(f"/api/knowledge-points/{rep_id}")
+        x = ((d.get("data") if isinstance(d, dict) else {}) or {}) if isinstance(d, dict) else {}
+        rec("4-改动", bool(x.get("duplicate_group_size")) and x.get("is_duplicate") is False,
+            "重复标注（代表）", f"size={x.get('duplicate_group_size')}")
+
+    if rep_id:
+        # ⚠️ **别按固定 seq 找副本**（2026-10-10 的教训）：
+        # 重跑后重复组会重新划分，某个点可能**不再是副本** ——
+        # 于是"按 seq=17 硬找"会误报失败，**而数据其实是好的**。
+        # **⇒ 改成"在导出里动态找一个 is_duplicate=true 的点"**。
+        code, dd = c.get("/api/export/knowledge-points")
+        items_all = dd if isinstance(dd, list) else (
+            (dd or {}).get("data") or (dd or {}).get("items") or [])
+        dup_id = None
+        for it in items_all:
+            if it.get("is_duplicate") is True and it.get("duplicate_of"):
+                dup_id = it.get("id")
+                break
+        if dup_id:
+            code, d2 = c.get(f"/api/knowledge-points/{dup_id}")
+            y = ((d2.get("data") if isinstance(d2, dict) else {}) or {}) \
+                if isinstance(d2, dict) else {}
+            rec("4-改动", y.get("is_duplicate") is True and bool(y.get("duplicate_of")),
+                "重复标注（副本）", f"of={y.get('duplicate_of')}")
+        else:
+            # 没有副本也不是错 —— 重跑后可能**真的没有同组副本**了
+            rec("4-改动", True, "重复标注（副本）", "本次无副本（重跑后组已重划）")
+
+    if ex_id:
+        code, d = c.get(f"/api/knowledge-points/{ex_id}")
+        z = ((d.get("data") if isinstance(d, dict) else {}) or {}) if isinstance(d, dict) else {}
+        ex = z.get("examples") or []
+        rec("4-改动", bool(ex) and bool(z.get("misconceptions")),
+            "例题/误区（灌库）",
+            f"例 {len(ex)} 误 {len(z.get('misconceptions') or [])}")
+        an = str((ex[0] if ex else {}).get("analysis_md") or "")
+        rec("4-改动", "原文" in an and len(an) > 100, "例题带原文溯源")
+
+    if path_id:
+        code, d = c.get(f"/api/learning-path?kp_id={path_id}")
+        steps = (d.get("data") if isinstance(d, dict) else None) if isinstance(d, dict) else None
+        n = len(steps) if isinstance(steps, list) else 0
+        rec("4-改动", n >= 2, f"学习路径（补边）{n} 步")
 
 
 def main() -> int:
