@@ -350,22 +350,37 @@ export default function Tutor() {
             {protocolWarning && <InlineWarning>{protocolWarning.message}</InlineWarning>}
 
             {turns.length === 0 ? (
-              <div className="rounded-2xl border border-[#ddd7cb] bg-atlas-sheet p-5">
-                <p className="text-sm font-semibold text-atlas-ink">提问后你会依次看到三件事</p>
-                <ol className="mt-2 list-decimal space-y-1.5 pl-5 text-xs leading-relaxed text-slate-500">
-                  <li>
-                    <span className="text-slate-600">第 1 步 · 检索材料</span>
-                    ：先命中知识点与原文块；一条都没命中就直接拒答，绝不用材料外的知识作答。
-                  </li>
-                  <li>
-                    <span className="text-slate-600">第 2 步 · 组织回答</span>
-                    ：苏格拉底式反问 → 一级提示 → 二级提示 → 兜底讲解，逐字流式输出。
-                  </li>
-                  <li>
-                    <span className="text-slate-600">第 3 步 · 本轮诊断</span>
-                    ：涉及知识点、卡在哪一步（含来源证据）、下一步建议练习。
-                  </li>
-                </ol>
+              /* 开场状态：有信息层级的引导区，不预置任何虚构对话 */
+              <div className="flex min-h-[320px] flex-col items-center justify-center gap-5 px-4 py-8 text-center">
+                <svg width="72" height="72" viewBox="0 0 72 72" fill="none" aria-hidden className="text-atlas-muted">
+                  <path d="M14 14h32a6 6 0 0 1 6 6v18a6 6 0 0 1-6 6H30l-10 9v-9h-6a6 6 0 0 1-6-6V20a6 6 0 0 1 6-6z" stroke="currentColor" strokeWidth="1.6" transform="translate(6 4)" />
+                  <path d="M22 30h16M22 37h10" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" transform="translate(6 4)" />
+                  <path d="M46 22l4-4M46 34l4 4" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" transform="translate(6 4)" opacity="0.6" />
+                </svg>
+                <div>
+                  <p className="text-base font-semibold text-atlas-ink">从一个问题开始</p>
+                  <p className="mx-auto mt-2 max-w-[440px] text-xs leading-relaxed text-atlas-muted">
+                    在下方输入框直接提问，或点「建议继续追问」里的示例；首次提问会自动创建会话。
+                    回答范围仅限已入库的 {totalMaterials} 份材料 —— 检索不到就明确说不答，不使用材料外的知识。
+                  </p>
+                </div>
+                <div className="w-full max-w-[520px] rounded-2xl border border-[#ddd7cb] bg-atlas-sheet p-5 text-left">
+                  <p className="text-sm font-semibold text-atlas-ink">提问后你会依次看到三件事</p>
+                  <ol className="mt-2 list-decimal space-y-1.5 pl-5 text-xs leading-relaxed text-slate-500">
+                    <li>
+                      <span className="text-slate-600">第 1 步 · 检索材料</span>
+                      ：先命中知识点与原文块；一条都没命中就直接拒答，绝不用材料外的知识作答。
+                    </li>
+                    <li>
+                      <span className="text-slate-600">第 2 步 · 组织回答</span>
+                      ：苏格拉底式反问 → 一级提示 → 二级提示 → 兜底讲解，逐字流式输出。
+                    </li>
+                    <li>
+                      <span className="text-slate-600">第 3 步 · 本轮诊断</span>
+                      ：涉及知识点、卡在哪一步（含来源证据）、下一步建议练习。
+                    </li>
+                  </ol>
+                </div>
               </div>
             ) : (
               turns.map((turn) => (

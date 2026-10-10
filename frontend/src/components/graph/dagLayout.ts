@@ -13,10 +13,10 @@ import type { GraphEdge, GraphNode } from '@/lib/types'
  * 布局是**纯函数**，只吃 `GraphNode[]`/`GraphEdge[]`，便于单测与前端筛选后重算。
  */
 
-export const NODE_W = 176
-export const NODE_H = 54
+export const NODE_W = 190
+export const NODE_H = 66
 /** 层间距 / 同层节点间距 / 画布留白 */
-const COL_GAP = 88
+const COL_GAP = 84
 const ROW_GAP = 26
 const PADDING = 40
 /** 重心排序迭代次数 */

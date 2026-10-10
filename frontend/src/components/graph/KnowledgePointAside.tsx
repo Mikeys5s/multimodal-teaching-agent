@@ -39,10 +39,21 @@ export function KnowledgePointAside({ kpId, onClose }: KnowledgePointAsideProps)
         {kpId ? (
           <KnowledgePointDetail kpId={kpId} />
         ) : (
-          <p className="text-xs leading-relaxed text-atlas-muted">
-            在左侧画布中点选任一知识点节点，这里会显示它的难度、前置、例题、误区与来源证据。
-            也可用 Tab 遍历节点、Enter 打开。
-          </p>
+          /* 未选择状态：不虚构节点，只给清楚、紧凑的下一步操作说明 */
+          <div className="flex h-full flex-col items-center justify-center gap-3 text-center">
+            <svg width="56" height="56" viewBox="0 0 56 56" fill="none" aria-hidden className="text-atlas-muted">
+              <circle cx="16" cy="16" r="7" stroke="currentColor" strokeWidth="1.6" />
+              <circle cx="40" cy="22" r="7" stroke="currentColor" strokeWidth="1.6" strokeDasharray="3 3" />
+              <circle cx="24" cy="42" r="7" stroke="currentColor" strokeWidth="1.6" />
+              <path d="M22.5 18.5 33.5 21M19 22.5 22 35.5M37 28.5 29 37" stroke="currentColor" strokeWidth="1.4" />
+            </svg>
+            <p className="text-sm font-semibold text-atlas-ink">还没有选中知识点</p>
+            <ul className="space-y-1.5 text-xs leading-relaxed text-atlas-muted">
+              <li>· 在画布中点选任一节点，这里显示它的难度、前置、例题、误区与来源证据</li>
+              <li>· 键盘：Tab 遍历节点，Enter 打开详情</li>
+              <li>· 画布太宽时：拖拽平移、滚轮缩放，右上角可一键适应画布</li>
+            </ul>
+          </div>
         )}
       </div>
     </aside>

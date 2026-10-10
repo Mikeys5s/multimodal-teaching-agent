@@ -1,14 +1,18 @@
 import { ArrowRight, ArrowUpRight, Layers, MessagesSquare, Route, ShieldCheck, Upload } from 'lucide-react'
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 
+import { api } from '@/lib/endpoints'
+import { dupGroupSize, kpDisplayTitle } from '@/lib/kpTitle'
+
 /**
- * 概览页 —— Learning Atlas 主视觉（2026-10-10 v2）。
+ * 概览页 —— Learning Atlas 主视觉（2026-10-10 v2，2026-10-10 返修）。
  * 构图：编辑式大标题 + 深蓝制图 hero（路径描绘动画）+ 四步流程带 + A-D 直达入口 + 原则板。
  * 文案约束：
- *  - QUICK_TOURS 的三个纪律不破坏：① 点了直达（带 ?kp_id= 深链）② 文案自解释 ③ 数量 3–4 个；
- *  - 固定数字（629 / 462 / 35）**已实测可验证**（2026-10-10 对线上接口逐一核对）：
- *    629 = knowledge-points total；462 = 重复组成员总数 616 − 组数 154（同组副本口径）；
- *    35 = kp_42b16cd4_000_000_012 的 duplicate_group_size。
+ *  - QUICK_TOURS 的三个纪律不破坏：① 点了直达（深链来自运行时数据）② 文案自解释 ③ 数量 3–4 个；
+ *  - **不允许固定数字与固定实体 ID**（2026-10-10 返修 P0）：入口里的知识点总数、同组副本数、
+ *    「出现 N 处」和深链目标全部由 `/api/knowledge-points` 与 `/api/learning-path` 的实时响应算出；
+ *    接口失败时回落为不含数字、不带实体参数的文案与路由，绝不写死默认值。
  */
 
 /** 四步流程（对应三段管线的编辑式表达；纯展示，导航在下方 A-D 入口） */
@@ -19,37 +23,146 @@ const FLOW_STEPS = [
   { no: '04', title: '追问理解', desc: '先思考，再得到引导' },
 ]
 
-/** 「从这看起」A–D 直达入口（原 QUICK_TOURS，深链与文案不变） */
-const QUICK_TOURS = [
-  {
-    num: 'A',
-    icon: Route,
-    title: '看依赖图与学习路径',
-    desc: '打开「拥塞控制」的 4 步先修链，每步都写明先后关系。',
-    to: '/path?kp_id=kp_cf6fcaa0_000_000_028',
-  },
-  {
-    num: 'B',
-    icon: MessagesSquare,
-    title: '看多轮答疑怎么「降级直讲」',
-    desc: '首轮只反问不给答案；连续两次答不上，才降级为直接讲解。',
-    to: '/tutor',
-  },
-  {
-    num: 'C',
-    icon: Layers,
-    title: '看我们怎么处理重复数据',
-    desc: '629 个知识点里 462 个是同组副本（已实测）：只标注、不删数据 —— 打开就能看到「出现 35 处，已合并显示」。',
-    to: '/graph?kp_id=kp_42b16cd4_000_000_012',
-  },
-  {
-    num: 'D',
-    icon: ShieldCheck,
-    title: '看校验体系',
-    desc: '质量报告页汇总全链路复验与部署自检：环数、溯源覆盖、字段完备都在这一页。',
-    to: '/report',
-  },
-]
+/** 入口 C 的运行时数据：重复组中最大的一个合并知识点（深链目标 + 「出现 N 处」的 N） */
+interface DupShowcase {
+  id: string
+  name: string
+  size: number
+}
+
+/** 入口 A 的运行时数据：一条真实的学习路径（深链目标 + 实际步数） */
+interface PathShowcase {
+  id: string
+  name: string
+  steps: number
+}
+
+interface OverviewData {
+  /** 知识点总数（/api/knowledge-points 的 total） */
+  total: number
+  /** 同组副本数：重复组成员数 − 重复组数（成员 = is_duplicate 或 duplicate_group_size > 1） */
+  dupCopies: number
+  dup: DupShowcase | null
+  path: PathShowcase | null
+}
+
+const KP_PAGE_SIZE = 100
+
+/**
+ * 拉全量知识点并算出入口 A / C 需要的数据。
+ * 模块级缓存：StrictMode 双跑 effect、切页再回来都不会重复请求。
+ * 失败时 resolve(null) —— 调用方回落到无数字文案，不把错误堆到首页。
+ */
+let overviewDataPromise: Promise<OverviewData | null> | null = null
+function loadOverviewData(): Promise<OverviewData | null> {
+  overviewDataPromise ??= (async (): Promise<OverviewData | null> => {
+    try {
+      const first = await api.listKnowledgePoints({ page: 1, page_size: KP_PAGE_SIZE })
+      const pageCount = Math.max(1, Math.ceil(first.total / first.page_size))
+      const rest = await Promise.all(
+        Array.from({ length: pageCount - 1 }, (_, i) =>
+          api.listKnowledgePoints({ page: i + 2, page_size: KP_PAGE_SIZE }),
+        ),
+      )
+      const items = [first, ...rest].flatMap((page) => page.items)
+
+      let dupMembers = 0
+      const dupGroups = new Set<string>()
+      let dup: DupShowcase | null = null
+      let pathCandidate: { id: string; name: string; prereq: number } | null = null
+      for (const kp of items) {
+        const size = dupGroupSize(kp)
+        if (kp.is_duplicate || size !== null) {
+          dupMembers += 1
+          dupGroups.add(kp.duplicate_of ?? kp.id)
+          if (size !== null && (dup === null || size > dup.size)) {
+            dup = { id: kp.id, name: kpDisplayTitle(kp), size }
+          }
+        }
+        const prereq = kp.prerequisite_count ?? 0
+        if (prereq > (pathCandidate?.prereq ?? 0)) {
+          pathCandidate = { id: kp.id, name: kpDisplayTitle(kp), prereq }
+        }
+      }
+
+      let path: PathShowcase | null = null
+      if (pathCandidate) {
+        try {
+          const steps = await api.getLearningPath(pathCandidate.id)
+          if (steps.length > 0) {
+            path = {
+              id: pathCandidate.id,
+              name: kpDisplayTitle(steps[steps.length - 1]) || pathCandidate.name,
+              steps: steps.length,
+            }
+          }
+        } catch {
+          // 路径拉取失败：入口 A 回落为无参数路由
+        }
+      }
+
+      return { total: first.total, dupCopies: dupMembers - dupGroups.size, dup, path }
+    } catch {
+      return null
+    }
+  })()
+  return overviewDataPromise
+}
+
+/** 入口描述里的知识点名：过长时截断，防止把卡片撑破（完整名落到目标页展示） */
+function shortName(name: string, max = 14): string {
+  return name.length > max ? `${name.slice(0, max)}…` : name
+}
+
+/** 「从这看起」A–D 直达入口：B / D 为静态文案，A / C 的深链与数字来自运行时数据 */
+function useQuickTours() {
+  const [data, setData] = useState<OverviewData | null>(null)
+  useEffect(() => {
+    let cancelled = false
+    void loadOverviewData().then((result) => {
+      if (!cancelled) setData(result)
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
+  return [
+    {
+      num: 'A',
+      icon: Route,
+      title: '看依赖图与学习路径',
+      desc: data?.path
+        ? `打开「${shortName(data.path.name)}」的 ${data.path.steps} 步先修链，每步都写明先后关系。`
+        : '打开一个知识点的先修链：先修在前、目标在后，每步都写明先后关系。',
+      to: data?.path ? `/path?kp_id=${data.path.id}` : '/path',
+    },
+    {
+      num: 'B',
+      icon: MessagesSquare,
+      title: '看多轮答疑怎么「降级直讲」',
+      desc: '首轮只反问不给答案；连续两次答不上，才降级为直接讲解。',
+      to: '/tutor',
+    },
+    {
+      num: 'C',
+      icon: Layers,
+      title: '看我们怎么处理重复数据',
+      desc:
+        data?.dup != null
+          ? `${data.total} 个知识点里 ${data.dupCopies} 个是同组副本：只标注、不删数据 —— 打开能看到「出现 ${data.dup.size} 处，已合并显示」。`
+          : '重复的知识点只标注、不删数据 —— 节点详情会写明它在材料中出现了几处、已合并显示。',
+      to: data?.dup ? `/graph?kp_id=${data.dup.id}` : '/graph',
+    },
+    {
+      num: 'D',
+      icon: ShieldCheck,
+      title: '看校验体系',
+      desc: '质量报告页汇总全链路复验与部署自检：环数、溯源覆盖、字段完备都在这一页。',
+      to: '/report',
+    },
+  ]
+}
 
 /** Atlas 主视觉 SVG：路径沿虚线流动，节点带光晕（纯装饰，不代表真实数据） */
 function AtlasVisual() {
@@ -117,6 +230,7 @@ function AtlasVisual() {
 }
 
 export default function Overview() {
+  const quickTours = useQuickTours()
   return (
     <div className="mx-auto max-w-6xl">
       {/* 编辑式 eyebrow */}
@@ -198,7 +312,7 @@ export default function Overview() {
             </span>
           </div>
           <div className="grid sm:grid-cols-2">
-            {QUICK_TOURS.map((tour) => {
+            {quickTours.map((tour) => {
               const Icon = tour.icon
               return (
                 <Link

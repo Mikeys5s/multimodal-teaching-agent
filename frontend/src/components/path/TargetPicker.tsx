@@ -112,7 +112,7 @@ export function TargetFilters({ state }: { state: TargetPickerState }) {
         state.submitKeyword()
       }}
     >
-      <label className="relative min-w-0 flex-1 sm:min-w-[240px]">
+      <label className="relative w-full min-w-0 sm:w-auto sm:flex-1 sm:min-w-[240px]">
         <span className="sr-only">按知识点名称搜索</span>
         <Search
           className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400"
