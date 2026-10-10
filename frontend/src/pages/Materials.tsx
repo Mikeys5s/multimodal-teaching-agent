@@ -1,5 +1,6 @@
 import { RefreshCw } from 'lucide-react'
 import { useMemo, useState } from 'react'
+import { Link } from 'react-router-dom'
 
 import { ExtractPanel } from '@/components/materials/ExtractPanel'
 import { JobProgressPanel } from '@/components/materials/JobProgressPanel'
@@ -101,32 +102,77 @@ export default function Materials() {
 
   return (
     <div className="mx-auto max-w-6xl space-y-5">
-      {/* 上传区 */}
-      <section className="space-y-3">
-        <UploadDropzone
-          onFiles={handleFiles}
-          uploading={uploading}
-          capabilities={capabilities.data}
-          disabled={uploading}
-        />
-
-        {uploadError && <InlineError>{uploadError}</InlineError>}
-
-        {rejected.length > 0 && (
-          <div className="rounded-xl border border-warning-line bg-warning-soft p-3">
-            <div className="mb-1.5 text-xs font-medium text-warning">
-              {rejected.length} 个文件未被接受
-            </div>
-            <ul className="space-y-1">
-              {rejected.map((item) => (
-                <li key={item.filename} className="text-xs text-warning">
-                  <span className="font-medium">{item.filename}</span>：{item.reason}
-                </li>
-              ))}
-            </ul>
+      {/* 页头：编辑式标题 + 一个主操作（选择文件 → 打开上传区的文件选择器） */}
+      <div className="flex flex-wrap items-end justify-between gap-4">
+        <div className="min-w-0">
+          <div className="atlas-eyebrow">
+            <span className="idx">02</span> SOURCE LIBRARY / MATERIALS
           </div>
-        )}
-      </section>
+          <h2 className="atlas-h1 mt-2">让材料保留来处。</h2>
+          <p className="mt-2 max-w-[560px] text-[13px] leading-relaxed text-atlas-muted">
+            上传后可追踪解析、抽取和复核状态。每个知识点都应能回到原文。
+          </p>
+        </div>
+        <Button
+          disabled={uploading}
+          onClick={() => document.getElementById('materials-file-input')?.click()}
+        >
+          选择文件
+        </Button>
+      </div>
+
+      {/* 上传区 + 流程说明（材质对比：蓝灰上传面 × 深蓝说明卡） */}
+      <div className="grid gap-4 lg:grid-cols-[1.35fr_0.65fr]">
+        <section className="space-y-3">
+          <UploadDropzone
+            onFiles={handleFiles}
+            uploading={uploading}
+            capabilities={capabilities.data}
+            disabled={uploading}
+          />
+
+          {uploadError && <InlineError>{uploadError}</InlineError>}
+
+          {rejected.length > 0 && (
+            <div className="rounded-xl border border-warning-line bg-warning-soft p-3">
+              <div className="mb-1.5 text-xs font-medium text-warning">
+                {rejected.length} 个文件未被接受
+              </div>
+              <ul className="space-y-1">
+                {rejected.map((item) => (
+                  <li key={item.filename} className="text-xs text-warning">
+                    <span className="font-medium">{item.filename}</span>：{item.reason}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </section>
+
+        <aside className="atlas-navy-panel !rounded-2xl flex flex-col justify-between bg-atlas-ink2 p-5">
+          <div
+            aria-hidden
+            className="pointer-events-none absolute -right-20 -top-14 h-40 w-40 rounded-full border border-lime/35 shadow-[0_0_0_18px_rgba(217,237,131,0.06),0_0_0_40px_rgba(217,237,131,0.04)]"
+          />
+          <div className="relative z-10">
+            <div className="atlas-eyebrow !text-[#aeb9c7]">
+              <span className="idx">01</span> PROCESS NOTE
+            </div>
+            <h3 className="mt-3 max-w-[240px] text-lg font-semibold leading-snug tracking-tight">
+              先确认解析质量，再生成知识结构。
+            </h3>
+            <p className="mt-2.5 max-w-[250px] text-xs leading-relaxed text-[#aeb9c7]">
+              解析失败的素材保留在清单里。修复并重试，不会静默丢弃原文件。
+            </p>
+          </div>
+          <Link
+            to="/report"
+            className="relative z-10 mt-4 self-start text-xs text-lime transition-colors duration-120 hover:text-[#e4f6a2]"
+          >
+            查看解析质量说明 ↗
+          </Link>
+        </aside>
+      </div>
 
       {/* 解析进度 */}
       <JobProgressPanel
@@ -136,16 +182,18 @@ export default function Materials() {
       />
       {jobError && <InlineError>{jobError}</InlineError>}
 
-      {/* 素材清单 */}
-      <section className="xizhi-card">
-        <header className="flex items-center justify-between border-b border-slate-100 px-4 py-3">
-          <div className="flex items-baseline gap-3">
-            <h2 className="text-sm font-semibold text-slate-800">素材清单</h2>
-            <span className="text-xs text-slate-400">
-              共 {stats.total} 份
-              {stats.parsing > 0 && ` · 解析中 ${stats.parsing}`}
-              {stats.failed > 0 && ` · 失败 ${stats.failed}`}
-              {stats.uncertain > 0 && ` · 存疑 ${stats.uncertain} 处`}
+      {/* 素材清单（材料档案） */}
+      <section className="atlas-sheet-panel">
+        <header className="flex items-center justify-between border-b border-atlas-line bg-atlas-paper2/60 px-4 py-3">
+          <div className="flex flex-wrap items-baseline gap-x-3 gap-y-0.5">
+            <h3 className="text-base font-semibold text-atlas-ink">
+              材料档案
+              <span className="ml-2 text-xs font-normal text-atlas-muted">/ {stats.total} sources</span>
+            </h3>
+            <span className="text-xs text-atlas-muted">
+              {stats.parsing > 0 && `解析中 ${stats.parsing} · `}
+              {stats.failed > 0 && `失败 ${stats.failed} · `}
+              {stats.uncertain > 0 ? `存疑 ${stats.uncertain} 处` : '按最近处理时间排序'}
             </span>
           </div>
           <Button

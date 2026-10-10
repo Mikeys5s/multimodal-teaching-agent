@@ -1,7 +1,6 @@
-import { CornerDownRight, Flag, RefreshCw, Target } from 'lucide-react'
+import { CornerDownRight, RefreshCw } from 'lucide-react'
 import { useMemo } from 'react'
 
-import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
 import { EmptyState, ErrorState, LoadingState } from '@/components/ui/Feedback'
 import { KpIdChip } from '@/components/ui/KpIdChip'
@@ -47,6 +46,16 @@ function summarize(steps: LearningPathStep[]): PathSummary {
   }
 }
 
+/**
+ * 学习路径时间线（api-spec §4.4「地图与路径」）。
+ *
+ * 三条不可省略的呈现约定：
+ *   ① 按 `order` 编号自上而下排列 —— 顺序本身就是结论；
+ *   ② 每一步的 `reason` 有则**逐条展示**（来自 P10 产出在硬前置边上的 reason），
+ *      让「为什么它排在前面」可解释；reason 缺失时**不编造**，
+ *      改说一句由路径顺序本身可核对的话（本步须先于下一步），并在顶部一次性披露；
+ *   ③ `is_start_point` 是拓扑排序里入度为 0 的节点，用独立徽标 + 底色标出。
+ */
 export function PathTimeline({ kpId, kpName, onRetarget }: PathTimelineProps) {
   const pathReq = useRequest(() => api.getLearningPath(kpId), [kpId])
   const steps = pathReq.data ?? []
@@ -54,17 +63,18 @@ export function PathTimeline({ kpId, kpName, onRetarget }: PathTimelineProps) {
   const summary = useMemo(() => summarize(steps), [steps])
 
   return (
-    <section className="xizhi-card">
-      <header className="flex items-start justify-between gap-3 border-b border-slate-100 px-4 py-3">
+    <div className="flex min-h-0 flex-col">
+      {/* 面板头：目标与汇总 */}
+      <div className="flex flex-wrap items-start justify-between gap-3 border-b border-atlas-line px-5 py-3.5">
         <div className="min-w-0">
           <div className="flex flex-wrap items-baseline gap-x-3 gap-y-0.5">
-            <h2 className="text-base font-semibold leading-6 text-slate-800">学习路径时间线</h2>
-            <span className="truncate text-xs text-slate-400" title={kpName}>
+            <h3 className="text-base font-semibold leading-6 text-atlas-ink">学习路径</h3>
+            <span className="truncate text-xs text-atlas-muted" title={kpName}>
               目标：{kpName}
             </span>
           </div>
           {steps.length > 0 && (
-            <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-slate-500">
+            <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-atlas-muted">
               <span>共 {summary.total} 步</span>
               <span className="text-slate-300">|</span>
               <span>其中 {summary.startPoints} 个起点</span>
@@ -74,10 +84,10 @@ export function PathTimeline({ kpId, kpName, onRetarget }: PathTimelineProps) {
               </span>
               <span className="text-slate-300">|</span>
               <span>
-                难度范围 {summary.minDifficulty}–{summary.maxDifficulty}
+                难度 {summary.minDifficulty}–{summary.maxDifficulty}
                 {summary.minDifficulty === summary.maxDifficulty
                   ? `（${DIFFICULTY_LABEL[summary.minDifficulty]}）`
-                  : `（${DIFFICULTY_LABEL[summary.minDifficulty]} → ${DIFFICULTY_LABEL[summary.maxDifficulty]}）`}
+                  : ''}
               </span>
             </div>
           )}
@@ -92,9 +102,9 @@ export function PathTimeline({ kpId, kpName, onRetarget }: PathTimelineProps) {
         >
           刷新
         </Button>
-      </header>
+      </div>
 
-      <div className="p-4">
+      <div className="min-h-0 flex-1 overflow-y-auto p-5">
         {pathReq.error && <ErrorState message={pathReq.error} onRetry={() => void pathReq.reload()} />}
 
         {!pathReq.error && pathReq.loading && steps.length === 0 && (
@@ -113,75 +123,87 @@ export function PathTimeline({ kpId, kpName, onRetarget }: PathTimelineProps) {
             {/* 诚实披露：reason 全缺时只在这里说一次，不逐条喊"质量有问题"。
                 实测口径（2026-10-10）：11 条多步路径 / 26 步，reason 非空 0 —— 是后端口径，不是单点缺陷。 */}
             {summary.allReasonMissing && steps.length > 1 && (
-              <p className="mb-3 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs leading-relaxed text-slate-500">
+              <p className="mb-4 rounded-lg border border-atlas-line bg-atlas-paper px-3 py-2 text-xs leading-relaxed text-slate-500">
                 本路径每一步的「排序依据」（后端 <span className="font-mono">reason</span>）当前未返回 ——
                 顺序由硬前置依赖的拓扑排序确定，下面每步标注的是<span className="text-slate-600">可核对的先后关系</span>
                 （本步须先于下一步）；后端补上 <span className="font-mono">reason</span> 后会自动改回原文展示。
               </p>
             )}
-            <ol className="relative space-y-2.5">
-            {steps.map((step, index) => {
-              const color = difficultyColor(step.difficulty)
-              const isTarget = index === steps.length - 1
-              const nextStep = index < steps.length - 1 ? steps[index + 1] : null
-              return (
-                <li
-                  key={step.kp_id}
-                  className="xizhi-rise relative pl-11"
-                  style={{ animationDelay: `${Math.min(index * 60, 600)}ms` }}
-                >
-                  {/* 节点序号（里程碑）：语义 = 第 N 步 / 共 M 步 */}
-                  <span
-                    className="absolute left-0 top-2 flex h-7 w-7 items-center justify-center rounded-full border text-xs font-semibold tabular-nums"
-                    title={`第 ${step.order} 步 / 共 ${steps.length} 步`}
-                    aria-label={`路径第 ${step.order} 步，共 ${steps.length} 步`}
-                    style={
-                      isTarget
-                        ? { color: '#ffffff', backgroundColor: '#2563eb', borderColor: '#2563eb' }
-                        : { color, backgroundColor: `${color}14`, borderColor: `${color}66` }
-                    }
-                  >
-                    {step.order}
-                  </span>
-                  {/* 连接线 */}
-                  {index < steps.length - 1 && (
-                    <span className="absolute left-[13px] top-9 bottom-[-14px] w-px bg-slate-200" aria-hidden />
-                  )}
 
-                  <div
-                    className={[
-                      'rounded-lg border px-3 py-2.5',
-                      isTarget
-                        ? 'border-brand-500 bg-brand-50/50 ring-1 ring-brand-200'
-                        : step.is_start_point
-                          ? 'border-warning-line bg-warning-soft'
-                          : 'border-slate-200 bg-white',
-                    ].join(' ')}
+            <ol className="relative">
+              {steps.map((step, index) => {
+                const color = difficultyColor(step.difficulty)
+                const isTarget = index === steps.length - 1
+                const nextStep = index < steps.length - 1 ? steps[index + 1] : null
+                return (
+                  <li
+                    key={step.kp_id}
+                    className="xizhi-rise relative grid grid-cols-[46px_minmax(0,1fr)] gap-3.5 pb-5 last:pb-0 sm:grid-cols-[46px_minmax(0,1fr)_auto]"
+                    style={{ animationDelay: `${Math.min(index * 80, 640)}ms` }}
                   >
-                    <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-                      {/* 决赛任务 2：路径步骤名同样走可读标题；原名收进 title 悬停可见 */}
-                      <span
-                        className="text-sm font-medium text-slate-800"
-                        title={kpTitleAttr(step)}
-                      >
-                        {kpDisplayTitle(step)}
-                      </span>
-                      {isTarget && (
-                        <Badge color="#1d4ed8" dot>
-                          目标
-                        </Badge>
-                      )}
-                      {step.is_start_point && (
-                        <Badge color="#92400e" dot>
-                          起点
-                        </Badge>
-                      )}
-                      <Badge color={color}>
-                        难度 {step.difficulty} · {DIFFICULTY_LABEL[step.difficulty]}
-                      </Badge>
+                    {/* 连接线 */}
+                    {index < steps.length - 1 && (
+                      <span className="absolute bottom-0 left-[22px] top-[46px] w-px bg-[#c7c0b3]" aria-hidden />
+                    )}
+                    {/* 序号圆牌（里程碑）：起点=绿、目标=深蓝底荧光字 */}
+                    <span
+                      className={[
+                        'relative z-10 grid h-[46px] w-[46px] place-items-center rounded-full border font-serif text-lg italic',
+                        isTarget
+                          ? 'border-2 border-brand-600 bg-atlas-ink text-lime shadow-[0_0_0_5px_#dfe7ff]'
+                          : step.is_start_point
+                            ? 'border-[#84b09b] bg-[#e2f0e8] text-[#2d815e]'
+                            : 'border-[#c8c0b1] bg-atlas-sheet text-[#7c858d]',
+                      ].join(' ')}
+                      title={`第 ${step.order} 步 / 共 ${steps.length} 步`}
+                      aria-label={`路径第 ${step.order} 步，共 ${steps.length} 步`}
+                    >
+                      {String(step.order).padStart(2, '0')}
+                    </span>
+
+                    {/* 步骤主文 */}
+                    <div className="min-w-0 border-b border-[#ebe5d9] pb-4 [.xizhi-rise:last-child_&]:border-0">
+                      <div className="text-[10px] uppercase tracking-[0.1em] text-[#82909a]">
+                        {isTarget ? 'LEARNING TARGET / 目标' : step.is_start_point ? 'START / 起点' : 'PREREQUISITE / 先修'}
+                      </div>
+                      <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1">
+                        <span
+                          className="text-sm font-semibold tracking-tight text-atlas-ink"
+                          title={kpTitleAttr(step)}
+                        >
+                          {kpDisplayTitle(step)}
+                        </span>
+                        <span
+                          className="rounded-full px-2 py-0.5 text-xs font-medium"
+                          style={{ color, backgroundColor: `${color}14`, border: `1px solid ${color}40` }}
+                        >
+                          难度 {step.difficulty} · {DIFFICULTY_LABEL[step.difficulty]}
+                        </span>
+                      </div>
+
+                      {/* 排序依据：后端给了 reason 就原样展示；缺失时给可核对的先后关系 */}
+                      <p className="mt-1.5 text-xs leading-relaxed text-slate-600">
+                        {step.reason ? (
+                          <>
+                            <span className="font-medium text-slate-500">排序依据：</span>
+                            {step.reason}
+                          </>
+                        ) : nextStep ? (
+                          <>
+                            本步是第 {nextStep.order} 步「{kpDisplayTitle(nextStep)}」的先修 —— 未学完本步，下一步不成立。
+                          </>
+                        ) : (
+                          <>路径终点：完成本步即可学当前目标知识点。</>
+                        )}
+                      </p>
+                    </div>
+
+                    {/* 右列元信息：溯源锚 + 设为目标 */}
+                    <div className="col-start-2 flex items-center gap-2 sm:col-start-auto sm:flex-col sm:items-end sm:justify-start sm:pt-1">
+                      <KpIdChip kpId={step.kp_id} />
                       <button
                         type="button"
-                        className="ml-auto inline-flex min-h-11 items-center gap-1 text-xs text-brand-600 hover:underline sm:min-h-0"
+                        className="inline-flex min-h-11 items-center gap-1 text-xs text-brand-600 hover:underline sm:min-h-0"
                         title="以这一步为新的目标知识点，重新生成路径"
                         onClick={() => onRetarget(step.kp_id, kpDisplayTitle(step))}
                       >
@@ -189,49 +211,13 @@ export function PathTimeline({ kpId, kpName, onRetarget }: PathTimelineProps) {
                         设为目标
                       </button>
                     </div>
-
-                    {/* 排序依据：后端给了 reason 就原样展示；
-                        reason 缺失时**不编造、也不每步喊"质量有问题"** ——
-                        改说一句由路径顺序本身可核对的话（本步须先于下一步）。 */}
-                    <p className="mt-1.5 text-xs leading-relaxed text-slate-600">
-                      <span className="font-medium text-slate-500">
-                        {step.reason ? '排序依据：' : '先后关系：'}
-                      </span>
-                      {step.reason ? (
-                        step.reason
-                      ) : nextStep ? (
-                        <>
-                          本步是第 {nextStep.order} 步「{kpDisplayTitle(nextStep)}」的先修 —— 未学完本步，下一步不成立。
-                        </>
-                      ) : (
-                        <>路径终点：完成本步即可学当前目标知识点。</>
-                      )}
-                    </p>
-
-                    <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-slate-400">
-                      {/* 方案 C②：kp_id 降级为行尾可查小标签（悬停见完整 id、点击复制） */}
-                      <KpIdChip kpId={step.kp_id} />
-                      {step.is_start_point && (
-                        <span className="inline-flex items-center gap-1 text-warning">
-                          <Flag className="h-3 w-3" aria-hidden />
-                          入度为 0，可从零基础起步
-                        </span>
-                      )}
-                      {isTarget && (
-                        <span className="inline-flex items-center gap-1 text-brand-700">
-                          <Target className="h-3 w-3" aria-hidden />
-                          当前学习目标
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                </li>
-              )
-            })}
+                  </li>
+                )
+              })}
             </ol>
           </>
         )}
       </div>
-    </section>
+    </div>
   )
 }

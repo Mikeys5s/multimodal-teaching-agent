@@ -460,11 +460,11 @@ export function ExtractPanel({
 
   return (
     <section className="space-y-3">
-      <div className="xizhi-card p-4">
-        <header className="mb-3 flex items-baseline gap-2">
-          <Sparkles className="h-4 w-4 shrink-0 text-brand-500" aria-hidden />
-          <h2 className="text-sm font-semibold text-slate-800">知识点抽取</h2>
-          <span className="text-xs text-slate-400">
+      <div className="atlas-sheet-panel p-4">
+        <header className="mb-3 flex flex-wrap items-baseline gap-2">
+          <Sparkles className="h-4 w-4 shrink-0 text-brand-600" aria-hidden />
+          <h2 className="text-base font-semibold text-atlas-ink">从已完成素材中抽取知识点</h2>
+          <span className="text-xs text-atlas-muted">
             异步任务：单页 OCR 约需 140 秒，整批可能持续几十分钟
           </span>
         </header>

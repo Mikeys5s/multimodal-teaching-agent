@@ -67,27 +67,30 @@ export function TurnCard({ turn, active }: { turn: TurnView; active: boolean }) 
   const showAnswerBlock = Boolean(turn.state) || turn.answer !== '' || active || turn.incomplete
 
   return (
-    <article className="space-y-2">
-      {/* 学生提问 */}
+    <article className="xizhi-rise space-y-2.5">
+      {/* 学习者提问（深蓝气泡，靠右） */}
       <div className="flex justify-end">
-        <div className="max-w-[88%] rounded-2xl rounded-br-sm bg-brand-600 px-3.5 py-2 text-sm leading-relaxed text-white sm:max-w-[75%]">
-          {turn.question}
+        <div className="max-w-[88%] rounded-2xl rounded-br-sm bg-atlas-ink2 px-4 py-2.5 sm:max-w-[76%]">
+          <span className="mb-1 block text-[10px] tracking-[0.08em] text-[#b9c5d3]">学习者</span>
+          <span className="text-sm leading-relaxed text-[#f5f2e9]">{turn.question}</span>
         </div>
       </div>
 
       {/* 第 1 步 · 溯源（收到 retrieved 立刻渲染，先于任何 delta 文本） */}
       <TraceCard retrieved={turn.retrieved} pending={active} />
 
-      {/* 第 2 步 · 组织回答 */}
+      {/* 第 2 步 · 组织回答（暖纸卡片，靠左） */}
       {showAnswerBlock && (
-        <div className="rounded-xl border border-slate-200 bg-white p-3">
+        <div className="max-w-full rounded-2xl rounded-tl-sm border border-[#ddd7cb] bg-atlas-sheet p-4 shadow-[0_5px_14px_rgba(16,28,46,0.04)] sm:max-w-[88%]">
           <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-            <span className="text-xs font-medium text-slate-500">第 2 步 · 组织回答</span>
+            <span className="text-[10px] font-medium tracking-[0.08em] text-[#9aa4ae]">
+              析知 / 苏格拉底式引导 · 第 2 步 组织回答
+            </span>
             {turn.state ? <StateBadge state={turn.state} /> : active ? <Spinner className="h-3 w-3" /> : null}
           </div>
 
           {turn.answer !== '' ? (
-            <div className="whitespace-pre-wrap text-sm leading-relaxed text-slate-800">
+            <div className="whitespace-pre-wrap text-sm leading-7 text-[#354253]">
               {turn.answer}
               {streamingAnswer && (
                 <span className="ml-0.5 inline-block h-4 w-1.5 animate-pulse bg-brand-500 align-text-bottom" />
@@ -126,7 +129,7 @@ export function TurnCard({ turn, active }: { turn: TurnView; active: boolean }) 
 
       {/* 完成信息 */}
       {turn.done && (
-        <footer className="flex flex-wrap items-center gap-3 px-1 text-xs text-slate-400">
+        <footer className="flex flex-wrap items-center gap-3 px-1 text-xs text-atlas-muted">
           <span>本轮结束</span>
           <span className="font-mono">{turn.done.turn_id}</span>
           <span>耗时 {formatLatency(turn.done.latency_ms)}</span>

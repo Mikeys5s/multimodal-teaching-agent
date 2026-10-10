@@ -97,6 +97,15 @@ export default function Tutor() {
     return null
   }, [turns])
 
+  /** 最新一轮的检索命中 —— 「回答所依据的材料」面板的数据源（retrieved 事件先于回答到达） */
+  const latestRetrieved = useMemo(() => {
+    for (let index = turns.length - 1; index >= 0; index -= 1) {
+      const retrieved = turns[index]?.retrieved
+      if (retrieved) return retrieved
+    }
+    return null
+  }, [turns])
+
   const resetLocal = useCallback(() => {
     setSession(null)
     setTurns([])
@@ -251,40 +260,21 @@ export default function Tutor() {
   }
 
   return (
-    <div className="mx-auto max-w-6xl space-y-4">
-      {/* 会话条 */}
-      <section className="xizhi-card flex flex-wrap items-center justify-between gap-3 px-4 py-3">
-        <div className="flex flex-wrap items-baseline gap-3">
-          <h2 className="text-sm font-semibold text-slate-800">答疑会话</h2>
-          {session ? (
-            <>
-              <span className="font-mono text-xs text-slate-500">{session.session_id}</span>
-              <span className="text-xs text-slate-400">
-                学生 {STUDENT_LABEL} · 材料范围 全部材料
-                {' · '}
-                <span title="断线续推用的最后事件序号">Last-Event-ID {lastSeq ?? '—'}</span>
-              </span>
-            </>
-          ) : (
-            <span className="text-xs text-slate-400">尚未创建会话 —— 首次提问时会自动创建</span>
-          )}
+    <div className="mx-auto max-w-[1400px] space-y-4">
+      {/* 页头：编辑式标题 + 会话级操作 */}
+      <div className="flex flex-wrap items-end justify-between gap-4">
+        <div className="min-w-0">
+          <div className="atlas-eyebrow">
+            <span className="idx">05</span> SOCRATIC TUTOR / GUIDED QUESTIONING
+          </div>
+          <h2 className="atlas-h1 mt-2">先追问，再解释。</h2>
+          <p className="mt-2 max-w-[560px] text-[13px] leading-relaxed text-atlas-muted">
+            围绕已有材料逐步引导。答案可追溯到来源，遇到缺失内容会明确说明。
+          </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex shrink-0 items-center gap-2">
           <Button
             variant="secondary"
-            size="sm"
-            icon={<RefreshCw className="h-3.5 w-3.5" />}
-            disabled={!sessionId || stateReq.loading}
-            onClick={() => {
-              void stateReq.reload()
-              void reportReq.reload()
-            }}
-          >
-            刷新状态与报告
-          </Button>
-          <Button
-            variant="secondary"
-            size="sm"
             loading={busy}
             icon={<Plus className="h-3.5 w-3.5" />}
             onClick={() => void startSession()}
@@ -294,7 +284,6 @@ export default function Tutor() {
           {session && (
             <Button
               variant="danger"
-              size="sm"
               icon={<Trash2 className="h-3.5 w-3.5" />}
               onClick={() => void handleDeleteSession()}
             >
@@ -302,105 +291,134 @@ export default function Tutor() {
             </Button>
           )}
         </div>
-      </section>
+      </div>
 
-      <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_330px]">
-        {/* 左：问答流 */}
-        <div className="space-y-3">
-          <section className="xizhi-card p-3">
-            {/* 示例问题 —— 点一下填入输入框（**不自动提交**，留改的余地）*/}
-            <div className="mb-2">
-              <div className="mb-1.5 text-xs font-medium text-slate-500">
-                示例问题（点一下填入，可再修改）
-              </div>
-              <div className="flex flex-wrap gap-1.5">
-                {SAMPLE_QUESTIONS.map((item) => (
-                  <button
-                    key={item.q}
-                    type="button"
-                    onClick={() => setQuestion(item.q)}
-                    title={item.label}
-                    className={
-                      'inline-flex min-h-11 items-center rounded-full border px-3 text-xs transition-colors sm:min-h-8 ' +
-                      (item.scope === 'out'
-                        ? 'border-warning-line bg-warning-soft text-warning hover:bg-warning-line/60'
-                        : 'border-slate-200 bg-slate-50 text-slate-600 hover:border-brand-300 hover:text-brand-700')
-                    }
-                  >
-                    {item.q}
-                  </button>
-                ))}
-              </div>
-            </div>
-            <textarea
-              rows={3}
-              value={question}
-              onChange={(event) => setQuestion(event.target.value)}
-              onKeyDown={(event) => {
-                if (event.key === 'Enter' && (event.ctrlKey || event.metaKey)) {
-                  event.preventDefault()
-                  void handleAsk()
-                }
-              }}
-              placeholder="例如：三次握手为什么不是两次？（也可以点上面的示例）"
-              className="w-full resize-none rounded-lg border border-slate-200 px-3 py-2 text-sm leading-relaxed text-slate-800 outline-none placeholder:text-slate-400 focus:border-brand-300 focus:ring-2 focus:ring-brand-500/20"
-            />
-            <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
-              <span className="text-xs text-slate-400">
-                基于 {totalMaterials} 份材料作答 · 首轮只反问、不给答案 · Ctrl/⌘ + Enter 提交
-              </span>
-              <div className="flex items-center gap-2">
-                {streaming && (
-                  <Button variant="danger" icon={<Square className="h-3.5 w-3.5" />} onClick={handleAbort}>
-                    中断
-                  </Button>
+      <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_300px]">
+        {/* 左：暖纸对话区 */}
+        <section className="atlas-sheet-panel flex min-h-[600px] flex-col overflow-hidden">
+          {/* 会话头 */}
+          <div className="flex shrink-0 flex-wrap items-center justify-between gap-3 border-b border-[#ddd7cb] bg-atlas-paper2 px-5 py-3">
+            <div className="min-w-0">
+              <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+                <h3 className="text-sm font-semibold text-atlas-ink">答疑会话</h3>
+                {session && (
+                  <span className="font-mono text-xs text-atlas-muted">{session.session_id}</span>
                 )}
-                <Button
-                  loading={streaming}
-                  disabled={question.trim() === ''}
-                  icon={<SendHorizontal className="h-3.5 w-3.5" />}
-                  onClick={() => void handleAsk()}
-                >
-                  提问
-                </Button>
+              </div>
+              <div className="mt-0.5 text-[10px] text-[#808992]">
+                {session
+                  ? `学生 ${STUDENT_LABEL} · 材料范围 全部材料 · Last-Event-ID ${lastSeq ?? '—'}`
+                  : '尚未创建会话 —— 首次提问时会自动创建'}
               </div>
             </div>
-          </section>
+            <div className="flex items-center gap-2">
+              <span
+                className={[
+                  'inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium',
+                  streaming ? 'bg-brand-50 text-brand-700' : 'bg-success-soft text-success',
+                ].join(' ')}
+              >
+                <span className="h-1.5 w-1.5 rounded-full bg-current" aria-hidden />
+                {streaming ? '回答中' : '等待提问'}
+              </span>
+              <Button
+                variant="ghost"
+                size="sm"
+                icon={<RefreshCw className="h-3.5 w-3.5" />}
+                disabled={!sessionId || stateReq.loading}
+                title="刷新状态机与诊断报告"
+                aria-label="刷新状态机与诊断报告"
+                onClick={() => {
+                  void stateReq.reload()
+                  void reportReq.reload()
+                }}
+              />
+            </div>
+          </div>
 
-          {error && <InlineError>{error}</InlineError>}
+          {/* 对话体（暖纸颗粒底） */}
+          <div
+            className="min-h-0 flex-1 space-y-4 overflow-y-auto px-5 py-5"
+            style={{
+              backgroundImage: 'radial-gradient(rgba(16,28,46,0.07) 0.5px, transparent 0.7px)',
+              backgroundSize: '7px 7px',
+            }}
+          >
+            {error && <InlineError>{error}</InlineError>}
 
-          {/* 契约漂移告警：不阻断本轮回答，但会让断线续推错位，必须让人看见 */}
-          {protocolWarning && <InlineWarning>{protocolWarning.message}</InlineWarning>}
+            {/* 契约漂移告警：不阻断本轮回答，但会让断线续推错位，必须让人看见 */}
+            {protocolWarning && <InlineWarning>{protocolWarning.message}</InlineWarning>}
 
-          {turns.length === 0 ? (
-            <section className="xizhi-card p-5">
-              <p className="text-sm font-medium text-slate-700">提问后你会依次看到三件事</p>
-              <ol className="mt-2 list-decimal space-y-1.5 pl-5 text-xs leading-relaxed text-slate-500">
-                <li>
-                  <span className="text-slate-600">第 1 步 · 检索材料</span>
-                  ：先命中知识点与原文块；一条都没命中就直接拒答，绝不用材料外的知识作答。
-                </li>
-                <li>
-                  <span className="text-slate-600">第 2 步 · 组织回答</span>
-                  ：苏格拉底式反问 → 一级提示 → 二级提示 → 兜底讲解，逐字流式输出。
-                </li>
-                <li>
-                  <span className="text-slate-600">第 3 步 · 本轮诊断</span>
-                  ：涉及知识点、卡在哪一步（含来源证据）、下一步建议练习。
-                </li>
-              </ol>
-            </section>
-          ) : (
-            <section className="space-y-4">
-              {turns.map((turn) => (
+            {turns.length === 0 ? (
+              <div className="rounded-2xl border border-[#ddd7cb] bg-atlas-sheet p-5">
+                <p className="text-sm font-semibold text-atlas-ink">提问后你会依次看到三件事</p>
+                <ol className="mt-2 list-decimal space-y-1.5 pl-5 text-xs leading-relaxed text-slate-500">
+                  <li>
+                    <span className="text-slate-600">第 1 步 · 检索材料</span>
+                    ：先命中知识点与原文块；一条都没命中就直接拒答，绝不用材料外的知识作答。
+                  </li>
+                  <li>
+                    <span className="text-slate-600">第 2 步 · 组织回答</span>
+                    ：苏格拉底式反问 → 一级提示 → 二级提示 → 兜底讲解，逐字流式输出。
+                  </li>
+                  <li>
+                    <span className="text-slate-600">第 3 步 · 本轮诊断</span>
+                    ：涉及知识点、卡在哪一步（含来源证据）、下一步建议练习。
+                  </li>
+                </ol>
+              </div>
+            ) : (
+              turns.map((turn) => (
                 <TurnCard key={turn.key} turn={turn} active={turn.key === streamingKey} />
-              ))}
-            </section>
-          )}
-        </div>
+              ))
+            )}
+          </div>
 
-        {/* 右：状态机 + 诊断报告 */}
-        <aside className="space-y-4">
+          {/* 输入区（吸附内容底部） */}
+          <div className="shrink-0 border-t border-[#ded8cd] bg-[#f7f4ed] px-4 py-3">
+            <div className="rounded-xl border border-[#c9c2b6] bg-white p-3">
+              <textarea
+                rows={2}
+                value={question}
+                onChange={(event) => setQuestion(event.target.value)}
+                onKeyDown={(event) => {
+                  if (event.key === 'Enter' && (event.ctrlKey || event.metaKey)) {
+                    event.preventDefault()
+                    void handleAsk()
+                  }
+                }}
+                aria-label="输入问题"
+                placeholder="继续追问这一步，或输入你的问题…"
+                className="w-full resize-none bg-transparent text-sm leading-relaxed text-atlas-ink outline-none placeholder:text-slate-400"
+              />
+              <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
+                <span className="text-[10px] text-[#89919a]">
+                  回答范围：全部 {totalMaterials} 份材料 · 首轮只反问、不给答案 · Ctrl/⌘ + Enter 发送
+                </span>
+                <div className="flex items-center gap-2">
+                  {streaming && (
+                    <Button variant="danger" size="sm" icon={<Square className="h-3.5 w-3.5" />} onClick={handleAbort}>
+                      中断
+                    </Button>
+                  )}
+                  <button
+                    type="button"
+                    disabled={question.trim() === '' || streaming}
+                    onClick={() => void handleAsk()}
+                    aria-label="发送"
+                    className="inline-flex h-9 min-w-[44px] items-center justify-center gap-1.5 rounded-lg bg-brand-600 px-3 text-sm font-semibold text-white transition-colors duration-120 hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    <SendHorizontal className="h-4 w-4" aria-hidden />
+                    {streaming ? '…' : '发送'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* 右：原则板 + 追问建议 + 来源 + 报告 */}
+        <aside className="space-y-3">
           <StateMachinePanel
             state={stateReq.data}
             loading={stateReq.loading}
@@ -409,6 +427,64 @@ export default function Tutor() {
             onRefresh={() => void stateReq.reload()}
             currentKpName={currentKpName}
           />
+
+          {/* 建议继续追问（示例问题：点一下填入输入框，不自动提交） */}
+          <div className="rounded-2xl border border-atlas-line bg-atlas-sheet p-4">
+            <h3 className="text-xs font-semibold text-atlas-ink">建议继续追问</h3>
+            <div className="mt-2 space-y-1.5">
+              {SAMPLE_QUESTIONS.map((item, index) => (
+                <button
+                  key={item.q}
+                  type="button"
+                  onClick={() => setQuestion(item.q)}
+                  title={item.label}
+                  className="flex min-h-8 w-full items-start gap-2 rounded-lg px-1 py-1 text-left text-xs leading-relaxed text-[#4b5969] transition-colors duration-120 hover:bg-atlas-paper"
+                >
+                  <span
+                    className={[
+                      'grid h-4 w-4 shrink-0 place-items-center rounded-full text-[9px] font-medium',
+                      item.scope === 'out' ? 'bg-warning-soft text-warning' : 'bg-[#e2e9f7] text-brand-600',
+                    ].join(' ')}
+                  >
+                    {index + 1}
+                  </span>
+                  <span>{item.q}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* 回答所依据的材料（最新一轮 retrieved 事件） */}
+          <div className="rounded-2xl border border-atlas-line bg-atlas-sheet p-4">
+            <h3 className="text-xs font-semibold text-atlas-ink">回答所依据的材料</h3>
+            {latestRetrieved ? (
+              <>
+                <div className="mt-2 flex flex-wrap gap-1.5">
+                  {latestRetrieved.kp_ids.slice(0, 6).map((id, i) => (
+                    <span
+                      key={id}
+                      title={`知识点 id：${id}`}
+                      className="inline-flex items-center rounded-md bg-atlas-ink3 px-2 py-1 text-[10px] text-[#dbe4ef]"
+                    >
+                      {latestRetrieved.kp_names?.[i]?.trim() || id}
+                    </span>
+                  ))}
+                  {latestRetrieved.kp_ids.length === 0 && (
+                    <span className="text-xs text-atlas-muted">本轮未命中知识点</span>
+                  )}
+                </div>
+                <p className="mt-2 text-[10px] leading-relaxed text-atlas-muted">
+                  命中 {latestRetrieved.kp_ids.length} 个知识点 / {latestRetrieved.block_ids.length} 个原文块；
+                  回答只用这些材料，不用材料外的知识。
+                </p>
+              </>
+            ) : (
+              <p className="mt-2 text-xs leading-relaxed text-atlas-muted">
+                提问后这里会列出本轮回答命中的知识点与原文块。
+              </p>
+            )}
+          </div>
+
           <ReportPanel
             report={reportReq.data}
             loading={reportReq.loading}
@@ -416,6 +492,15 @@ export default function Tutor() {
             enabled={sessionId !== null}
             onRefresh={() => void reportReq.reload()}
           />
+
+          <div className="rounded-2xl bg-[#dbe7f4] p-4">
+            <blockquote className="font-serif text-base italic leading-snug text-[#233a56]">
+              理解的路径，也应该能被看见。
+            </blockquote>
+            <small className="mt-2 block text-[10px] tracking-wide text-[#687d98]">
+              SOCRATIC LEARNING / XI ZHI
+            </small>
+          </div>
         </aside>
       </div>
     </div>

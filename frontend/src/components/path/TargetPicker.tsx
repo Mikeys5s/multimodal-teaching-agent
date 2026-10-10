@@ -13,19 +13,30 @@ import type { Difficulty, KnowledgePoint } from '@/lib/types'
 
 const DIFFICULTY_OPTIONS: Difficulty[] = [1, 2, 3, 4, 5]
 
-export interface TargetPickerProps {
-  selectedId: string | null
-  onSelect: (kp: KnowledgePoint) => void
+export interface TargetPickerState {
+  items: KnowledgePoint[]
+  total: number | null
+  loading: boolean
+  error: string | null
+  filtered: boolean
+  reload: () => void
+  setDraftKeyword: (value: string) => void
+  draftKeyword: string
+  submitKeyword: () => void
+  resetFilters: () => void
+  difficulty: Difficulty | ''
+  setDifficulty: (value: Difficulty | '') => void
+  chapterId: string
+  setChapterId: (value: string) => void
+  chapters: { id: string; title: string }[]
 }
 
 /**
- * 目标知识点选择器。
- *
- * `/learning-path` 与 `/gap-analysis` 的入参都是**一个知识点的 id**（api-spec §4.4），
- * 不是整张图 —— 所以必须先让用户选定一个目标知识点，再往下拉路径与卡点回溯。
+ * 目标知识点的查询状态（`/learning-path` 与 `/gap-analysis` 的入参都是一个知识点 id，
+ * api-spec §4.4 —— 必须先选定目标再拉路径与卡点回溯）。
  * 过滤参数直接映射 `KnowledgePointQuery`（api-spec §4.2），不额外造字段。
  */
-export function TargetPicker({ selectedId, onSelect }: TargetPickerProps) {
+export function useTargetPickerState(): TargetPickerState {
   const [draftKeyword, setDraftKeyword] = useState('')
   const [keyword, setKeyword] = useState('')
   const [difficulty, setDifficulty] = useState<Difficulty | ''>('')
@@ -72,103 +83,140 @@ export function TargetPicker({ selectedId, onSelect }: TargetPickerProps) {
     setChapterId('')
   }
 
+  return {
+    items,
+    total: listReq.data?.total ?? null,
+    loading: listReq.loading,
+    error: listReq.error,
+    filtered,
+    reload: () => void listReq.reload(),
+    setDraftKeyword,
+    draftKeyword,
+    submitKeyword: () => setKeyword(draftKeyword.trim()),
+    resetFilters,
+    difficulty,
+    setDifficulty,
+    chapterId,
+    setChapterId,
+    chapters,
+  }
+}
+
+/** 筛选行：搜索 + 难度/章节胶囊 + 查询（胶囊式，与图谱筛选行同构） */
+export function TargetFilters({ state }: { state: TargetPickerState }) {
   return (
-    <section className="xizhi-card">
-      <header className="flex items-center justify-between border-b border-slate-100 px-4 py-3">
-        <div className="flex items-baseline gap-3">
-          <h2 className="text-sm font-semibold text-slate-800">目标知识点</h2>
-          <span className="text-xs text-slate-400">
-            {listReq.data ? `共 ${listReq.data.total} 个` : '加载中…'}
-            {filtered && items.length > 0 && ` · 显示 ${items.length} 个`}
-          </span>
-        </div>
-        <Button
-          variant="secondary"
-          size="sm"
-          loading={listReq.loading}
-          icon={<RefreshCw className="h-3.5 w-3.5" />}
-          onClick={() => void listReq.reload()}
-        >
-          刷新
-        </Button>
-      </header>
+    <form
+      className="flex flex-wrap items-center gap-2"
+      onSubmit={(event) => {
+        event.preventDefault()
+        state.submitKeyword()
+      }}
+    >
+      <label className="relative min-w-0 flex-1 sm:min-w-[240px]">
+        <span className="sr-only">按知识点名称搜索</span>
+        <Search
+          className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400"
+          aria-hidden
+        />
+        <input
+          value={state.draftKeyword}
+          onChange={(event) => state.setDraftKeyword(event.target.value)}
+          placeholder="按知识点名称搜索，回车确认"
+          className="h-11 w-full rounded-lg border border-[#d5cfc3] bg-atlas-sheet pl-9 pr-3 text-sm text-slate-700 placeholder:text-slate-400 focus:xizhi-focus sm:h-10"
+        />
+      </label>
 
-      <div className="space-y-3 p-4">
-        <form
-          className="flex flex-wrap items-end gap-2"
-          onSubmit={(event) => {
-            event.preventDefault()
-            setKeyword(draftKeyword.trim())
+      <label className="inline-flex items-center gap-1.5 rounded-full border border-[#d2ccbf] bg-atlas-sheet px-3 py-2 text-xs text-[#536073]">
+        难度
+        <select
+          value={state.difficulty === '' ? '' : String(state.difficulty)}
+          onChange={(event) => {
+            const value = event.target.value
+            state.setDifficulty(value === '' ? '' : (Number(value) as Difficulty))
           }}
+          aria-label="按难度筛选"
+          className="bg-transparent text-xs text-atlas-ink outline-none"
         >
-          <label className="flex min-w-[220px] flex-1 flex-col gap-1">
-            <span className="text-xs text-slate-500">关键词</span>
-            <div className="relative">
-              <Search
-                className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400"
-                aria-hidden
-              />
-              <input
-                value={draftKeyword}
-                onChange={(event) => setDraftKeyword(event.target.value)}
-                placeholder="按知识点名称搜索，回车确认"
-                className="h-11 w-full rounded-lg border border-slate-300 bg-white pl-8 pr-3 text-sm text-slate-700 placeholder:text-slate-400 focus:xizhi-focus sm:h-10"
-              />
-            </div>
-          </label>
+          <option value="">全部难度</option>
+          {DIFFICULTY_OPTIONS.map((value) => (
+            <option key={value} value={value}>
+              {value} · {DIFFICULTY_LABEL[value]}
+            </option>
+          ))}
+        </select>
+      </label>
 
-          <label className="flex w-full flex-col gap-1 sm:w-auto">
-            <span className="text-xs text-slate-500">难度</span>
-            <select
-              value={difficulty === '' ? '' : String(difficulty)}
-              onChange={(event) => {
-                const value = event.target.value
-                setDifficulty(value === '' ? '' : (Number(value) as Difficulty))
-              }}
-              className="h-11 w-full rounded-lg border border-slate-300 bg-white px-2 text-sm text-slate-700 sm:h-10 sm:w-auto"
-            >
-              <option value="">全部难度</option>
-              {DIFFICULTY_OPTIONS.map((value) => (
-                <option key={value} value={value}>
-                  {value} · {DIFFICULTY_LABEL[value]}
-                </option>
-              ))}
-            </select>
-          </label>
+      <label className="inline-flex items-center gap-1.5 rounded-full border border-[#d2ccbf] bg-atlas-sheet px-3 py-2 text-xs text-[#536073]">
+        章节
+        <select
+          value={state.chapterId}
+          onChange={(event) => state.setChapterId(event.target.value)}
+          aria-label="按章节筛选"
+          className="max-w-[160px] bg-transparent text-xs text-atlas-ink outline-none"
+        >
+          <option value="">全部章节</option>
+          {state.chapters.map((chapter) => (
+            <option key={chapter.id} value={chapter.id}>
+              {chapter.title || chapter.id}
+            </option>
+          ))}
+        </select>
+      </label>
 
-          <label className="flex w-full flex-col gap-1 sm:w-auto">
-            <span className="text-xs text-slate-500">章节</span>
-            <select
-              value={chapterId}
-              onChange={(event) => setChapterId(event.target.value)}
-              className="h-11 w-full rounded-lg border border-slate-300 bg-white px-2 text-sm text-slate-700 sm:h-10 sm:w-auto sm:min-w-[160px]"
-            >
-              <option value="">全部章节</option>
-              {chapters.map((chapter) => (
-                <option key={chapter.id} value={chapter.id}>
-                  {chapter.title || chapter.id}
-                </option>
-              ))}
-            </select>
-          </label>
+      <Button type="submit" loading={state.loading}>
+        查询
+      </Button>
+      {state.filtered && (
+        <button type="button" className="min-h-11 text-xs text-brand-600 hover:underline sm:min-h-0" onClick={state.resetFilters}>
+          清空筛选
+        </button>
+      )}
 
-          <Button type="submit" size="md" loading={listReq.loading}>
-            查询
-          </Button>
-          {filtered && (
-            <button type="button" className="pb-2 text-xs text-brand-600 hover:underline" onClick={resetFilters}>
-              清空筛选
-            </button>
-          )}
-        </form>
+      <span className="ml-auto hidden text-xs text-atlas-muted md:inline">
+        {state.total !== null ? `共 ${state.total} 个` : '加载中…'}
+        {state.filtered && state.items.length > 0 && ` · 显示 ${state.items.length} 个`}
+      </span>
+      <Button
+        type="button"
+        variant="ghost"
+        size="sm"
+        loading={state.loading}
+        icon={<RefreshCw className="h-3.5 w-3.5" />}
+        onClick={state.reload}
+      >
+        刷新
+      </Button>
+    </form>
+  )
+}
 
-        {listReq.error && <ErrorState message={listReq.error} onRetry={() => void listReq.reload()} />}
+/** INDEX 侧栏：可点的目标清单（path-board 左栏） */
+export function TargetIndex({
+  state,
+  selectedId,
+  onSelect,
+}: {
+  state: TargetPickerState
+  selectedId: string | null
+  onSelect: (kp: KnowledgePoint) => void
+}) {
+  const { items, loading, error, filtered, reload } = state
 
-        {!listReq.error && listReq.loading && items.length === 0 && (
-          <LoadingState label="正在加载知识点…" />
-        )}
+  return (
+    <div className="flex min-h-0 flex-col">
+      <div className="border-b border-[#d7d0c4] px-4 pb-3 pt-4">
+        <div className="atlas-eyebrow !text-[10px]">
+          <span className="idx">INDEX</span> TARGET LIST
+        </div>
+        <h3 className="mt-2 text-sm font-semibold text-atlas-ink">选择一个目标</h3>
+      </div>
 
-        {!listReq.error && !listReq.loading && items.length === 0 && (
+      <div className="min-h-0 flex-1 overflow-y-auto px-2 py-2">
+        {error && <ErrorState message={error} onRetry={reload} />}
+
+        {!error && loading && items.length === 0 && <LoadingState label="正在加载知识点…" />}
+
+        {!error && !loading && items.length === 0 && (
           <EmptyState
             title={filtered ? '没有匹配的知识点' : '还没有知识点'}
             description={
@@ -189,55 +237,40 @@ export function TargetPicker({ selectedId, onSelect }: TargetPickerProps) {
           />
         )}
 
-        {items.length > 0 && (
-          <ul className="max-h-72 space-y-1.5 overflow-y-auto pr-1">
-            {items.map((kp) => {
-              const active = kp.id === selectedId
-              return (
-                <li key={kp.id}>
-                  <button
-                    type="button"
-                    onClick={() => onSelect(kp)}
-                    aria-pressed={active}
-                    className={[
-                      'flex w-full items-start justify-between gap-3 rounded-lg border px-3 py-2 text-left transition-colors',
-                      active
-                        ? 'border-brand-500 bg-brand-50/70'
-                        : 'border-slate-200 bg-white hover:border-brand-300 hover:bg-slate-50',
-                    ].join(' ')}
+        <ul className="space-y-0.5">
+          {items.map((kp) => {
+            const active = kp.id === selectedId
+            return (
+              <li key={kp.id}>
+                <button
+                  type="button"
+                  onClick={() => onSelect(kp)}
+                  aria-pressed={active}
+                  className={[
+                    'w-full rounded-lg px-2.5 py-2 text-left transition-colors duration-120',
+                    active
+                      ? 'bg-[#dce5f4] text-[#15294a]'
+                      : 'text-[#596675] hover:bg-atlas-paper',
+                  ].join(' ')}
+                >
+                  <span
+                    className="block truncate text-xs font-medium"
+                    title={kpTitleAttr(kp) ?? kp.name}
                   >
-                    <div className="min-w-0">
-                      {/* 决赛任务 2：目标选择列表也走可读标题；原名收进 title 悬停可见 */}
-                      <div
-                        className="truncate text-sm font-medium text-slate-700"
-                        title={kpTitleAttr(kp) ?? kp.name}
-                      >
-                        {kpDisplayTitle(kp)}
-                      </div>
-                      <div className="mt-0.5 truncate text-xs text-slate-400">
-                        {kp.chapter.number} {kp.chapter.title}
-                        {kp.section.title ? ` · ${kp.section.title}` : ''}
-                      </div>
-                    </div>
-                    <div className="flex shrink-0 items-center gap-2">
-                      <span className="text-xs text-slate-400">
-                        前置 {kp.prerequisite_count} · 误区 {kp.misconception_count}
-                      </span>
-                      <DifficultyBadge difficulty={kp.difficulty} />
-                    </div>
-                  </button>
-                </li>
-              )
-            })}
-          </ul>
-        )}
-
-        {items.length > 0 && (
-          <p className="text-xs text-slate-400">
-            选中一个知识点后，下方会按它的硬前置依赖输出拓扑有序的学习路径，并做卡点根因回溯。
-          </p>
-        )}
+                    {kpDisplayTitle(kp)}
+                  </span>
+                  <span className="mt-1 flex items-center gap-2 text-[10px] text-[#888f93]">
+                    <span>
+                      前置 {kp.prerequisite_count} · 误区 {kp.misconception_count}
+                    </span>
+                    <DifficultyBadge difficulty={kp.difficulty} />
+                  </span>
+                </button>
+              </li>
+            )
+          })}
+        </ul>
       </div>
-    </section>
+    </div>
   )
 }

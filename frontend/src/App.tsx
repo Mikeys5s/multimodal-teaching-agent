@@ -38,20 +38,24 @@ function useCurrentNav(): NavItem | undefined {
   )
 }
 
+/** Learning Atlas 品牌块：lime 地图徽标 + 名称 + 制图档案编号 */
 function BrandBlock() {
   return (
-    <div className="px-5 py-4">
-      <div className="flex items-center gap-2.5">
-        {/* 记忆点徽标：节点 + 依赖边，呼应「知识地图」母题 */}
-        <svg width="26" height="26" viewBox="0 0 26 26" fill="none" aria-hidden className="shrink-0">
-          <path d="M7 19 L19 7" stroke="#2563eb" strokeWidth="1.6" strokeDasharray="0" />
-          <circle cx="7" cy="19" r="3.2" fill="#eff6ff" stroke="#2563eb" strokeWidth="1.6" />
-          <circle cx="19" cy="7" r="3.2" fill="#2563eb" />
-          <circle cx="19" cy="19" r="2.2" fill="none" stroke="#94a3b8" strokeWidth="1.4" strokeDasharray="2.5 2.5" />
-        </svg>
-        <div>
-          <div className="text-lg font-semibold tracking-tight text-slate-900">析知 XiZhi</div>
-          <div className="mt-0.5 text-xs text-slate-500">多模态教学智能体</div>
+    <div className="flex items-center gap-3 border-b border-white/10 px-2 pb-6 pt-1">
+      <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+        strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"
+        aria-hidden className="shrink-0 text-lime">
+        <circle cx="6" cy="6" r="2.5" fill="currentColor" stroke="none" />
+        <circle cx="18" cy="6" r="2.5" />
+        <circle cx="12" cy="18" r="2.5" />
+        <path d="M8.5 6h7M7.5 8l3 7M16.5 8l-3 7" />
+      </svg>
+      <div className="min-w-0">
+        <div className="truncate text-xl font-bold leading-none tracking-tight text-[#f8f5ec]">
+          析知 <span className="font-medium text-[#9ba8b8]">XiZhi</span>
+        </div>
+        <div className="mt-1.5 text-[10px] uppercase tracking-[0.13em] text-[#a9b4c1]">
+          LEARNING ATLAS / 01
         </div>
       </div>
     </div>
@@ -60,7 +64,10 @@ function BrandBlock() {
 
 function NavList({ onNavigate }: { onNavigate?: () => void }) {
   return (
-    <nav className="flex-1 space-y-1 overflow-y-auto p-3" aria-label="主导航">
+    <nav className="flex-1 space-y-1.5 overflow-y-auto py-3" aria-label="主导航">
+      <div className="px-2 pb-2 pt-4 text-[10px] font-bold uppercase tracking-[0.19em] text-[#7f8da0]">
+        Workspace
+      </div>
       {NAV_ITEMS.map((item) => {
         const Icon = item.icon
         return (
@@ -71,15 +78,15 @@ function NavList({ onNavigate }: { onNavigate?: () => void }) {
             onClick={onNavigate}
             className={({ isActive }) =>
               [
-                'flex min-h-11 items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors duration-120',
+                'flex min-h-11 items-center gap-3 rounded-xl border border-transparent px-3 text-[13px] transition-all duration-220',
                 isActive
-                  ? 'bg-brand-50 font-medium text-brand-700'
-                  : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900',
+                  ? 'border-[#7e99ff]/30 bg-gradient-to-r from-brand-600/30 to-brand-600/5 font-medium text-white shadow-[inset_3px_0_0_0_#7292ff]'
+                  : 'text-[#c6ced8] hover:translate-x-0.5 hover:bg-white/5 hover:text-white',
               ].join(' ')
             }
           >
-            <Icon className="h-4 w-4 shrink-0" aria-hidden />
-            <span className="flex-1">{item.label}</span>
+            <Icon className="h-[17px] w-[17px] shrink-0" aria-hidden />
+            <span className="flex-1 truncate">{item.label}</span>
           </NavLink>
         )
       })}
@@ -87,12 +94,53 @@ function NavList({ onNavigate }: { onNavigate?: () => void }) {
   )
 }
 
+/** SPEC 冻结提示 —— 基线纪律必须保留可见（必要信息不低于 12px） */
 function SpecNote() {
   return (
-    <div className="border-t border-slate-200 px-5 py-3 text-xs leading-relaxed text-slate-400">
-      SPEC v2.3 · 已冻结基线
+    <div className="border-t border-white/10 px-2.5 pb-1 pt-3 text-xs leading-relaxed text-[#94a1b2]">
+      <strong className="font-semibold text-lime">SPEC v2.3</strong>
       <br />
-      偏离本 SPEC 的实现视为缺陷
+      知识有来处，学习有方向。
+      <br />
+      已冻结基线 · 偏离属于缺陷
+    </div>
+  )
+}
+
+/** 深色制图侧栏（桌面常驻 + 移动抽屉共用） */
+function AtlasRail({ onNavigate, showClose, onClose }: { onNavigate?: () => void; showClose?: boolean; onClose?: () => void }) {
+  return (
+    <div className="relative flex h-full flex-col overflow-hidden bg-atlas-ink px-4 py-6 text-[#f8f5ec]">
+      {/* 制图氛围层（纯装饰） */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0"
+        style={{
+          background:
+            'linear-gradient(160deg, rgba(49,92,255,0.12), transparent 38%), radial-gradient(circle at 15% 90%, rgba(98,200,180,0.10), transparent 29%)',
+        }}
+      />
+      <div className="relative z-10 flex items-start justify-between">
+        <div className="min-w-0 flex-1">
+          <BrandBlock />
+        </div>
+        {showClose && (
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="关闭导航菜单"
+            className="-mr-1 -mt-1 inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-lg text-[#c6ced8] hover:bg-white/10 hover:text-white"
+          >
+            <X className="h-5 w-5" aria-hidden />
+          </button>
+        )}
+      </div>
+      <div className="relative z-10 flex min-h-0 flex-1 flex-col">
+        <NavList onNavigate={onNavigate} />
+      </div>
+      <div className="relative z-10">
+        <SpecNote />
+      </div>
     </div>
   )
 }
@@ -136,16 +184,12 @@ export default function App() {
 
   return (
     <div className="flex h-full min-w-0">
-      {/* 桌面侧栏（≥lg 常驻） */}
-      <aside className="hidden w-60 shrink-0 flex-col border-r border-slate-200 bg-white lg:flex">
-        <div className="border-b border-slate-200">
-          <BrandBlock />
-        </div>
-        <NavList />
-        <SpecNote />
+      {/* 桌面侧栏（≥lg 常驻，240px） */}
+      <aside className="hidden w-60 shrink-0 lg:block">
+        <AtlasRail />
       </aside>
 
-      {/* 移动抽屉（<lg） */}
+      {/* 移动抽屉（<lg，≤320px 左抽屉 + 遮罩） */}
       {drawerOpen && (
         <div className="fixed inset-0 z-40 lg:hidden" role="dialog" aria-modal="true" aria-label="导航菜单">
           <div
@@ -155,31 +199,17 @@ export default function App() {
           />
           <div
             ref={drawerRef}
-            className="absolute inset-y-0 left-0 flex w-72 max-w-[320px] flex-col bg-white shadow-overlay transition-transform duration-220"
+            className="absolute inset-y-0 left-0 w-72 max-w-[320px] shadow-overlay"
           >
-            <div className="flex items-center justify-between border-b border-slate-200 pr-2">
-              <div className="flex-1">
-                <BrandBlock />
-              </div>
-              <button
-                type="button"
-                onClick={closeDrawer}
-                aria-label="关闭导航菜单"
-                className="mr-2 inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100 hover:text-slate-900"
-              >
-                <X className="h-5 w-5" aria-hidden />
-              </button>
-            </div>
-            <NavList onNavigate={closeDrawer} />
-            <SpecNote />
+            <AtlasRail onNavigate={closeDrawer} showClose onClose={closeDrawer} />
           </div>
         </div>
       )}
 
       {/* 主区 */}
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="flex h-14 shrink-0 items-center justify-between gap-3 border-b border-slate-200 bg-white px-4 sm:px-6">
-          <div className="flex min-w-0 items-center gap-2">
+        <header className="flex h-[62px] shrink-0 items-center justify-between gap-3 border-b border-[#101c2e]/10 bg-atlas-sheet/70 px-4 backdrop-blur-md sm:px-8">
+          <div className="flex min-w-0 items-center gap-2.5">
             <button
               ref={menuButtonRef}
               type="button"
@@ -190,15 +220,27 @@ export default function App() {
             >
               <Menu className="h-5 w-5" aria-hidden />
             </button>
-            <div className="flex min-w-0 items-baseline gap-3">
-              <h1 className="truncate text-base font-semibold text-slate-900">{current?.label ?? '析知'}</h1>
-              <span className="hidden truncate text-xs text-slate-400 sm:inline">{current?.hint}</span>
-            </div>
+            {/* 面包屑：知识工作台 / 当前页（小屏收起面包屑、保留页名） */}
+            <nav aria-label="当前位置" className="flex min-w-0 items-center gap-2 text-xs text-[#7d8490]">
+              <span className="hidden sm:inline">知识工作台</span>
+              <span aria-hidden className="hidden text-[#c1b8a9] sm:inline">/</span>
+              <h1 className="truncate text-sm font-semibold text-atlas-ink">{current?.label ?? '析知'}</h1>
+            </nav>
           </div>
-          <BackendStatus />
+          <div className="flex shrink-0 items-center gap-4">
+            <BackendStatus />
+            <span
+              aria-hidden
+              className="hidden h-[27px] w-[27px] items-center justify-center rounded-full bg-brand-600 text-2xs font-bold text-white sm:inline-flex"
+              title="析知 XiZhi"
+            >
+              知
+            </span>
+          </div>
         </header>
 
-        <main className="min-h-0 min-w-0 flex-1 overflow-auto px-4 py-5 sm:px-6 lg:px-8">
+        {/* key=pathname：切页时整组内容以 220ms 淡入上移（reduced-motion 时瞬时切换） */}
+        <main key={pathname} className="xizhi-page-enter min-h-0 min-w-0 flex-1 overflow-auto px-4 py-6 sm:px-6 lg:px-8">
           <Outlet />
         </main>
       </div>
