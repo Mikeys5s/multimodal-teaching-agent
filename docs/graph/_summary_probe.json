@@ -1,0 +1,1341 @@
+{
+  "rows": [
+    {
+      "kp_id": "kp_ada1063f_000_000_001",
+      "raw_name": "Problem: Not All Networks are",
+      "summary_md": "Problem: Not All Networks are Directly Connected",
+      "name": "Problem: Not All Networks are ",
+      "page": 1
+    },
+    {
+      "kp_id": "kp_cf6fcaa0_000_000_002",
+      "raw_name": "how fast sources",
+      "summary_md": "how fast sources are allowed to send packets. This is done in an effort to keep congestion from occurring in the ﬁrst place and, should it occur, to help eliminate the congestion.",
+      "name": "how fast sources",
+      "page": 2
+    },
+    {
+      "kp_id": "kp_42b16cd4_000_000_002",
+      "raw_name": "Problem: Getting Processes to",
+      "summary_md": "Problem: Getting Processes to Communicate",
+      "name": "Problem: Getting Processes to ",
+      "page": 1
+    },
+    {
+      "kp_id": "kp_ada1063f_000_000_002",
+      "raw_name": "The core job of a switch",
+      "summary_md": "The core job of a switch is to take packets that arrive on an input and forward (or switch) them to the right output so that they will reach their appropriate destination. There are a variety of ways that the switch can determine the “right” output for a packet, which can be broadly categorized as connectionless and connection-oriented approaches. These two approaches have both found important application areas over the years.",
+      "name": "The core job of a switch",
+      "page": 1
+    },
+    {
+      "kp_id": "kp_42b16cd4_000_000_003",
+      "raw_name": "Such a network",
+      "summary_md": "Such a network is said to provide a best-effort level of service, as exempliﬁed by the Internet.",
+      "name": "Such a network",
+      "page": 2
+    },
+    {
+      "kp_id": "kp_cf6fcaa0_000_000_005",
+      "raw_name": "Note that congestion control",
+      "summary_md": "Note that congestion control is a different problem than routing. While it is true that a congested link could be assigned a large edge weight by the routing protocol, and, as a consequence, routers would route around it, “routing around” a congested link does not generally solve the congestion problem. To see this, we need look no further than the simple network depicted in Figure 6.1, where all trafﬁc has to ﬂow through the same router to reach the destination. Although this is an extreme exam",
+      "name": "Note that congestion control",
+      "page": 3
+    },
+    {
+      "kp_id": "kp_ada1063f_000_000_005",
+      "raw_name": "One thing that",
+      "summary_md": "One thing that is common to all networks is that we need to have a way to identify the end nodes. Such identiﬁers are usually called addresses. We have already seen examples of addresses, such as the 48-bit address used for Ethernet. The only requirement for Ethernet addresses is that no two nodes on a network have the same address. This is accomplished by making sure that all Ethernet cards are assigned a globally unique identiﬁer. For the following discussion, we assume that each host has a gl",
+      "name": "One thing that",
+      "page": 3
+    },
+    {
+      "kp_id": "kp_42b16cd4_000_000_006",
+      "raw_name": "The next issue",
+      "summary_md": "The next issue is how a process learns the port for the process to which it wants to send a message. Typically, a client process initiates a message exchange with a server process. Once a client has contacted a server, the server knows the client’s port (from the SrcPrt ﬁeld contained in the message header) and can reply to it. The real problem, therefore, is how the client learns the server’s port in the ﬁrst place. A common approach is for the server to accept messages at a well-known port. Th",
+      "name": "The next issue",
+      "page": 3
+    },
+    {
+      "kp_id": "kp_ada1063f_000_000_006",
+      "raw_name": "Another assumption that we nee",
+      "summary_md": "Another assumption that we need to make is that there is some way to identify the input and output ports of each switch. There are at least two sensible ways to identify ports: One is to number each port, and the other is to identify the port by the name of the node (switch or host) to which it leads. For now, we use numbering",
+      "name": "Another assumption that we nee",
+      "page": 3
+    },
+    {
+      "kp_id": "kp_cf6fcaa0_000_000_008",
+      "raw_name": "There",
+      "summary_md": "There are countless ways in which resource allocation mechanisms differ, so creating a thorough taxonomy is a difﬁcult proposition. For now, we describe three dimensions along which resource allocation mecha- nisms can be characterized; more subtle distinctions will be called out during the course of this chapter.",
+      "name": "There",
+      "page": 5
+    },
+    {
+      "kp_id": "kp_ada1063f_000_000_009",
+      "raw_name": "The idea behind datagrams",
+      "summary_md": "The idea behind datagrams is incredibly simple: You just include in every packet enough information to enable any switch to decide how to get it to its destination. That is, every packet contains the complete desti- nation address. Consider the example network illustrated in Figure 3.2, in which the hosts have addresses A, B, C, and so on. To decide how to forward a packet, a switch consults a forwarding table (sometimes called a routing table), an example of which is depicted in Table 3.1. This",
+      "name": "The idea behind datagrams",
+      "page": 4
+    },
+    {
+      "kp_id": "kp_ada1063f_000_000_010",
+      "raw_name": "This last fact",
+      "summary_md": "This last fact is particularly important to the history of datagram networks. One of the important design goals of the Internet is robustness to failures, and history has shown it to be quite effective at meeting this goal. Since datagram-based networks are the dominant technology discussed in this book, we postpone illustrative examples for the following sections, and move on to the two main alternatives.",
+      "name": "This last fact",
+      "page": 5
+    },
+    {
+      "kp_id": "kp_42b16cd4_000_000_011",
+      "raw_name": "At the heart of TCP",
+      "summary_md": "At the heart of TCP is the sliding window algorithm. Even though this is the same basic algorithm as is often used at the link level, because TCP runs over the Internet rather than a physical point-to-point link, there are many important differences. This subsection identiﬁes these differences and explains how they complicate TCP. The following subsections then describe how TCP addresses these and other complications.",
+      "name": "At the heart of TCP",
+      "page": 5
+    },
+    {
+      "kp_id": "kp_cf6fcaa0_000_000_012",
+      "raw_name": "Note that it",
+      "summary_md": "Note that it is not obvious that power is the right metric for judging resource allocation effectiveness. For one thing, the theory behind power is based on an M/M/1 queuing network that assumes inﬁnite queues;1 real networks have ﬁnite buffers and sometimes have to drop packets. For another, power is typically deﬁned relative to a single connection (ﬂow); it is not clear how it extends to multiple, competing connections. Despite these rather severe limitations, however, no alternatives have gai",
+      "name": "Note that it",
+      "page": 8
+    },
+    {
+      "kp_id": "kp_cf6fcaa0_000_000_014",
+      "raw_name": "Since this",
+      "summary_md": "1 Since this is not a queuing theory book, we provide only this brief description of an M/M/1 queue. The 1 means it has a single server, and the Ms mean that the distribution of both packet arrival and service times is Markovian, that is, exponential.",
+      "name": "Since this",
+      "page": 8
+    },
+    {
+      "kp_id": "kp_42b16cd4_000_000_014",
+      "raw_name": "The problem with this latter a",
+      "summary_md": "The problem with this latter approach is that a sequence of hop-by-hop guarantees does not necessarily add up to an end-to-end guarantee. First, if a heterogeneous link (say, an Ethernet) is added to one end of the path, then there is no guarantee that this hop will preserve the same service as the other hops. Second, just because the sliding window protocol guarantees that messages are delivered correctly from node A to node B, and then from node B to node C, it does not guarantee that node B b",
+      "name": "The problem with this latter a",
+      "page": 7
+    },
+    {
+      "kp_id": "kp_ada1063f_000_000_015",
+      "raw_name": "There",
+      "summary_md": "There are two broad approaches to establishing connection state. One is to have a network administrator conﬁgure the state, in which case the virtual circuit is “permanent.” Of course, it can also be deleted by the administrator, so a permanent virtual circuit (PVC) might best be thought of as a long-lived or admin- istratively conﬁgured VC. Alternatively, a host can send messages into the network to cause the state to be established. This is referred to as signalling, and the resulting virtual",
+      "name": "There",
+      "page": 6
+    },
+    {
+      "kp_id": "kp_ada1063f_000_000_017",
+      "raw_name": "There",
+      "summary_md": "There are several things to note about virtual circuit switching:",
+      "name": "There",
+      "page": 9
+    },
+    {
+      "kp_id": "kp_cf6fcaa0_000_000_018",
+      "raw_name": "Note that tail drop and FIFO",
+      "summary_md": "Note that tail drop and FIFO are two separable ideas. FIFO is a scheduling discipline—it determines the order in which packets are transmitted. Tail drop is a drop policy—it determines which packets get dropped. Because FIFO and tail drop are the simplest instances of scheduling discipline and drop policy, respectively, they are sometimes viewed as a bundle—the vanilla queuing implementation. Unfortunately, the bundle is often referred to simply as FIFO queuing, when it should more precisely be",
+      "name": "Note that tail drop and FIFO",
+      "page": 10
+    },
+    {
+      "kp_id": "kp_ada1063f_000_000_019",
+      "raw_name": "There",
+      "summary_md": "There is another good argument in favor of small ATM cells, having to do with end-to-end latency. ATM was designed to carry both voice phone calls (the dominant use case at the time) and data. Because voice is low-bandwidth but has strict delay requirements, the last thing you want is for a small voice packet queued behind a large data packet at a switch. If you force all packets to be small (i.e., cell-sized), then large data packets can still be supported by reassembling a set of cells into a",
+      "name": "There",
+      "page": 11
+    },
+    {
+      "kp_id": "kp_cf6fcaa0_000_000_020",
+      "raw_name": "One situation in which priorit",
+      "summary_md": "One situation in which priority queuing is used in the Internet is to protect the most important pack- ets—typically, the routing updates that are necessary to stabilize the routing tables after a topology change. Often there is a special queue for such packets, which can be identiﬁed by the Differentiated Services Code Point (formerly the TOS ﬁeld) in the IP header. This is in fact a simple case of the idea of “Differentiated Services.”",
+      "name": "One situation in which priorit",
+      "page": 11
+    },
+    {
+      "kp_id": "kp_cf6fcaa0_000_000_022",
+      "raw_name": "The main problem with FIFO que",
+      "summary_md": "The main problem with FIFO queuing is that it does not discriminate between different trafﬁc sources, or, in the language introduced in the previous section, it does not separate packets according to the ﬂow to which they belong. This is a problem at two different levels. At one level, it is not clear that any congestion- control algorithm implemented entirely at the source will be able to adequately control congestion with so little help from the routers. We will suspend judgment on this point",
+      "name": "The main problem with FIFO que",
+      "page": 11
+    },
+    {
+      "kp_id": "kp_42b16cd4_000_000_022",
+      "raw_name": "There",
+      "summary_md": "There are three things to notice about the connection establishment half of the state-transition diagram. First,",
+      "name": "There",
+      "page": 11
+    },
+    {
+      "kp_id": "kp_ada1063f_000_000_022",
+      "raw_name": "There",
+      "summary_md": "There are various ways to implement source routing. One would be to assign a number to each output of each switch and to place that number in the header of the packet. The switching function is then very simple: For each packet that arrives on an input, the switch would read the port number in the header and transmit the packet on that output. However, since there will in general be more than one switch in the path between the sending and the receiving host, the header for the packet needs to co",
+      "name": "There",
+      "page": 12
+    },
+    {
+      "kp_id": "kp_cf6fcaa0_000_000_024",
+      "raw_name": "What we really want",
+      "summary_md": "What we really want is bit-by-bit round-robin, where the router transmits a bit from ﬂow 1, then a bit from ﬂow 2, and so on. Clearly, it is not feasible to interleave the bits from different packets. The FQ mechanism therefore simulates this behavior by ﬁrst determining when a given packet would ﬁnish being transmitted if",
+      "name": "What we really want",
+      "page": 12
+    },
+    {
+      "kp_id": "kp_42b16cd4_000_000_024",
+      "raw_name": "There",
+      "summary_md": "There is actually a fourth, although rare, sequence of transitions that leads to the CLOSED state; it follows the arc from FIN_WAIT_1 to TIME_WAIT. We leave it as an exercise for you to ﬁgure out what combination of circumstances leads to this fourth possibility.",
+      "name": "There",
+      "page": 13
+    },
+    {
+      "kp_id": "kp_cf6fcaa0_000_000_026",
+      "raw_name": "There",
+      "summary_md": "There are two things to notice about fair queuing. First, the link is never left idle as long as there is at least one packet in the queue. Any queuing scheme with this characteristic is said to be work conserving. One effect of being work conserving is that if I am sharing a link with a lot of ﬂows that are not sending any data then; I can use the full link capacity for my ﬂow. As soon as the other ﬂows start sending, however, they will start to use their share and the capacity available to my",
+      "name": "There",
+      "page": 14
+    },
+    {
+      "kp_id": "kp_cf6fcaa0_000_000_027",
+      "raw_name": "The second thing to notice",
+      "summary_md": "The second thing to notice is that if the link is fully loaded and there are n ﬂows sending data, I cannot use more than 1/nth of the link bandwidth. If I try to send more than that, my packets will be assigned increasingly large timestamps, causing them to sit in the queue longer awaiting transmission. Eventually, the queue will overﬂow—although whether it is my packets or someone else’s that are dropped is a decision that is not determined by the fact that we are using fair queuing. This is de",
+      "name": "The second thing to notice",
+      "page": 14
+    },
+    {
+      "kp_id": "kp_42b16cd4_000_000_027",
+      "raw_name": "Most of the above discussion",
+      "summary_md": "Most of the above discussion is similar to that found in the standard sliding window algorithm; the only real difference is that this time we elaborated on the fact that the sending and receiving application processes are ﬁlling and emptying their local buffer, respectively. (The earlier discussion glossed over the fact that data arriving from an upstream node was ﬁlling the send buffer and data being transmitted to a downstream node was emptying the receive buffer.)",
+      "name": "Most of the above discussion",
+      "page": 15
+    },
+    {
+      "kp_id": "kp_cf6fcaa0_000_000_028",
+      "raw_name": "Because FQ",
+      "summary_md": "Because FQ is work conserving, any bandwidth that is not used by one ﬂow is automatically available to other ﬂows. For example, if we have four ﬂows passing through a router, and all of them are sending packets, then each one will receive one-quarter of the bandwidth. But, if one of them is idle long enough that all its packets drain out of the router’s queue, then the available bandwidth will be shared among the remaining three ﬂows, which will each now receive one-third of the bandwidth. Thus,",
+      "name": "Because FQ",
+      "page": 14
+    },
+    {
+      "kp_id": "kp_42b16cd4_000_000_029",
+      "raw_name": "All the while this",
+      "summary_md": "All the while this is going on, the send side must also make sure that the local application process does not overﬂow the send buffer—that is,",
+      "name": "All the while this",
+      "page": 16
+    },
+    {
+      "kp_id": "kp_ada1063f_000_000_029",
+      "raw_name": "The rest of this and the next",
+      "summary_md": "The rest of this and the next chapter are about various aspects of IP. While it is certainly possible to build an internetwork that does not use IP—and in fact, in the early days of the Internet there were alternative solutions—IP is the most interesting case to study simply because of the size of the Internet. Said another way, it is only the IP Internet that has really faced the issue of scale. Thus, it provides the best case study of a scalable internetworking protocol.",
+      "name": "The rest of this and the next ",
+      "page": 16
+    },
+    {
+      "kp_id": "kp_42b16cd4_000_000_030",
+      "raw_name": "There",
+      "summary_md": "There is only one remaining detail that must be resolved—how does the sending side know that the advertised window is no longer 0?",
+      "name": "There",
+      "page": 16
+    },
+    {
+      "kp_id": "kp_ada1063f_000_000_030",
+      "raw_name": "The good news",
+      "summary_md": "The good news is that when you fully understand the implications of this duality, you will have cleared a major hurdle in mastering modern packet-switched networks.",
+      "name": "The good news",
+      "page": 16
+    },
+    {
+      "kp_id": "kp_42b16cd4_000_000_031",
+      "raw_name": "Note that these 1-byte message",
+      "summary_md": "Note that these 1-byte messages are called Zero Window Probes and in practice they are sent every 5 to 60 seconds. As for what single byte of data to send in the probe: it’s the next byte of actual data just outside the window. (It has to be real data in case it’s accepted by the receiver.)",
+      "name": "Note that these 1-byte message",
+      "page": 17
+    },
+    {
+      "kp_id": "kp_cf6fcaa0_000_000_032",
+      "raw_name": "Although CongestionWindow",
+      "summary_md": "Although CongestionWindow is deﬁned in terms of bytes, it is easiest to understand multiplicative decrease if we think in terms of whole packets. For example, suppose the CongestionWindow is cur- rently set to 16 packets. If a loss is detected, CongestionWindow is set to 8. (Normally, a loss is detected when a timeout occurs, but as we see below, TCP has another mechanism to detect dropped pack- ets.) Additional losses cause CongestionWindow to be reduced to 4, then 2, and ﬁnally to 1 packet. Co",
+      "name": "Although CongestionWindow",
+      "page": 16
+    },
+    {
+      "kp_id": "kp_42b16cd4_000_000_034",
+      "raw_name": "Note that the silly window syn",
+      "summary_md": "Note that the silly window syndrome is only a problem when either the sender transmits a small segment or the receiver opens the window a small amount. If neither of these happens, then the small container is never introduced into the stream. It’s not possible to outlaw sending small segments; for example, the application might do a push after sending a single byte. It is possible, however, to keep the receiver from introducing a small container (i.e., a small open window). The rule is that afte",
+      "name": "Note that the silly window syn",
+      "page": 19
+    },
+    {
+      "kp_id": "kp_cf6fcaa0_000_000_035",
+      "raw_name": "There",
+      "summary_md": "There are actually two different situations in which slow start runs. The ﬁrst is at the very beginning of a connection, at which time the source has no idea how many packets it is going to be able to have in transit at a given time. (Keep in mind that today TCP runs over everything from 1-Mbps links to 40-Gbps links, so there is no way for the source to know the network’s capacity.) In this situation, slow start continues to",
+      "name": "There",
+      "page": 18
+    },
+    {
+      "kp_id": "kp_cf6fcaa0_000_000_037",
+      "raw_name": "The second situation in which",
+      "summary_md": "The second situation in which slow start is used is a bit more subtle; it occurs when the connection goes dead while waiting for a timeout to occur. Recall how TCP’s sliding window algorithm works—when a packet is lost, the source eventually reaches a point where it has sent as much data as the advertised window allows, and so it blocks while waiting for an ACK that will not arrive. Eventually, a timeout happens, but by this time there are no packets in transit, meaning that the source will rece",
+      "name": "The second situation in which ",
+      "page": 20
+    },
+    {
+      "kp_id": "kp_cf6fcaa0_000_000_038",
+      "raw_name": "Although the source",
+      "summary_md": "Although the source is using slow start again, it now knows more information than it did at the beginning of a connection. Speciﬁcally, the source has a current (and useful) value of CongestionWindow; this is the value of CongestionWindow that existed prior to the last packet loss, divided by 2 as a result of the loss. We can think of this as the target congestion window. Slow start is used to rapidly increase the sending rate up to this value, and then additive increase is used beyond this poin",
+      "name": "Although the source",
+      "page": 20
+    },
+    {
+      "kp_id": "kp_ada1063f_000_000_038",
+      "raw_name": "Observe that the fragmentation",
+      "summary_md": "Observe that the fragmentation process is done in such a way that it could be repeated if a fragment arrived at another network with an even smaller MTU. Fragmentation produces smaller, valid IP datagrams that can be readily reassembled into the original datagram upon receipt, independent of the order of their arrival. Reassembly is done at the receiving host and not at each router.",
+      "name": "Observe that the fragmentation",
+      "page": 22
+    },
+    {
+      "kp_id": "kp_cf6fcaa0_000_000_039",
+      "raw_name": "There",
+      "summary_md": "There are several things to notice about this trace. The ﬁrst is the rapid increase in the congestion win- dow at the beginning of the connection. This corresponds to the initial slow start phase. The slow start phase continues until several packets are lost at about 0.4 seconds into the connection, at which time CongestionWindow ﬂattens out at about 34 KB. (Why so many packets are lost during slow start is discussed below.) The reason why the congestion window ﬂattens is that there are no ACKs",
+      "name": "There",
+      "page": 20
+    },
+    {
+      "kp_id": "kp_cf6fcaa0_000_000_041",
+      "raw_name": "There",
+      "summary_md": "There is not enough detail in the trace to see exactly what happens when a couple of packets are lost just after 2 seconds, so we jump ahead to the linear increase in the congestion window that occurs between 2 and 4 seconds. This corresponds to additive increase. At about 4 seconds, CongestionWindow ﬂattens out, again due to a lost packet. Now, at about 5.5 seconds:",
+      "name": "There",
+      "page": 21
+    },
+    {
+      "kp_id": "kp_42b16cd4_000_000_042",
+      "raw_name": "There",
+      "summary_md": "There are two items of note regarding the implementation of timeouts in TCP. The ﬁrst is that it is possible to implement the calculation for EstimatedRTT and Deviation without using ﬂoating-point arithmetic. Instead, the whole calculation is scaled by 2n, with delta selected to be 1/2n. This allows us to do integer arithmetic, implementing multiplicationand division using shifts, thereby achieving higher performance. The resulting calculation is given by the following code fragment, where n=3 (",
+      "name": "There",
+      "page": 23
+    },
+    {
+      "kp_id": "kp_42b16cd4_000_000_044",
+      "raw_name": "The second point of note",
+      "summary_md": "The second point of note is that the Jacobson/Karels algorithm is only as good as the clock used to read the current time. On typical Unix implementations at the time, the clock granularity was as large as 500 ms, which is signiﬁcantly larger than the average cross-country RTT of somewhere between 100 and 200 ms. To make matters worse, the Unix implementation of TCP only checked to see if a timeout should happen every time this 500-ms clock ticked and would only take a sample of the round-trip t",
+      "name": "The second point of note",
+      "page": 24
+    },
+    {
+      "kp_id": "kp_42b16cd4_000_000_045",
+      "raw_name": "There",
+      "summary_md": "There is one other point to make about computing timeouts. It is a surprisingly tricky business, so much so, that there is an entire RFC dedicated to the topic: RFC 6298. The takeaway is that sometimes fully specify- ing a protocol involves so much minutiae that the line between speciﬁcation and implementation becomes blurred. That has happened more than once with TCP, causing some to argue that “the implementation is the speciﬁcation.” But that’s not necessarily a bad thing as long as the refer",
+      "name": "There",
+      "page": 24
+    },
+    {
+      "kp_id": "kp_ada1063f_000_000_045",
+      "raw_name": "If the node",
+      "summary_md": "If the node is not connected to the same physical network as the destination node, then it needs to send the datagram to a router. In general, each node will have a choice of several routers, and so it needs to pick the best one, or at least one that has a reasonable chance of getting the datagram closer to its destination. The router that it chooses is known as the next hop router. The router ﬁnds the correct next hop by consulting its forwarding table. The forwarding table is conceptually just",
+      "name": "If the node",
+      "page": 24
+    },
+    {
+      "kp_id": "kp_42b16cd4_000_000_047",
+      "raw_name": "Since TCP",
+      "summary_md": "Since TCP is a byte-stream protocol, the number of bytes written by the sender are not necessarily the same as the number of bytes read by the receiver. For example, the application might write 8 bytes, then 2 bytes, then 20 bytes to a TCP connection, while on the receiving side the application reads 5 bytes at a time inside a loop that iterates 6 times. TCP does not interject record boundaries between the 8th and 9th bytes, nor between the 10th and 11th bytes. This is in contrast to a message-o",
+      "name": "Since TCP",
+      "page": 24
+    },
+    {
+      "kp_id": "kp_ada1063f_000_000_047",
+      "raw_name": "Note that it",
+      "summary_md": "Note that it is possible to include the information about directly connected networks in the forwarding table. For example, we could label the network interfaces of router R2 as interface 0 for the point-to-point link (network 3) and interface 1 for the Ethernet (network 2). Then R2 would have the forwarding table shown in Table 3.7.",
+      "name": "Note that it",
+      "page": 25
+    },
+    {
+      "kp_id": "kp_42b16cd4_000_000_048",
+      "raw_name": "Even though TCP",
+      "summary_md": "Even though TCP is a byte-stream protocol, it has two different features that can be used by the sender to insert record boundaries into this byte stream, thereby informing the receiver how to break the stream of bytes into records. (Being able to mark record boundaries is useful, for example, in many database applications.) Both of these features were originally included in TCP for completely different reasons; they have only come to be used for this purpose over time.",
+      "name": "Even though TCP",
+      "page": 24
+    },
+    {
+      "kp_id": "kp_cf6fcaa0_000_000_050",
+      "raw_name": "The second important aspect of",
+      "summary_md": "The second important aspect of CUBIC is its use of a cubic function to adjust the congestion window. The basic idea is easiest to understand by looking at the general shape of a cubic function, which has three phases: slowing growth, ﬂatten plateau, increasing growth. A generic example is shown in Figure 6.14, which we have annotated with one extra piece of information: the maximum congestion window size achieved just before the last congestion event as a target (denoted 𝑊𝑚𝑎𝑥). The idea is to st",
+      "name": "The second important aspect of",
+      "page": 24
+    },
+    {
+      "kp_id": "kp_ada1063f_000_000_051",
+      "raw_name": "What subnetting means to a hos",
+      "summary_md": "What subnetting means to a host is that it is now conﬁgured with both an IP address and a subnet mask for the subnet to which it is attached. For example, host H1 in Figure 3.22 is conﬁgured with an address of 128.96.34.15 and a subnet mask of 255.255.255.128. (All hosts on a given subnet are conﬁgured with the same mask; that is, there is exactly one subnet mask per subnet.) The bitwise AND of these two numbers deﬁnes the subnet number of the host and of all other hosts on the same subnet. In t",
+      "name": "What subnetting means to a hos",
+      "page": 27
+    },
+    {
+      "kp_id": "kp_cf6fcaa0_001_001_053",
+      "raw_name": "Note that congestion control",
+      "summary_md": "Note that congestion control is a different problem than routing. While it is true that a congested link could be assigned a large edge weight by the routing protocol, and, as a consequence, routers would route around it, “routing around” a congested link does not generally solve the congestion problem. To see this, we need look no further than the simple network depicted in Figure 6.1, where all trafﬁc has to ﬂow through the same router to reach the destination. Although this is an extreme exam",
+      "name": "Note that congestion control",
+      "page": 3
+    },
+    {
+      "kp_id": "kp_ada1063f_000_000_053",
+      "raw_name": "if NextHop",
+      "summary_md": "if NextHop is an interface",
+      "name": "if NextHop",
+      "page": 29
+    },
+    {
+      "kp_id": "kp_cf6fcaa0_001_001_056",
+      "raw_name": "There",
+      "summary_md": "There are countless ways in which resource allocation mechanisms differ, so creating a thorough taxonomy is a difﬁcult proposition. For now, we describe three dimensions along which resource allocation mecha- nisms can be characterized; more subtle distinctions will be called out during the course of this chapter.",
+      "name": "There",
+      "page": 5
+    },
+    {
+      "kp_id": "kp_42b16cd4_000_000_057",
+      "raw_name": "If network latency",
+      "summary_md": "If network latency is high—in the hundreds of milliseconds—then a few RTTs can quickly add up to a visible annoyance for an end user. Establishing an HTTP session over TCP with Transport Layer Security (Section 8.5) would typically take three round trips (one for TCP session establishment and two for setting up the encryption parameters) before the ﬁrst HTTP message could be sent. The designers of QUIC recognized that this delay—the direct result of a layered approach to protocol design—could be",
+      "name": "If network latency",
+      "page": 31
+    },
+    {
+      "kp_id": "kp_cf6fcaa0_001_001_060",
+      "raw_name": "Note that it",
+      "summary_md": "Note that it is not obvious that power is the right metric for judging resource allocation effectiveness. For one thing, the theory behind power is based on an M/M/1 queuing network that assumes inﬁnite queues;1 real networks have ﬁnite buffers and sometimes have to drop packets. For another, power is typically deﬁned relative to a single connection (ﬂow); it is not clear how it extends to multiple, competing connections. Despite these rather severe limitations, however, no alternatives have gai",
+      "name": "Note that it",
+      "page": 8
+    },
+    {
+      "kp_id": "kp_ada1063f_000_000_060",
+      "raw_name": "Since the goal of DHCP",
+      "summary_md": "Since the goal of DHCP is to minimize the amount of manual conﬁguration required for a host to function, it would rather defeat the purpose if each host had to be conﬁgured with the address of a DHCP server. Thus, the ﬁrst problem faced by DHCP is that of server discovery.",
+      "name": "Since the goal of DHCP",
+      "page": 34
+    },
+    {
+      "kp_id": "kp_cf6fcaa0_001_001_062",
+      "raw_name": "Since this",
+      "summary_md": "1 Since this is not a queuing theory book, we provide only this brief description of an M/M/1 queue. The 1 means it has a single server, and the Ms mean that the distribution of both packet arrival and service times is Markovian, that is, exponential.",
+      "name": "Since this",
+      "page": 8
+    },
+    {
+      "kp_id": "kp_42b16cd4_001_001_062",
+      "raw_name": "The next issue",
+      "summary_md": "The next issue is how a process learns the port for the process to which it wants to send a message. Typically, a client process initiates a message exchange with a server process. Once a client has contacted a server, the server knows the client’s port (from the SrcPrt ﬁeld contained in the message header) and can reply to it. The real problem, therefore, is how the client learns the server’s port in the ﬁrst place. A common approach is for the server to accept messages at a well-known port. Th",
+      "name": "The next issue",
+      "page": 3
+    },
+    {
+      "kp_id": "kp_ada1063f_000_000_064",
+      "raw_name": "The next issue",
+      "summary_md": "The next issue is how the Internet treats errors. While IP is perfectly willing to drop datagrams when the going gets tough—for example, when a router does not know how to forward the datagram or when one fragment of a datagram fails to arrive at the destination—it does not necessarily fail silently. IP is always conﬁgured with a companion protocol, known as the Internet Control Message Protocol (ICMP), that deﬁnes a collection of error messages that are sent back to the source host whenever a r",
+      "name": "The next issue",
+      "page": 36
+    },
+    {
+      "kp_id": "kp_cf6fcaa0_001_001_066",
+      "raw_name": "Note that tail drop and FIFO",
+      "summary_md": "Note that tail drop and FIFO are two separable ideas. FIFO is a scheduling discipline—it determines the order in which packets are transmitted. Tail drop is a drop policy—it determines which packets get dropped. Because FIFO and tail drop are the simplest instances of scheduling discipline and drop policy, respectively, they are sometimes viewed as a bundle—the vanilla queuing implementation. Unfortunately, the bundle is often referred to simply as FIFO queuing, when it should more precisely be",
+      "name": "Note that tail drop and FIFO",
+      "page": 10
+    },
+    {
+      "kp_id": "kp_42b16cd4_001_001_067",
+      "raw_name": "At the heart of TCP",
+      "summary_md": "At the heart of TCP is the sliding window algorithm. Even though this is the same basic algorithm as is often used at the link level, because TCP runs over the Internet rather than a physical point-to-point link, there are many important differences. This subsection identiﬁes these differences and explains how they complicate TCP. The following subsections then describe how TCP addresses these and other complications.",
+      "name": "At the heart of TCP",
+      "page": 5
+    },
+    {
+      "kp_id": "kp_cf6fcaa0_001_001_068",
+      "raw_name": "One situation in which priorit",
+      "summary_md": "One situation in which priority queuing is used in the Internet is to protect the most important pack- ets—typically, the routing updates that are necessary to stabilize the routing tables after a topology change. Often there is a special queue for such packets, which can be identiﬁed by the Differentiated Services Code Point (formerly the TOS ﬁeld) in the IP header. This is in fact a simple case of the idea of “Differentiated Services.”",
+      "name": "One situation in which priorit",
+      "page": 11
+    },
+    {
+      "kp_id": "kp_ada1063f_000_000_069",
+      "raw_name": "While R2",
+      "summary_md": "While R2 is acting as the endpoint of the tunnel, there is nothing to prevent it from performing the normal functions of a router. For example, it might receive some packets that are not tunneled, but that are addressed to networks that it knows how to reach, and it would forward them in the normal way.",
+      "name": "While R2",
+      "page": 39
+    },
+    {
+      "kp_id": "kp_cf6fcaa0_001_001_070",
+      "raw_name": "The main problem with FIFO que",
+      "summary_md": "The main problem with FIFO queuing is that it does not discriminate between different trafﬁc sources, or, in the language introduced in the previous section, it does not separate packets according to the ﬂow to which they belong. This is a problem at two different levels. At one level, it is not clear that any congestion- control algorithm implemented entirely at the source will be able to adequately control congestion with so little help from the routers. We will suspend judgment on this point",
+      "name": "The main problem with FIFO que",
+      "page": 11
+    },
+    {
+      "kp_id": "kp_42b16cd4_001_001_070",
+      "raw_name": "The problem with this latter a",
+      "summary_md": "The problem with this latter approach is that a sequence of hop-by-hop guarantees does not necessarily add up to an end-to-end guarantee. First, if a heterogeneous link (say, an Ethernet) is added to one end of the path, then there is no guarantee that this hop will preserve the same service as the other hops. Second, just because the sliding window protocol guarantees that messages are delivered correctly from node A to node B, and then from node B to node C, it does not guarantee that node B b",
+      "name": "The problem with this latter a",
+      "page": 7
+    },
+    {
+      "kp_id": "kp_cf6fcaa0_001_001_072",
+      "raw_name": "What we really want",
+      "summary_md": "What we really want is bit-by-bit round-robin, where the router transmits a bit from ﬂow 1, then a bit from ﬂow 2, and so on. Clearly, it is not feasible to interleave the bits from different packets. The FQ mechanism therefore simulates this behavior by ﬁrst determining when a given packet would ﬁnish being transmitted if",
+      "name": "What we really want",
+      "page": 12
+    },
+    {
+      "kp_id": "kp_cf6fcaa0_001_001_074",
+      "raw_name": "There",
+      "summary_md": "There are two things to notice about fair queuing. First, the link is never left idle as long as there is at least one packet in the queue. Any queuing scheme with this characteristic is said to be work conserving. One effect of being work conserving is that if I am sharing a link with a lot of ﬂows that are not sending any data then; I can use the full link capacity for my ﬂow. As soon as the other ﬂows start sending, however, they will start to use their share and the capacity available to my",
+      "name": "There",
+      "page": 14
+    },
+    {
+      "kp_id": "kp_cf6fcaa0_001_001_075",
+      "raw_name": "The second thing to notice",
+      "summary_md": "The second thing to notice is that if the link is fully loaded and there are n ﬂows sending data, I cannot use more than 1/nth of the link bandwidth. If I try to send more than that, my packets will be assigned increasingly large timestamps, causing them to sit in the queue longer awaiting transmission. Eventually, the queue will overﬂow—although whether it is my packets or someone else’s that are dropped is a decision that is not determined by the fact that we are using fair queuing. This is de",
+      "name": "The second thing to notice",
+      "page": 14
+    },
+    {
+      "kp_id": "kp_cf6fcaa0_001_001_076",
+      "raw_name": "Because FQ",
+      "summary_md": "Because FQ is work conserving, any bandwidth that is not used by one ﬂow is automatically available to other ﬂows. For example, if we have four ﬂows passing through a router, and all of them are sending packets, then each one will receive one-quarter of the bandwidth. But, if one of them is idle long enough that all its packets drain out of the router’s queue, then the available bandwidth will be shared among the remaining three ﬂows, which will each now receive one-third of the bandwidth. Thus,",
+      "name": "Because FQ",
+      "page": 14
+    },
+    {
+      "kp_id": "kp_ada1063f_000_000_076",
+      "raw_name": "The next step in distance-vect",
+      "summary_md": "The next step in distance-vector routing is that every node sends a message to its directly connected neigh- bors containing its personal list of distances. For example, node F tells node A that it can reach node G at a cost of 1; A also knows it can reach F at a cost of 1, so it adds these costs to get the cost of reaching G by means of F. This total cost of 2 is less than the current cost of inﬁnity, so A records that it can reach G at a cost of 2 by going through F. Similarly, A learns from C",
+      "name": "The next step in distance-vect",
+      "page": 44
+    },
+    {
+      "kp_id": "kp_ada1063f_000_000_077",
+      "raw_name": "There",
+      "summary_md": "There are a few details to ﬁll in before our discussion of distance-vector routing is complete. First we note that there are two different circumstances under which a given node decides to send a routing update to its neighbors. One of these circumstances is the periodic update. In this case, each node automatically sends an update message every so often, even if nothing has changed. This serves to let the other nodes know that this node is still running. It also makes sure that they keep gettin",
+      "name": "There",
+      "page": 44
+    },
+    {
+      "kp_id": "kp_42b16cd4_001_001_078",
+      "raw_name": "There",
+      "summary_md": "There are three things to notice about the connection establishment half of the state-transition diagram. First,",
+      "name": "There",
+      "page": 11
+    },
+    {
+      "kp_id": "kp_ada1063f_000_000_079",
+      "raw_name": "There",
+      "summary_md": "There are several partial solutions to this problem. The ﬁrst one is to use some relatively small number as an approximation of inﬁnity. For example, we might decide that the maximum number of hops to get across a certain network is never going to be more than 16, and so we could pick 16 as the value that represents inﬁnity. This at least bounds the amount of time that it takes to count to inﬁnity. Of course, it could also present a problem if our network grew to a point where some nodes were se",
+      "name": "There",
+      "page": 45
+    },
+    {
+      "kp_id": "kp_cf6fcaa0_001_001_080",
+      "raw_name": "Although CongestionWindow",
+      "summary_md": "Although CongestionWindow is deﬁned in terms of bytes, it is easiest to understand multiplicative decrease if we think in terms of whole packets. For example, suppose the CongestionWindow is cur- rently set to 16 packets. If a loss is detected, CongestionWindow is set to 8. (Normally, a loss is detected when a timeout occurs, but as we see below, TCP has another mechanism to detect dropped pack- ets.) Additional losses cause CongestionWindow to be reduced to 4, then 2, and ﬁnally to 1 packet. Co",
+      "name": "Although CongestionWindow",
+      "page": 16
+    },
+    {
+      "kp_id": "kp_42b16cd4_001_001_080",
+      "raw_name": "There",
+      "summary_md": "There is actually a fourth, although rare, sequence of transitions that leads to the CLOSED state; it follows the arc from FIN_WAIT_1 to TIME_WAIT. We leave it as an exercise for you to ﬁgure out what combination of circumstances leads to this fourth possibility.",
+      "name": "There",
+      "page": 13
+    },
+    {
+      "kp_id": "kp_ada1063f_000_000_080",
+      "raw_name": "The code that implements this",
+      "summary_md": "The code that implements this algorithm is very straightforward; we give only some of the basics here. Structure Route deﬁnes each entry in the routing table, and constant MAX_TTL speciﬁes how long an entry is kept in the table before it is discarded.",
+      "name": "The code that implements this ",
+      "page": 46
+    },
+    {
+      "kp_id": "kp_cf6fcaa0_001_001_083",
+      "raw_name": "There",
+      "summary_md": "There are actually two different situations in which slow start runs. The ﬁrst is at the very beginning of a connection, at which time the source has no idea how many packets it is going to be able to have in transit at a given time. (Keep in mind that today TCP runs over everything from 1-Mbps links to 40-Gbps links, so there is no way for the source to know the network’s capacity.) In this situation, slow start continues to",
+      "name": "There",
+      "page": 18
+    },
+    {
+      "kp_id": "kp_42b16cd4_001_001_083",
+      "raw_name": "Most of the above discussion",
+      "summary_md": "Most of the above discussion is similar to that found in the standard sliding window algorithm; the only real difference is that this time we elaborated on the fact that the sending and receiving application processes are ﬁlling and emptying their local buffer, respectively. (The earlier discussion glossed over the fact that data arriving from an upstream node was ﬁlling the send buffer and data being transmitted to a downstream node was emptying the receive buffer.)",
+      "name": "Most of the above discussion",
+      "page": 15
+    },
+    {
+      "kp_id": "kp_cf6fcaa0_001_001_085",
+      "raw_name": "The second situation in which",
+      "summary_md": "The second situation in which slow start is used is a bit more subtle; it occurs when the connection goes dead while waiting for a timeout to occur. Recall how TCP’s sliding window algorithm works—when a packet is lost, the source eventually reaches a point where it has sent as much data as the advertised window allows, and so it blocks while waiting for an ACK that will not arrive. Eventually, a timeout happens, but by this time there are no packets in transit, meaning that the source will rece",
+      "name": "The second situation in which ",
+      "page": 20
+    },
+    {
+      "kp_id": "kp_42b16cd4_001_001_085",
+      "raw_name": "All the while this",
+      "summary_md": "All the while this is going on, the send side must also make sure that the local application process does not overﬂow the send buffer—that is,",
+      "name": "All the while this",
+      "page": 16
+    },
+    {
+      "kp_id": "kp_cf6fcaa0_001_001_086",
+      "raw_name": "Although the source",
+      "summary_md": "Although the source is using slow start again, it now knows more information than it did at the beginning of a connection. Speciﬁcally, the source has a current (and useful) value of CongestionWindow; this is the value of CongestionWindow that existed prior to the last packet loss, divided by 2 as a result of the loss. We can think of this as the target congestion window. Slow start is used to rapidly increase the sending rate up to this value, and then additive increase is used beyond this poin",
+      "name": "Although the source",
+      "page": 20
+    },
+    {
+      "kp_id": "kp_42b16cd4_001_001_086",
+      "raw_name": "There",
+      "summary_md": "There is only one remaining detail that must be resolved—how does the sending side know that the advertised window is no longer 0?",
+      "name": "There",
+      "page": 16
+    },
+    {
+      "kp_id": "kp_cf6fcaa0_001_001_087",
+      "raw_name": "There",
+      "summary_md": "There are several things to notice about this trace. The ﬁrst is the rapid increase in the congestion win- dow at the beginning of the connection. This corresponds to the initial slow start phase. The slow start phase continues until several packets are lost at about 0.4 seconds into the connection, at which time CongestionWindow ﬂattens out at about 34 KB. (Why so many packets are lost during slow start is discussed below.) The reason why the congestion window ﬂattens is that there are no ACKs",
+      "name": "There",
+      "page": 20
+    },
+    {
+      "kp_id": "kp_42b16cd4_001_001_087",
+      "raw_name": "Note that these 1-byte message",
+      "summary_md": "Note that these 1-byte messages are called Zero Window Probes and in practice they are sent every 5 to 60 seconds. As for what single byte of data to send in the probe: it’s the next byte of actual data just outside the window. (It has to be real data in case it’s accepted by the receiver.)",
+      "name": "Note that these 1-byte message",
+      "page": 17
+    },
+    {
+      "kp_id": "kp_ada1063f_000_000_087",
+      "raw_name": "One easy way to reduce overhea",
+      "summary_md": "One easy way to reduce overhead is to avoid generating LSPs unless absolutely necessary. This can be done by using very long timers—often on the order of hours—for the periodic generation of LSPs. Given that the ﬂooding protocol is truly reliable when topology changes, it is safe to assume that messages saying “nothing has changed” do not need to be sent very often.",
+      "name": "One easy way to reduce overhea",
+      "page": 51
+    },
+    {
+      "kp_id": "kp_42b16cd4_001_001_090",
+      "raw_name": "Note that the silly window syn",
+      "summary_md": "Note that the silly window syndrome is only a problem when either the sender transmits a small segment or the receiver opens the window a small amount. If neither of these happens, then the small container is never introduced into the stream. It’s not possible to outlaw sending small segments; for example, the application might do a push after sending a single byte. It is possible, however, to keep the receiver from introducing a small container (i.e., a small open window). The rule is that afte",
+      "name": "Note that the silly window syn",
+      "page": 19
+    },
+    {
+      "kp_id": "kp_ada1063f_000_000_090",
+      "raw_name": "Since D",
+      "summary_md": "Since D is the only new member of the conﬁrmed list, look at its LSP.",
+      "name": "Since D",
+      "page": 53
+    },
+    {
+      "kp_id": "kp_ada1063f_000_000_093",
+      "raw_name": "There",
+      "summary_md": "There are several different types of OSPF messages, but all begin with the same header, as shown in Fig- ure 3.35. The Version ﬁeld is currently set to 2, and the Type ﬁeld may take the values 1 through 5. The SourceAddr identiﬁes the sender of the message, and the AreaId is a 32-bit identiﬁer of the area in which the node is located. The entire packet, except the authentication data, is protected by a 16-bit checksum using the same algorithm as the IP header. The Authentication type is 0 if no",
+      "name": "There",
+      "page": 54
+    },
+    {
+      "kp_id": "kp_cf6fcaa0_002_002_098",
+      "raw_name": "Note that congestion control",
+      "summary_md": "Note that congestion control is a different problem than routing. While it is true that a congested link could be assigned a large edge weight by the routing protocol, and, as a consequence, routers would route around it, “routing around” a congested link does not generally solve the congestion problem. To see this, we need look no further than the simple network depicted in Figure 6.1, where all trafﬁc has to ﬂow through the same router to reach the destination. Although this is an extreme exam",
+      "name": "Note that congestion control",
+      "page": 3
+    },
+    {
+      "kp_id": "kp_42b16cd4_001_001_098",
+      "raw_name": "There",
+      "summary_md": "There are two items of note regarding the implementation of timeouts in TCP. The ﬁrst is that it is possible to implement the calculation for EstimatedRTT and Deviation without using ﬂoating-point arithmetic. Instead, the whole calculation is scaled by 2n, with delta selected to be 1/2n. This allows us to do integer arithmetic, implementing multiplicationand division using shifts, thereby achieving higher performance. The resulting calculation is given by the following code fragment, where n=3 (",
+      "name": "There",
+      "page": 23
+    },
+    {
+      "kp_id": "kp_ada1063f_000_000_099",
+      "raw_name": "All of these factors mean that",
+      "summary_md": "All of these factors mean that a link is much less likely to be universally abandoned, since a threefold increase in cost is likely to make the link unattractive for some paths while letting it remain the best choice for others. The slopes, offsets, and breakpoints for the curves in Figure 3.37 were arrived at by a great deal of trial and error, and they were carefully tuned to provide good performance.",
+      "name": "All of these factors mean that",
+      "page": 57
+    },
+    {
+      "kp_id": "kp_42b16cd4_001_001_100",
+      "raw_name": "The second point of note",
+      "summary_md": "The second point of note is that the Jacobson/Karels algorithm is only as good as the clock used to read the current time. On typical Unix implementations at the time, the clock granularity was as large as 500 ms, which is signiﬁcantly larger than the average cross-country RTT of somewhere between 100 and 200 ms. To make matters worse, the Unix implementation of TCP only checked to see if a timeout should happen every time this 500-ms clock ticked and would only take a sample of the round-trip t",
+      "name": "The second point of note",
+      "page": 24
+    },
+    {
+      "kp_id": "kp_cf6fcaa0_002_002_101",
+      "raw_name": "There",
+      "summary_md": "There are countless ways in which resource allocation mechanisms differ, so creating a thorough taxonomy is a difﬁcult proposition. For now, we describe three dimensions along which resource allocation mecha- nisms can be characterized; more subtle distinctions will be called out during the course of this chapter.",
+      "name": "There",
+      "page": 5
+    },
+    {
+      "kp_id": "kp_42b16cd4_001_001_101",
+      "raw_name": "There",
+      "summary_md": "There is one other point to make about computing timeouts. It is a surprisingly tricky business, so much so, that there is an entire RFC dedicated to the topic: RFC 6298. The takeaway is that sometimes fully specify- ing a protocol involves so much minutiae that the line between speciﬁcation and implementation becomes blurred. That has happened more than once with TCP, causing some to argue that “the implementation is the speciﬁcation.” But that’s not necessarily a bad thing as long as the refer",
+      "name": "There",
+      "page": 24
+    },
+    {
+      "kp_id": "kp_ada1063f_001_001_102",
+      "raw_name": "One thing that",
+      "summary_md": "One thing that is common to all networks is that we need to have a way to identify the end nodes. Such identiﬁers are usually called addresses. We have already seen examples of addresses, such as the 48-bit address used for Ethernet. The only requirement for Ethernet addresses is that no two nodes on a network have the same address. This is accomplished by making sure that all Ethernet cards are assigned a globally unique identiﬁer. For the following discussion, we assume that each host has a gl",
+      "name": "One thing that",
+      "page": 3
+    },
+    {
+      "kp_id": "kp_42b16cd4_001_001_103",
+      "raw_name": "Since TCP",
+      "summary_md": "Since TCP is a byte-stream protocol, the number of bytes written by the sender are not necessarily the same as the number of bytes read by the receiver. For example, the application might write 8 bytes, then 2 bytes, then 20 bytes to a TCP connection, while on the receiving side the application reads 5 bytes at a time inside a loop that iterates 6 times. TCP does not interject record boundaries between the 8th and 9th bytes, nor between the 10th and 11th bytes. This is in contrast to a message-o",
+      "name": "Since TCP",
+      "page": 24
+    },
+    {
+      "kp_id": "kp_ada1063f_001_001_103",
+      "raw_name": "Another assumption that we nee",
+      "summary_md": "Another assumption that we need to make is that there is some way to identify the input and output ports of each switch. There are at least two sensible ways to identify ports: One is to number each port, and the other is to identify the port by the name of the node (switch or host) to which it leads. For now, we use numbering",
+      "name": "Another assumption that we nee",
+      "page": 3
+    },
+    {
+      "kp_id": "kp_42b16cd4_001_001_104",
+      "raw_name": "Even though TCP",
+      "summary_md": "Even though TCP is a byte-stream protocol, it has two different features that can be used by the sender to insert record boundaries into this byte stream, thereby informing the receiver how to break the stream of bytes into records. (Being able to mark record boundaries is useful, for example, in many database applications.) Both of these features were originally included in TCP for completely different reasons; they have only come to be used for this purpose over time.",
+      "name": "Even though TCP",
+      "page": 24
+    },
+    {
+      "kp_id": "kp_cf6fcaa0_002_002_105",
+      "raw_name": "Note that it",
+      "summary_md": "Note that it is not obvious that power is the right metric for judging resource allocation effectiveness. For one thing, the theory behind power is based on an M/M/1 queuing network that assumes inﬁnite queues;1 real networks have ﬁnite buffers and sometimes have to drop packets. For another, power is typically deﬁned relative to a single connection (ﬂow); it is not clear how it extends to multiple, competing connections. Despite these rather severe limitations, however, no alternatives have gai",
+      "name": "Note that it",
+      "page": 8
+    },
+    {
+      "kp_id": "kp_ada1063f_001_001_106",
+      "raw_name": "The idea behind datagrams",
+      "summary_md": "The idea behind datagrams is incredibly simple: You just include in every packet enough information to enable any switch to decide how to get it to its destination. That is, every packet contains the complete desti- nation address. Consider the example network illustrated in Figure 3.2, in which the hosts have addresses A, B, C, and so on. To decide how to forward a packet, a switch consults a forwarding table (sometimes called a routing table), an example of which is depicted in Table 3.1. This",
+      "name": "The idea behind datagrams",
+      "page": 4
+    },
+    {
+      "kp_id": "kp_cf6fcaa0_002_002_107",
+      "raw_name": "Since this",
+      "summary_md": "1 Since this is not a queuing theory book, we provide only this brief description of an M/M/1 queue. The 1 means it has a single server, and the Ms mean that the distribution of both packet arrival and service times is Markovian, that is, exponential.",
+      "name": "Since this",
+      "page": 8
+    },
+    {
+      "kp_id": "kp_ada1063f_001_001_107",
+      "raw_name": "This last fact",
+      "summary_md": "This last fact is particularly important to the history of datagram networks. One of the important design goals of the Internet is robustness to failures, and history has shown it to be quite effective at meeting this goal. Since datagram-based networks are the dominant technology discussed in this book, we postpone illustrative examples for the following sections, and move on to the two main alternatives.",
+      "name": "This last fact",
+      "page": 5
+    },
+    {
+      "kp_id": "kp_cf6fcaa0_002_002_110",
+      "raw_name": "Note that tail drop and FIFO",
+      "summary_md": "Note that tail drop and FIFO are two separable ideas. FIFO is a scheduling discipline—it determines the order in which packets are transmitted. Tail drop is a drop policy—it determines which packets get dropped. Because FIFO and tail drop are the simplest instances of scheduling discipline and drop policy, respectively, they are sometimes viewed as a bundle—the vanilla queuing implementation. Unfortunately, the bundle is often referred to simply as FIFO queuing, when it should more precisely be",
+      "name": "Note that tail drop and FIFO",
+      "page": 10
+    },
+    {
+      "kp_id": "kp_cf6fcaa0_002_002_112",
+      "raw_name": "One situation in which priorit",
+      "summary_md": "One situation in which priority queuing is used in the Internet is to protect the most important pack- ets—typically, the routing updates that are necessary to stabilize the routing tables after a topology change. Often there is a special queue for such packets, which can be identiﬁed by the Differentiated Services Code Point (formerly the TOS ﬁeld) in the IP header. This is in fact a simple case of the idea of “Differentiated Services.”",
+      "name": "One situation in which priorit",
+      "page": 11
+    },
+    {
+      "kp_id": "kp_ada1063f_001_001_112",
+      "raw_name": "There",
+      "summary_md": "There are two broad approaches to establishing connection state. One is to have a network administrator conﬁgure the state, in which case the virtual circuit is “permanent.” Of course, it can also be deleted by the administrator, so a permanent virtual circuit (PVC) might best be thought of as a long-lived or admin- istratively conﬁgured VC. Alternatively, a host can send messages into the network to cause the state to be established. This is referred to as signalling, and the resulting virtual",
+      "name": "There",
+      "page": 6
+    },
+    {
+      "kp_id": "kp_42b16cd4_001_001_113",
+      "raw_name": "If network latency",
+      "summary_md": "If network latency is high—in the hundreds of milliseconds—then a few RTTs can quickly add up to a visible annoyance for an end user. Establishing an HTTP session over TCP with Transport Layer Security (Section 8.5) would typically take three round trips (one for TCP session establishment and two for setting up the encryption parameters) before the ﬁrst HTTP message could be sent. The designers of QUIC recognized that this delay—the direct result of a layered approach to protocol design—could be",
+      "name": "If network latency",
+      "page": 31
+    },
+    {
+      "kp_id": "kp_cf6fcaa0_002_002_114",
+      "raw_name": "The main problem with FIFO que",
+      "summary_md": "The main problem with FIFO queuing is that it does not discriminate between different trafﬁc sources, or, in the language introduced in the previous section, it does not separate packets according to the ﬂow to which they belong. This is a problem at two different levels. At one level, it is not clear that any congestion- control algorithm implemented entirely at the source will be able to adequately control congestion with so little help from the routers. We will suspend judgment on this point",
+      "name": "The main problem with FIFO que",
+      "page": 11
+    },
+    {
+      "kp_id": "kp_ada1063f_001_001_114",
+      "raw_name": "There",
+      "summary_md": "There are several things to note about virtual circuit switching:",
+      "name": "There",
+      "page": 9
+    },
+    {
+      "kp_id": "kp_cf6fcaa0_002_002_116",
+      "raw_name": "What we really want",
+      "summary_md": "What we really want is bit-by-bit round-robin, where the router transmits a bit from ﬂow 1, then a bit from ﬂow 2, and so on. Clearly, it is not feasible to interleave the bits from different packets. The FQ mechanism therefore simulates this behavior by ﬁrst determining when a given packet would ﬁnish being transmitted if",
+      "name": "What we really want",
+      "page": 12
+    },
+    {
+      "kp_id": "kp_ada1063f_001_001_116",
+      "raw_name": "There",
+      "summary_md": "There is another good argument in favor of small ATM cells, having to do with end-to-end latency. ATM was designed to carry both voice phone calls (the dominant use case at the time) and data. Because voice is low-bandwidth but has strict delay requirements, the last thing you want is for a small voice packet queued behind a large data packet at a switch. If you force all packets to be small (i.e., cell-sized), then large data packets can still be supported by reassembling a set of cells into a",
+      "name": "There",
+      "page": 11
+    },
+    {
+      "kp_id": "kp_cf6fcaa0_002_002_117",
+      "raw_name": "There",
+      "summary_md": "There are two things to notice about fair queuing. First, the link is never left idle as long as there is at least one packet in the queue. Any queuing scheme with this characteristic is said to be work conserving. One effect of being work conserving is that if I am sharing a link with a lot of ﬂows that are not sending any data then; I can use the full link capacity for my ﬂow. As soon as the other ﬂows start sending, however, they will start to use their share and the capacity available to my",
+      "name": "There",
+      "page": 14
+    },
+    {
+      "kp_id": "kp_42b16cd4_002_002_117",
+      "raw_name": "At the heart of TCP",
+      "summary_md": "At the heart of TCP is the sliding window algorithm. Even though this is the same basic algorithm as is often used at the link level, because TCP runs over the Internet rather than a physical point-to-point link, there are many important differences. This subsection identiﬁes these differences and explains how they complicate TCP. The following subsections then describe how TCP addresses these and other complications.",
+      "name": "At the heart of TCP",
+      "page": 5
+    },
+    {
+      "kp_id": "kp_cf6fcaa0_002_002_118",
+      "raw_name": "The second thing to notice",
+      "summary_md": "The second thing to notice is that if the link is fully loaded and there are n ﬂows sending data, I cannot use more than 1/nth of the link bandwidth. If I try to send more than that, my packets will be assigned increasingly large timestamps, causing them to sit in the queue longer awaiting transmission. Eventually, the queue will overﬂow—although whether it is my packets or someone else’s that are dropped is a decision that is not determined by the fact that we are using fair queuing. This is de",
+      "name": "The second thing to notice",
+      "page": 14
+    },
+    {
+      "kp_id": "kp_cf6fcaa0_002_002_119",
+      "raw_name": "Because FQ",
+      "summary_md": "Because FQ is work conserving, any bandwidth that is not used by one ﬂow is automatically available to other ﬂows. For example, if we have four ﬂows passing through a router, and all of them are sending packets, then each one will receive one-quarter of the bandwidth. But, if one of them is idle long enough that all its packets drain out of the router’s queue, then the available bandwidth will be shared among the remaining three ﬂows, which will each now receive one-third of the bandwidth. Thus,",
+      "name": "Because FQ",
+      "page": 14
+    },
+    {
+      "kp_id": "kp_ada1063f_001_001_119",
+      "raw_name": "There",
+      "summary_md": "There are various ways to implement source routing. One would be to assign a number to each output of each switch and to place that number in the header of the packet. The switching function is then very simple: For each packet that arrives on an input, the switch would read the port number in the header and transmit the packet on that output. However, since there will in general be more than one switch in the path between the sending and the receiving host, the header for the packet needs to co",
+      "name": "There",
+      "page": 12
+    },
+    {
+      "kp_id": "kp_42b16cd4_002_002_120",
+      "raw_name": "The problem with this latter a",
+      "summary_md": "The problem with this latter approach is that a sequence of hop-by-hop guarantees does not necessarily add up to an end-to-end guarantee. First, if a heterogeneous link (say, an Ethernet) is added to one end of the path, then there is no guarantee that this hop will preserve the same service as the other hops. Second, just because the sliding window protocol guarantees that messages are delivered correctly from node A to node B, and then from node B to node C, it does not guarantee that node B b",
+      "name": "The problem with this latter a",
+      "page": 7
+    },
+    {
+      "kp_id": "kp_cf6fcaa0_003_003_123",
+      "raw_name": "Although CongestionWindow",
+      "summary_md": "Although CongestionWindow is deﬁned in terms of bytes, it is easiest to understand multiplicative decrease if we think in terms of whole packets. For example, suppose the CongestionWindow is cur- rently set to 16 packets. If a loss is detected, CongestionWindow is set to 8. (Normally, a loss is detected when a timeout occurs, but as we see below, TCP has another mechanism to detect dropped pack- ets.) Additional losses cause CongestionWindow to be reduced to 4, then 2, and ﬁnally to 1 packet. Co",
+      "name": "Although CongestionWindow",
+      "page": 16
+    },
+    {
+      "kp_id": "kp_cf6fcaa0_003_003_125",
+      "raw_name": "There",
+      "summary_md": "There are actually two different situations in which slow start runs. The ﬁrst is at the very beginning of a connection, at which time the source has no idea how many packets it is going to be able to have in transit at a given time. (Keep in mind that today TCP runs over everything from 1-Mbps links to 40-Gbps links, so there is no way for the source to know the network’s capacity.) In this situation, slow start continues to",
+      "name": "There",
+      "page": 18
+    },
+    {
+      "kp_id": "kp_cf6fcaa0_003_003_126",
+      "raw_name": "The second situation in which",
+      "summary_md": "The second situation in which slow start is used is a bit more subtle; it occurs when the connection goes dead while waiting for a timeout to occur. Recall how TCP’s sliding window algorithm works—when a packet is lost, the source eventually reaches a point where it has sent as much data as the advertised window allows, and so it blocks while waiting for an ACK that will not arrive. Eventually, a timeout happens, but by this time there are no packets in transit, meaning that the source will rece",
+      "name": "The second situation in which ",
+      "page": 20
+    },
+    {
+      "kp_id": "kp_ada1063f_001_001_126",
+      "raw_name": "The rest of this and the next",
+      "summary_md": "The rest of this and the next chapter are about various aspects of IP. While it is certainly possible to build an internetwork that does not use IP—and in fact, in the early days of the Internet there were alternative solutions—IP is the most interesting case to study simply because of the size of the Internet. Said another way, it is only the IP Internet that has really faced the issue of scale. Thus, it provides the best case study of a scalable internetworking protocol.",
+      "name": "The rest of this and the next ",
+      "page": 16
+    },
+    {
+      "kp_id": "kp_cf6fcaa0_003_003_127",
+      "raw_name": "Although the source",
+      "summary_md": "Although the source is using slow start again, it now knows more information than it did at the beginning of a connection. Speciﬁcally, the source has a current (and useful) value of CongestionWindow; this is the value of CongestionWindow that existed prior to the last packet loss, divided by 2 as a result of the loss. We can think of this as the target congestion window. Slow start is used to rapidly increase the sending rate up to this value, and then additive increase is used beyond this poin",
+      "name": "Although the source",
+      "page": 20
+    },
+    {
+      "kp_id": "kp_42b16cd4_002_002_127",
+      "raw_name": "There",
+      "summary_md": "There are three things to notice about the connection establishment half of the state-transition diagram. First,",
+      "name": "There",
+      "page": 11
+    },
+    {
+      "kp_id": "kp_ada1063f_001_001_127",
+      "raw_name": "The good news",
+      "summary_md": "The good news is that when you fully understand the implications of this duality, you will have cleared a major hurdle in mastering modern packet-switched networks.",
+      "name": "The good news",
+      "page": 16
+    },
+    {
+      "kp_id": "kp_42b16cd4_002_002_129",
+      "raw_name": "Most of the above discussion",
+      "summary_md": "Most of the above discussion is similar to that found in the standard sliding window algorithm; the only real difference is that this time we elaborated on the fact that the sending and receiving application processes are ﬁlling and emptying their local buffer, respectively. (The earlier discussion glossed over the fact that data arriving from an upstream node was ﬁlling the send buffer and data being transmitted to a downstream node was emptying the receive buffer.)",
+      "name": "Most of the above discussion",
+      "page": 15
+    },
+    {
+      "kp_id": "kp_42b16cd4_002_002_130",
+      "raw_name": "All the while this",
+      "summary_md": "All the while this is going on, the send side must also make sure that the local application process does not overﬂow the send buffer—that is,",
+      "name": "All the while this",
+      "page": 16
+    },
+    {
+      "kp_id": "kp_42b16cd4_002_002_131",
+      "raw_name": "Note that these 1-byte message",
+      "summary_md": "Note that these 1-byte messages are called Zero Window Probes and in practice they are sent every 5 to 60 seconds. As for what single byte of data to send in the probe: it’s the next byte of actual data just outside the window. (It has to be real data in case it’s accepted by the receiver.)",
+      "name": "Note that these 1-byte message",
+      "page": 17
+    },
+    {
+      "kp_id": "kp_42b16cd4_002_002_133",
+      "raw_name": "Note that the silly window syn",
+      "summary_md": "Note that the silly window syndrome is only a problem when either the sender transmits a small segment or the receiver opens the window a small amount. If neither of these happens, then the small container is never introduced into the stream. It’s not possible to outlaw sending small segments; for example, the application might do a push after sending a single byte. It is possible, however, to keep the receiver from introducing a small container (i.e., a small open window). The rule is that afte",
+      "name": "Note that the silly window syn",
+      "page": 19
+    },
+    {
+      "kp_id": "kp_cf6fcaa0_003_003_135",
+      "raw_name": "The second important aspect of",
+      "summary_md": "The second important aspect of CUBIC is its use of a cubic function to adjust the congestion window. The basic idea is easiest to understand by looking at the general shape of a cubic function, which has three phases: slowing growth, ﬂatten plateau, increasing growth. A generic example is shown in Figure 6.14, which we have annotated with one extra piece of information: the maximum congestion window size achieved just before the last congestion event as a target (denoted 𝑊𝑚𝑎𝑥). The idea is to st",
+      "name": "The second important aspect of",
+      "page": 24
+    },
+    {
+      "kp_id": "kp_ada1063f_001_001_135",
+      "raw_name": "Observe that the fragmentation",
+      "summary_md": "Observe that the fragmentation process is done in such a way that it could be repeated if a fragment arrived at another network with an even smaller MTU. Fragmentation produces smaller, valid IP datagrams that can be readily reassembled into the original datagram upon receipt, independent of the order of their arrival. Reassembly is done at the receiving host and not at each router.",
+      "name": "Observe that the fragmentation",
+      "page": 22
+    },
+    {
+      "kp_id": "kp_42b16cd4_002_002_141",
+      "raw_name": "There",
+      "summary_md": "There are two items of note regarding the implementation of timeouts in TCP. The ﬁrst is that it is possible to implement the calculation for EstimatedRTT and Deviation without using ﬂoating-point arithmetic. Instead, the whole calculation is scaled by 2n, with delta selected to be 1/2n. This allows us to do integer arithmetic, implementing multiplicationand division using shifts, thereby achieving higher performance. The resulting calculation is given by the following code fragment, where n=3 (",
+      "name": "There",
+      "page": 23
+    },
+    {
+      "kp_id": "kp_42b16cd4_002_002_142",
+      "raw_name": "The second point of note",
+      "summary_md": "The second point of note is that the Jacobson/Karels algorithm is only as good as the clock used to read the current time. On typical Unix implementations at the time, the clock granularity was as large as 500 ms, which is signiﬁcantly larger than the average cross-country RTT of somewhere between 100 and 200 ms. To make matters worse, the Unix implementation of TCP only checked to see if a timeout should happen every time this 500-ms clock ticked and would only take a sample of the round-trip t",
+      "name": "The second point of note",
+      "page": 24
+    },
+    {
+      "kp_id": "kp_ada1063f_001_001_142",
+      "raw_name": "If the node",
+      "summary_md": "If the node is not connected to the same physical network as the destination node, then it needs to send the datagram to a router. In general, each node will have a choice of several routers, and so it needs to pick the best one, or at least one that has a reasonable chance of getting the datagram closer to its destination. The router that it chooses is known as the next hop router. The router ﬁnds the correct next hop by consulting its forwarding table. The forwarding table is conceptually just",
+      "name": "If the node",
+      "page": 24
+    },
+    {
+      "kp_id": "kp_42b16cd4_002_002_144",
+      "raw_name": "Since TCP",
+      "summary_md": "Since TCP is a byte-stream protocol, the number of bytes written by the sender are not necessarily the same as the number of bytes read by the receiver. For example, the application might write 8 bytes, then 2 bytes, then 20 bytes to a TCP connection, while on the receiving side the application reads 5 bytes at a time inside a loop that iterates 6 times. TCP does not interject record boundaries between the 8th and 9th bytes, nor between the 10th and 11th bytes. This is in contrast to a message-o",
+      "name": "Since TCP",
+      "page": 24
+    },
+    {
+      "kp_id": "kp_ada1063f_001_001_144",
+      "raw_name": "Note that it",
+      "summary_md": "Note that it is possible to include the information about directly connected networks in the forwarding table. For example, we could label the network interfaces of router R2 as interface 0 for the point-to-point link (network 3) and interface 1 for the Ethernet (network 2). Then R2 would have the forwarding table shown in Table 3.7.",
+      "name": "Note that it",
+      "page": 25
+    },
+    {
+      "kp_id": "kp_42b16cd4_002_002_145",
+      "raw_name": "Even though TCP",
+      "summary_md": "Even though TCP is a byte-stream protocol, it has two different features that can be used by the sender to insert record boundaries into this byte stream, thereby informing the receiver how to break the stream of bytes into records. (Being able to mark record boundaries is useful, for example, in many database applications.) Both of these features were originally included in TCP for completely different reasons; they have only come to be used for this purpose over time.",
+      "name": "Even though TCP",
+      "page": 24
+    },
+    {
+      "kp_id": "kp_ada1063f_001_001_148",
+      "raw_name": "What subnetting means to a hos",
+      "summary_md": "What subnetting means to a host is that it is now conﬁgured with both an IP address and a subnet mask for the subnet to which it is attached. For example, host H1 in Figure 3.22 is conﬁgured with an address of 128.96.34.15 and a subnet mask of 255.255.255.128. (All hosts on a given subnet are conﬁgured with the same mask; that is, there is exactly one subnet mask per subnet.) The bitwise AND of these two numbers deﬁnes the subnet number of the host and of all other hosts on the same subnet. In t",
+      "name": "What subnetting means to a hos",
+      "page": 27
+    },
+    {
+      "kp_id": "kp_ada1063f_001_001_150",
+      "raw_name": "if NextHop",
+      "summary_md": "if NextHop is an interface",
+      "name": "if NextHop",
+      "page": 29
+    },
+    {
+      "kp_id": "kp_42b16cd4_003_003_154",
+      "raw_name": "The problem with this latter a",
+      "summary_md": "The problem with this latter approach is that a sequence of hop-by-hop guarantees does not necessarily add up to an end-to-end guarantee. First, if a heterogeneous link (say, an Ethernet) is added to one end of the path, then there is no guarantee that this hop will preserve the same service as the other hops. Second, just because the sliding window protocol guarantees that messages are delivered correctly from node A to node B, and then from node B to node C, it does not guarantee that node B b",
+      "name": "The problem with this latter a",
+      "page": 7
+    },
+    {
+      "kp_id": "kp_ada1063f_001_001_157",
+      "raw_name": "Since the goal of DHCP",
+      "summary_md": "Since the goal of DHCP is to minimize the amount of manual conﬁguration required for a host to function, it would rather defeat the purpose if each host had to be conﬁgured with the address of a DHCP server. Thus, the ﬁrst problem faced by DHCP is that of server discovery.",
+      "name": "Since the goal of DHCP",
+      "page": 34
+    },
+    {
+      "kp_id": "kp_42b16cd4_003_003_159",
+      "raw_name": "There",
+      "summary_md": "There are three things to notice about the connection establishment half of the state-transition diagram. First,",
+      "name": "There",
+      "page": 11
+    },
+    {
+      "kp_id": "kp_42b16cd4_003_003_161",
+      "raw_name": "Most of the above discussion",
+      "summary_md": "Most of the above discussion is similar to that found in the standard sliding window algorithm; the only real difference is that this time we elaborated on the fact that the sending and receiving application processes are ﬁlling and emptying their local buffer, respectively. (The earlier discussion glossed over the fact that data arriving from an upstream node was ﬁlling the send buffer and data being transmitted to a downstream node was emptying the receive buffer.)",
+      "name": "Most of the above discussion",
+      "page": 15
+    },
+    {
+      "kp_id": "kp_ada1063f_001_001_161",
+      "raw_name": "The next issue",
+      "summary_md": "The next issue is how the Internet treats errors. While IP is perfectly willing to drop datagrams when the going gets tough—for example, when a router does not know how to forward the datagram or when one fragment of a datagram fails to arrive at the destination—it does not necessarily fail silently. IP is always conﬁgured with a companion protocol, known as the Internet Control Message Protocol (ICMP), that deﬁnes a collection of error messages that are sent back to the source host whenever a r",
+      "name": "The next issue",
+      "page": 36
+    },
+    {
+      "kp_id": "kp_42b16cd4_003_003_162",
+      "raw_name": "All the while this",
+      "summary_md": "All the while this is going on, the send side must also make sure that the local application process does not overﬂow the send buffer—that is,",
+      "name": "All the while this",
+      "page": 16
+    },
+    {
+      "kp_id": "kp_42b16cd4_003_003_163",
+      "raw_name": "Note that these 1-byte message",
+      "summary_md": "Note that these 1-byte messages are called Zero Window Probes and in practice they are sent every 5 to 60 seconds. As for what single byte of data to send in the probe: it’s the next byte of actual data just outside the window. (It has to be real data in case it’s accepted by the receiver.)",
+      "name": "Note that these 1-byte message",
+      "page": 17
+    },
+    {
+      "kp_id": "kp_42b16cd4_003_003_165",
+      "raw_name": "Note that the silly window syn",
+      "summary_md": "Note that the silly window syndrome is only a problem when either the sender transmits a small segment or the receiver opens the window a small amount. If neither of these happens, then the small container is never introduced into the stream. It’s not possible to outlaw sending small segments; for example, the application might do a push after sending a single byte. It is possible, however, to keep the receiver from introducing a small container (i.e., a small open window). The rule is that afte",
+      "name": "Note that the silly window syn",
+      "page": 19
+    },
+    {
+      "kp_id": "kp_ada1063f_001_001_166",
+      "raw_name": "While R2",
+      "summary_md": "While R2 is acting as the endpoint of the tunnel, there is nothing to prevent it from performing the normal functions of a router. For example, it might receive some packets that are not tunneled, but that are addressed to networks that it knows how to reach, and it would forward them in the normal way.",
+      "name": "While R2",
+      "page": 39
+    },
+    {
+      "kp_id": "kp_42b16cd4_003_003_170",
+      "raw_name": "The second point of note",
+      "summary_md": "The second point of note is that the Jacobson/Karels algorithm is only as good as the clock used to read the current time. On typical Unix implementations at the time, the clock granularity was as large as 500 ms, which is signiﬁcantly larger than the average cross-country RTT of somewhere between 100 and 200 ms. To make matters worse, the Unix implementation of TCP only checked to see if a timeout should happen every time this 500-ms clock ticked and would only take a sample of the round-trip t",
+      "name": "The second point of note",
+      "page": 24
+    },
+    {
+      "kp_id": "kp_42b16cd4_003_003_172",
+      "raw_name": "Since TCP",
+      "summary_md": "Since TCP is a byte-stream protocol, the number of bytes written by the sender are not necessarily the same as the number of bytes read by the receiver. For example, the application might write 8 bytes, then 2 bytes, then 20 bytes to a TCP connection, while on the receiving side the application reads 5 bytes at a time inside a loop that iterates 6 times. TCP does not interject record boundaries between the 8th and 9th bytes, nor between the 10th and 11th bytes. This is in contrast to a message-o",
+      "name": "Since TCP",
+      "page": 24
+    },
+    {
+      "kp_id": "kp_42b16cd4_003_003_173",
+      "raw_name": "Even though TCP",
+      "summary_md": "Even though TCP is a byte-stream protocol, it has two different features that can be used by the sender to insert record boundaries into this byte stream, thereby informing the receiver how to break the stream of bytes into records. (Being able to mark record boundaries is useful, for example, in many database applications.) Both of these features were originally included in TCP for completely different reasons; they have only come to be used for this purpose over time.",
+      "name": "Even though TCP",
+      "page": 24
+    },
+    {
+      "kp_id": "kp_ada1063f_001_001_173",
+      "raw_name": "The next step in distance-vect",
+      "summary_md": "The next step in distance-vector routing is that every node sends a message to its directly connected neigh- bors containing its personal list of distances. For example, node F tells node A that it can reach node G at a cost of 1; A also knows it can reach F at a cost of 1, so it adds these costs to get the cost of reaching G by means of F. This total cost of 2 is less than the current cost of inﬁnity, so A records that it can reach G at a cost of 2 by going through F. Similarly, A learns from C",
+      "name": "The next step in distance-vect",
+      "page": 44
+    },
+    {
+      "kp_id": "kp_ada1063f_001_001_174",
+      "raw_name": "There",
+      "summary_md": "There are a few details to ﬁll in before our discussion of distance-vector routing is complete. First we note that there are two different circumstances under which a given node decides to send a routing update to its neighbors. One of these circumstances is the periodic update. In this case, each node automatically sends an update message every so often, even if nothing has changed. This serves to let the other nodes know that this node is still running. It also makes sure that they keep gettin",
+      "name": "There",
+      "page": 44
+    },
+    {
+      "kp_id": "kp_ada1063f_001_001_176",
+      "raw_name": "There",
+      "summary_md": "There are several partial solutions to this problem. The ﬁrst one is to use some relatively small number as an approximation of inﬁnity. For example, we might decide that the maximum number of hops to get across a certain network is never going to be more than 16, and so we could pick 16 as the value that represents inﬁnity. This at least bounds the amount of time that it takes to count to inﬁnity. Of course, it could also present a problem if our network grew to a point where some nodes were se",
+      "name": "There",
+      "page": 45
+    },
+    {
+      "kp_id": "kp_ada1063f_001_001_177",
+      "raw_name": "The code that implements this",
+      "summary_md": "The code that implements this algorithm is very straightforward; we give only some of the basics here. Structure Route deﬁnes each entry in the routing table, and constant MAX_TTL speciﬁes how long an entry is kept in the table before it is discarded.",
+      "name": "The code that implements this ",
+      "page": 46
+    },
+    {
+      "kp_id": "kp_42b16cd4_003_003_179",
+      "raw_name": "If network latency",
+      "summary_md": "If network latency is high—in the hundreds of milliseconds—then a few RTTs can quickly add up to a visible annoyance for an end user. Establishing an HTTP session over TCP with Transport Layer Security (Section 8.5) would typically take three round trips (one for TCP session establishment and two for setting up the encryption parameters) before the ﬁrst HTTP message could be sent. The designers of QUIC recognized that this delay—the direct result of a layered approach to protocol design—could be",
+      "name": "If network latency",
+      "page": 31
+    },
+    {
+      "kp_id": "kp_ada1063f_001_001_184",
+      "raw_name": "One easy way to reduce overhea",
+      "summary_md": "One easy way to reduce overhead is to avoid generating LSPs unless absolutely necessary. This can be done by using very long timers—often on the order of hours—for the periodic generation of LSPs. Given that the ﬂooding protocol is truly reliable when topology changes, it is safe to assume that messages saying “nothing has changed” do not need to be sent very often.",
+      "name": "One easy way to reduce overhea",
+      "page": 51
+    },
+    {
+      "kp_id": "kp_ada1063f_001_001_187",
+      "raw_name": "Since D",
+      "summary_md": "Since D is the only new member of the conﬁrmed list, look at its LSP.",
+      "name": "Since D",
+      "page": 53
+    },
+    {
+      "kp_id": "kp_ada1063f_001_001_190",
+      "raw_name": "There",
+      "summary_md": "There are several different types of OSPF messages, but all begin with the same header, as shown in Fig- ure 3.35. The Version ﬁeld is currently set to 2, and the Type ﬁeld may take the values 1 through 5. The SourceAddr identiﬁes the sender of the message, and the AreaId is a 32-bit identiﬁer of the area in which the node is located. The entire packet, except the authentication data, is protected by a 16-bit checksum using the same algorithm as the IP header. The Authentication type is 0 if no",
+      "name": "There",
+      "page": 54
+    },
+    {
+      "kp_id": "kp_ada1063f_002_002_198",
+      "raw_name": "There",
+      "summary_md": "There are two broad approaches to establishing connection state. One is to have a network administrator conﬁgure the state, in which case the virtual circuit is “permanent.” Of course, it can also be deleted by the administrator, so a permanent virtual circuit (PVC) might best be thought of as a long-lived or admin- istratively conﬁgured VC. Alternatively, a host can send messages into the network to cause the state to be established. This is referred to as signalling, and the resulting virtual",
+      "name": "There",
+      "page": 6
+    },
+    {
+      "kp_id": "kp_ada1063f_002_002_205",
+      "raw_name": "The rest of this and the next",
+      "summary_md": "The rest of this and the next chapter are about various aspects of IP. While it is certainly possible to build an internetwork that does not use IP—and in fact, in the early days of the Internet there were alternative solutions—IP is the most interesting case to study simply because of the size of the Internet. Said another way, it is only the IP Internet that has really faced the issue of scale. Thus, it provides the best case study of a scalable internetworking protocol.",
+      "name": "The rest of this and the next ",
+      "page": 16
+    },
+    {
+      "kp_id": "kp_ada1063f_002_002_206",
+      "raw_name": "The good news",
+      "summary_md": "The good news is that when you fully understand the implications of this duality, you will have cleared a major hurdle in mastering modern packet-switched networks.",
+      "name": "The good news",
+      "page": 16
+    },
+    {
+      "kp_id": "kp_ada1063f_002_002_212",
+      "raw_name": "Observe that the fragmentation",
+      "summary_md": "Observe that the fragmentation process is done in such a way that it could be repeated if a fragment arrived at another network with an even smaller MTU. Fragmentation produces smaller, valid IP datagrams that can be readily reassembled into the original datagram upon receipt, independent of the order of their arrival. Reassembly is done at the receiving host and not at each router.",
+      "name": "Observe that the fragmentation",
+      "page": 22
+    },
+    {
+      "kp_id": "kp_ada1063f_002_002_219",
+      "raw_name": "If the node",
+      "summary_md": "If the node is not connected to the same physical network as the destination node, then it needs to send the datagram to a router. In general, each node will have a choice of several routers, and so it needs to pick the best one, or at least one that has a reasonable chance of getting the datagram closer to its destination. The router that it chooses is known as the next hop router. The router ﬁnds the correct next hop by consulting its forwarding table. The forwarding table is conceptually just",
+      "name": "If the node",
+      "page": 24
+    },
+    {
+      "kp_id": "kp_ada1063f_002_002_221",
+      "raw_name": "Note that it",
+      "summary_md": "Note that it is possible to include the information about directly connected networks in the forwarding table. For example, we could label the network interfaces of router R2 as interface 0 for the point-to-point link (network 3) and interface 1 for the Ethernet (network 2). Then R2 would have the forwarding table shown in Table 3.7.",
+      "name": "Note that it",
+      "page": 25
+    },
+    {
+      "kp_id": "kp_ada1063f_002_002_225",
+      "raw_name": "What subnetting means to a hos",
+      "summary_md": "What subnetting means to a host is that it is now conﬁgured with both an IP address and a subnet mask for the subnet to which it is attached. For example, host H1 in Figure 3.22 is conﬁgured with an address of 128.96.34.15 and a subnet mask of 255.255.255.128. (All hosts on a given subnet are conﬁgured with the same mask; that is, there is exactly one subnet mask per subnet.) The bitwise AND of these two numbers deﬁnes the subnet number of the host and of all other hosts on the same subnet. In t",
+      "name": "What subnetting means to a hos",
+      "page": 27
+    },
+    {
+      "kp_id": "kp_ada1063f_002_002_226",
+      "raw_name": "if NextHop",
+      "summary_md": "if NextHop is an interface",
+      "name": "if NextHop",
+      "page": 29
+    },
+    {
+      "kp_id": "kp_ada1063f_002_002_231",
+      "raw_name": "Since the goal of DHCP",
+      "summary_md": "Since the goal of DHCP is to minimize the amount of manual conﬁguration required for a host to function, it would rather defeat the purpose if each host had to be conﬁgured with the address of a DHCP server. Thus, the ﬁrst problem faced by DHCP is that of server discovery.",
+      "name": "Since the goal of DHCP",
+      "page": 34
+    },
+    {
+      "kp_id": "kp_ada1063f_002_002_234",
+      "raw_name": "The next issue",
+      "summary_md": "The next issue is how the Internet treats errors. While IP is perfectly willing to drop datagrams when the going gets tough—for example, when a router does not know how to forward the datagram or when one fragment of a datagram fails to arrive at the destination—it does not necessarily fail silently. IP is always conﬁgured with a companion protocol, known as the Internet Control Message Protocol (ICMP), that deﬁnes a collection of error messages that are sent back to the source host whenever a r",
+      "name": "The next issue",
+      "page": 36
+    },
+    {
+      "kp_id": "kp_ada1063f_002_002_238",
+      "raw_name": "While R2",
+      "summary_md": "While R2 is acting as the endpoint of the tunnel, there is nothing to prevent it from performing the normal functions of a router. For example, it might receive some packets that are not tunneled, but that are addressed to networks that it knows how to reach, and it would forward them in the normal way.",
+      "name": "While R2",
+      "page": 39
+    },
+    {
+      "kp_id": "kp_ada1063f_002_002_245",
+      "raw_name": "The next step in distance-vect",
+      "summary_md": "The next step in distance-vector routing is that every node sends a message to its directly connected neigh- bors containing its personal list of distances. For example, node F tells node A that it can reach node G at a cost of 1; A also knows it can reach F at a cost of 1, so it adds these costs to get the cost of reaching G by means of F. This total cost of 2 is less than the current cost of inﬁnity, so A records that it can reach G at a cost of 2 by going through F. Similarly, A learns from C",
+      "name": "The next step in distance-vect",
+      "page": 44
+    },
+    {
+      "kp_id": "kp_ada1063f_002_002_246",
+      "raw_name": "There",
+      "summary_md": "There are a few details to ﬁll in before our discussion of distance-vector routing is complete. First we note that there are two different circumstances under which a given node decides to send a routing update to its neighbors. One of these circumstances is the periodic update. In this case, each node automatically sends an update message every so often, even if nothing has changed. This serves to let the other nodes know that this node is still running. It also makes sure that they keep gettin",
+      "name": "There",
+      "page": 44
+    },
+    {
+      "kp_id": "kp_ada1063f_002_002_247",
+      "raw_name": "The code that implements this",
+      "summary_md": "The code that implements this algorithm is very straightforward; we give only some of the basics here. Structure Route deﬁnes each entry in the routing table, and constant MAX_TTL speciﬁes how long an entry is kept in the table before it is discarded.",
+      "name": "The code that implements this ",
+      "page": 46
+    },
+    {
+      "kp_id": "kp_ada1063f_002_002_251",
+      "raw_name": "One easy way to reduce overhea",
+      "summary_md": "One easy way to reduce overhead is to avoid generating LSPs unless absolutely necessary. This can be done by using very long timers—often on the order of hours—for the periodic generation of LSPs. Given that the ﬂooding protocol is truly reliable when topology changes, it is safe to assume that messages saying “nothing has changed” do not need to be sent very often.",
+      "name": "One easy way to reduce overhea",
+      "page": 51
+    },
+    {
+      "kp_id": "kp_ada1063f_002_002_253",
+      "raw_name": "Since D",
+      "summary_md": "Since D is the only new member of the conﬁrmed list, look at its LSP.",
+      "name": "Since D",
+      "page": 53
+    },
+    {
+      "kp_id": "kp_ada1063f_003_003_262",
+      "raw_name": "The rest of this and the next",
+      "summary_md": "The rest of this and the next chapter are about various aspects of IP. While it is certainly possible to build an internetwork that does not use IP—and in fact, in the early days of the Internet there were alternative solutions—IP is the most interesting case to study simply because of the size of the Internet. Said another way, it is only the IP Internet that has really faced the issue of scale. Thus, it provides the best case study of a scalable internetworking protocol.",
+      "name": "The rest of this and the next ",
+      "page": 16
+    },
+    {
+      "kp_id": "kp_ada1063f_003_003_263",
+      "raw_name": "The good news",
+      "summary_md": "The good news is that when you fully understand the implications of this duality, you will have cleared a major hurdle in mastering modern packet-switched networks.",
+      "name": "The good news",
+      "page": 16
+    },
+    {
+      "kp_id": "kp_ada1063f_003_003_268",
+      "raw_name": "Observe that the fragmentation",
+      "summary_md": "Observe that the fragmentation process is done in such a way that it could be repeated if a fragment arrived at another network with an even smaller MTU. Fragmentation produces smaller, valid IP datagrams that can be readily reassembled into the original datagram upon receipt, independent of the order of their arrival. Reassembly is done at the receiving host and not at each router.",
+      "name": "Observe that the fragmentation",
+      "page": 22
+    },
+    {
+      "kp_id": "kp_ada1063f_003_003_274",
+      "raw_name": "If the node",
+      "summary_md": "If the node is not connected to the same physical network as the destination node, then it needs to send the datagram to a router. In general, each node will have a choice of several routers, and so it needs to pick the best one, or at least one that has a reasonable chance of getting the datagram closer to its destination. The router that it chooses is known as the next hop router. The router ﬁnds the correct next hop by consulting its forwarding table. The forwarding table is conceptually just",
+      "name": "If the node",
+      "page": 24
+    },
+    {
+      "kp_id": "kp_ada1063f_003_003_275",
+      "raw_name": "Note that it",
+      "summary_md": "Note that it is possible to include the information about directly connected networks in the forwarding table. For example, we could label the network interfaces of router R2 as interface 0 for the point-to-point link (network 3) and interface 1 for the Ethernet (network 2). Then R2 would have the forwarding table shown in Table 3.7.",
+      "name": "Note that it",
+      "page": 25
+    },
+    {
+      "kp_id": "kp_ada1063f_003_003_278",
+      "raw_name": "What subnetting means to a hos",
+      "summary_md": "What subnetting means to a host is that it is now conﬁgured with both an IP address and a subnet mask for the subnet to which it is attached. For example, host H1 in Figure 3.22 is conﬁgured with an address of 128.96.34.15 and a subnet mask of 255.255.255.128. (All hosts on a given subnet are conﬁgured with the same mask; that is, there is exactly one subnet mask per subnet.) The bitwise AND of these two numbers deﬁnes the subnet number of the host and of all other hosts on the same subnet. In t",
+      "name": "What subnetting means to a hos",
+      "page": 27
+    },
+    {
+      "kp_id": "kp_ada1063f_003_003_279",
+      "raw_name": "if NextHop",
+      "summary_md": "if NextHop is an interface",
+      "name": "if NextHop",
+      "page": 29
+    },
+    {
+      "kp_id": "kp_ada1063f_003_003_283",
+      "raw_name": "Since the goal of DHCP",
+      "summary_md": "Since the goal of DHCP is to minimize the amount of manual conﬁguration required for a host to function, it would rather defeat the purpose if each host had to be conﬁgured with the address of a DHCP server. Thus, the ﬁrst problem faced by DHCP is that of server discovery.",
+      "name": "Since the goal of DHCP",
+      "page": 34
+    },
+    {
+      "kp_id": "kp_ada1063f_003_003_286",
+      "raw_name": "The next issue",
+      "summary_md": "The next issue is how the Internet treats errors. While IP is perfectly willing to drop datagrams when the going gets tough—for example, when a router does not know how to forward the datagram or when one fragment of a datagram fails to arrive at the destination—it does not necessarily fail silently. IP is always conﬁgured with a companion protocol, known as the Internet Control Message Protocol (ICMP), that deﬁnes a collection of error messages that are sent back to the source host whenever a r",
+      "name": "The next issue",
+      "page": 36
+    },
+    {
+      "kp_id": "kp_ada1063f_003_003_289",
+      "raw_name": "While R2",
+      "summary_md": "While R2 is acting as the endpoint of the tunnel, there is nothing to prevent it from performing the normal functions of a router. For example, it might receive some packets that are not tunneled, but that are addressed to networks that it knows how to reach, and it would forward them in the normal way.",
+      "name": "While R2",
+      "page": 39
+    },
+    {
+      "kp_id": "kp_ada1063f_003_003_295",
+      "raw_name": "The next step in distance-vect",
+      "summary_md": "The next step in distance-vector routing is that every node sends a message to its directly connected neigh- bors containing its personal list of distances. For example, node F tells node A that it can reach node G at a cost of 1; A also knows it can reach F at a cost of 1, so it adds these costs to get the cost of reaching G by means of F. This total cost of 2 is less than the current cost of inﬁnity, so A records that it can reach G at a cost of 2 by going through F. Similarly, A learns from C",
+      "name": "The next step in distance-vect",
+      "page": 44
+    },
+    {
+      "kp_id": "kp_ada1063f_003_003_296",
+      "raw_name": "There",
+      "summary_md": "There are a few details to ﬁll in before our discussion of distance-vector routing is complete. First we note that there are two different circumstances under which a given node decides to send a routing update to its neighbors. One of these circumstances is the periodic update. In this case, each node automatically sends an update message every so often, even if nothing has changed. This serves to let the other nodes know that this node is still running. It also makes sure that they keep gettin",
+      "name": "There",
+      "page": 44
+    },
+    {
+      "kp_id": "kp_ada1063f_003_003_297",
+      "raw_name": "The code that implements this",
+      "summary_md": "The code that implements this algorithm is very straightforward; we give only some of the basics here. Structure Route deﬁnes each entry in the routing table, and constant MAX_TTL speciﬁes how long an entry is kept in the table before it is discarded.",
+      "name": "The code that implements this ",
+      "page": 46
+    },
+    {
+      "kp_id": "kp_ada1063f_003_003_301",
+      "raw_name": "One easy way to reduce overhea",
+      "summary_md": "One easy way to reduce overhead is to avoid generating LSPs unless absolutely necessary. This can be done by using very long timers—often on the order of hours—for the periodic generation of LSPs. Given that the ﬂooding protocol is truly reliable when topology changes, it is safe to assume that messages saying “nothing has changed” do not need to be sent very often.",
+      "name": "One easy way to reduce overhea",
+      "page": 51
+    },
+    {
+      "kp_id": "kp_ada1063f_003_003_303",
+      "raw_name": "Since D",
+      "summary_md": "Since D is the only new member of the conﬁrmed list, look at its LSP.",
+      "name": "Since D",
+      "page": 53
+    },
+    {
+      "kp_id": "kp_ada1063f_003_003_309",
+      "raw_name": "All of these factors mean that",
+      "summary_md": "All of these factors mean that a link is much less likely to be universally abandoned, since a threefold increase in cost is likely to make the link unattractive for some paths while letting it remain the best choice for others. The slopes, offsets, and breakpoints for the curves in Figure 3.37 were arrived at by a great deal of trial and error, and they were carefully tuned to provide good performance.",
+      "name": "All of these factors mean that",
+      "page": 57
+    }
+  ]
+}
