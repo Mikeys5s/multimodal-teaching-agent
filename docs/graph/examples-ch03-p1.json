@@ -1,0 +1,243 @@
+{
+  "_说明": "典型例题 / 常见误区（**P1 那一半：Ch03 Internetworking**）· 每条带 source_page + source_quote（从材料 content_md 逐字摘的原文）",
+  "_生成依据": "GET /api/materials/mat_ada1063f/blocks（703 个 block / 57 页）→ 全文落盘后逐条取引文；知识点取自 GET /api/knowledge-points",
+  "_铁律": "每条答案都能在材料里找到原文；找不到依据的不写进来。**不生成、不推断、不改写原文**。source_quote 经归一化子串校验（折叠连字 + 去软连字符 + 折叠印刷体引号/破折号 + 空白折叠 + 转小写）后，必须是**同一页的连续原文**。",
+  "_本批范围": "Ch03（kp_ada1063f_*）· P1 负责 Ch03，P2 负责 Ch05+Ch06",
+  "_日期": "2026-10-10 · 决赛完善期",
+  "_kp_id 约定": "**与 P2 的 Ch05 文件一致：全部用「重复组代表」**（即 exports/dup-groups.json 里每个组的 representative，是组内 id 字典序最小者）。",
+  "_验证强度": "三道关：① 作者按小节分片产出 → ② 程序化复算（字段全等 / 引文逐字同页 / kp_id 合法）→ ③ **独立审稿人复核**（与作者分离）。两轮审稿结论均为 **0 个事实性错误**。第一轮挑出的 3 个问题全是「引文停在结论句的前一句」，已扩引文 3 处 + 拆题 2 条。",
+  "counts": {
+    "examples": 13,
+    "misconceptions": 10,
+    "total": 23
+  },
+  "items": [
+    {
+      "kind": "example",
+      "kp_id": "kp_ada1063f_000_000_013",
+      "source_page": 7,
+      "question": "虚电路网络中，主机 A 要把包发给 B。A 在包头写入 VCI=5，从 switch 1 的入接口 2 进入。switch 1 的 VC 表项（表 3.2）是：入接口 2、入 VCI 5 → 出接口 1、出 VCI 11。问：switch 1 从哪个接口把包发出去？包头里的 VCI 会变成多少？它是靠什么在表里定位这一项的？",
+      "answer": "switch 1 从出接口 1 发出，并把包头里的 VCI 由 5 改成 11。它定位表项靠的是「入接口号 + 包头里的 VCI」这个组合，二者一起才能唯一确定这条连接。",
+      "source_quote": "Switch 1 receives any such packet on interface 2, and it uses the combination of the interface and the VCI in the packet header to ﬁnd the appropriate VC table entry. As shown in Table 3.2, the table entry in this case tells switch 1 to forward the packet out of interface 1 and to put the VCI value 11 in the header when the packet is sent.",
+      "source": "human"
+    },
+    {
+      "kind": "example",
+      "kp_id": "kp_ada1063f_000_000_014",
+      "source_page": 8,
+      "question": "用 signalling 建立一条 A→switch 1→switch 2→switch 3→B 的虚电路，setup 消息逐跳经过这些交换机。问：每一段链路上这个连接的 VCI 值由谁挑选（也就是该链路的哪一端来定）？挑选时唯一的限制条件是什么？为什么同一条连接在相邻两段链路上可以写成两个不同的 VCI 值？",
+      "answer": "VCI 由每一段链路上「收到 setup 消息的那一端」自己挑 —— 对中间链路来说是下游那台交换机，对最后一段来说是接收端主机 B。唯一的限制是：该值在这个端口上没有被其它连接占用。之所以相邻两段可以用不同的值，是因为 VCI 只有链路本地意义（link-local scope），没有全局意义。",
+      "source_quote": "Each switch can pick any number it likes, as long as that number is not currently in use for some other connection on that port of that switch. As noted above, VCIs have link-local scope; that is, they have no global signiﬁcance.",
+      "source": "human"
+    },
+    {
+      "kind": "example",
+      "kp_id": "kp_ada1063f_000_000_017",
+      "source_page": 9,
+      "question": "主机 A 不想再向 B 发数据了，于是向 switch 1 发出 teardown 消息。假设 teardown 已沿路径逐跳处理完毕。如果此刻 A 仍然发出一个包头带 VCI=5 的包给 switch 1，会发生什么？为什么？",
+      "answer": "这个包会被丢弃，就好像这条连接从来没有存在过一样。因为 teardown 使路径上各交换机都删掉了对应的表项，switch 1 里已经没有「入接口 2 + VCI 5」这一项，查不到转发依据，只能丢弃。",
+      "source_quote": "The switch removes the relevant entry from its table and forwards the message on to the other switches in the path, which similarly delete the appropriate table entries. At this point, if host A were to send a packet with a VCI of 5 to switch 1, it would be dropped as if the connection had never existed.",
+      "source": "human"
+    },
+    {
+      "kind": "example",
+      "kp_id": "kp_ada1063f_000_000_022",
+      "source_page": 12,
+      "question": "源路由网络中，包从 A 出发到 B 要经过三台交换机：第 1 台应从端口 1 出、第 2 台从端口 0 出、第 3 台从端口 3 出。A 发出的包头最初写的是端口列表 (3, 0, 1)，约定每台交换机读列表最右边的元素、读完就把列表旋转。问：switch 1 读到的元素是多少？它转发出去的包头列表会变成什么？switch 2 读到的元素又是多少？",
+      "answer": "switch 1 读此时列表最右的元素 1（对应端口 1）；按旋转规则把列表转成 (1, 3, 0) 后再转发。switch 2 于是在新列表中读到最右的元素 0（对应端口 0）。",
+      "source_quote": "Thus, the original header when the packet leaves host A contains the list of ports (3, 0, 1), where we assume that each switch reads the rightmost element of the list. To make sure that the next switch gets the appropriate information, each switch rotates the list after it has read its own entry.",
+      "source": "human"
+    },
+    {
+      "kind": "misconception",
+      "kp_id": "kp_ada1063f_000_000_014",
+      "source_page": 6,
+      "wrong_belief": "认为 VCI 是这条连接的全局编号 —— 一整条路径上包头写的是同一个值，所以「A 用 5，那一路到 B 都还是 5」。",
+      "cause": "建立过程中同一条连接在各段链路上被分配了不同的值（5、11、7、4），但学生看到的是「一条连接」，就默认它该有一个统一的编号；加上 VCI 字面像 circuit identifier，更容易误读成全局 ID。",
+      "remedy": "记一句：VCI 只在一段链路上有效（link-local）。真正唯一定位一条连接的是「入接口 + 入 VCI」这个组合；出 VCI 一般与入 VCI 不同，而且一台交换机的出 VCI 正好是下一台的入 VCI。",
+      "trigger": "A 发给 B 的包，VCI 一路都是 5 吗？如果每条链路的 VCI 都不同，那靠什么认出它们属于同一条连接？",
+      "source_quote": "Note that the combination of the VCI of packets as they are received at the switch and the interface on which they are received uniquely identiﬁes the virtual connection. There may of course be many virtual connections established in the switch at one time. Also, we observe that the incoming and outgoing VCI values are generally not the same. Thus, the VCI is not a globally signiﬁcant identiﬁer for the connection; rather, it has signiﬁcance only on a given link",
+      "source": "human"
+    },
+    {
+      "kind": "misconception",
+      "kp_id": "kp_ada1063f_000_000_009",
+      "source_page": 5,
+      "wrong_belief": "认为同一对 A→B 的相继数据包会沿着同一条路径依次到达，所以数据包天然是「按序走一根管子」过来的。",
+      "cause": "受电路/虚电路的直觉影响，把「同一条流」默认等同于「同一条通路」；再加上转发看起来像是照着固定表走，就以为路径是钉死的。",
+      "remedy": "记住数据报是逐包独立转发的：每台交换机对每个包单独查转发表，所以同一对 A→B 的相邻两个包可能走完全不同的路径（某台交换机的转发表一变，路径就变）。",
+      "trigger": "同一对 A→B 的相邻两个数据包，一定走同一条路径吗？如果中途某台交换机改了转发表会怎样？",
+      "source_quote": "Each packet is forwarded independently of previous packets that might have been sent to the same destination. Thus, two successive packets from host A to host B may follow completely different paths (perhaps because of a change in the forwarding table at some switch in the network).",
+      "source": "human"
+    },
+    {
+      "kind": "misconception",
+      "kp_id": "kp_ada1063f_000_000_023",
+      "source_page": 13,
+      "wrong_belief": "认为 loose source route 只是 strict source route 的「简写」：少写几个中间节点而已，最终走的还是那条被省略掉的既定路径。",
+      "cause": "把松散理解成「用省略号缩写」，以为省略的节点是隐含确定的；没意识到松散源路由只约束「必须经过哪些节点」，节点与节点之间具体怎么走并不指定，可能有多条走法。",
+      "remedy": "一句话记牢：strict = 路径上每一跳都要点名；loose = 只给一组必经的路标（waypoints），段与段之间的具体路径不指定。这样源主机需要掌握的信息量就小得多。",
+      "trigger": "loose source route 里只写了 3 个节点，那么这 3 个节点之间的路径到底由谁来决定？",
+      "source_quote": "Source routes are sometimes categorized as strict or loose. In a strict source route, every node along the path must be speciﬁed, whereas a loose source route only speciﬁes a set of nodes to be traversed, without saying exactly how to get from one node to the next. A loose source route can be thought of as a set of waypoints rather than a completely speciﬁed route.",
+      "source": "human"
+    },
+    {
+      "kind": "example",
+      "kp_id": "kp_ada1063f_000_000_043",
+      "source_page": 23,
+      "question": "IP 地址 128.96.34.15 属于哪一类地址（class A / B / C）？判断依据是首字节的最高几位？按同一规则，192.0.2.1 属于哪一类？",
+      "answer": "首字节 128 的二进制是 1000 0000：第一位为 1、第二位为 0，按「第一位是 1 且第二位是 0 → class B」的规则，128.96.34.15 属于 class B 地址。判据就是看最高几位：第一位为 0 是 class A；第一位是 1 且第二位是 0 是 class B；前两位是 1 且第三位是 0 是 class C。192.0.2.1 的首字节 192 = 1100 0000，前两位是 1、第三位是 0，所以属于 class C。",
+      "source_quote": "The class of an IP address is identified in the most significant few bits. If the first bit is 0, it is a class A address. If the first bit is 1 and the second is 0, it is a class B address. If the first two bits are 1 and the third is 0, it is a class C address.",
+      "source": "human"
+    },
+    {
+      "kind": "example",
+      "kp_id": "kp_ada1063f_000_000_045",
+      "source_page": 24,
+      "question": "主机 H1 只有一个网络接口，它的转发表里只配置了一条 default router。现在 H1 要发一个数据报给另一物理网络上的主机。请说明 H1 如何判断该走哪条路；当目的地地址的网络号与 H1 任一接口的网络号都不匹配时，数据报会从哪里发出？",
+      "answer": "H1 先比较目的地地址的 network part 与自己接口的 network part：相同就意味着目的地与 H1 在同一物理网络，可以直接投递；不匹配、且转发表里也没有目的地网络号对应的条目时，就交给 default router 发出。因此对“只有一个默认路由器”的主机来说，所有发往本物理网络之外的数据报都会从默认路由器出去。",
+      "source_quote": "Normally, there is also a default router that is used if none of the entries in the table matches the destination’s network number. For a host, it may be quite acceptable to have a default router and nothing else—this means that all datagrams destined for hosts not on the physical network to which the sending host is attached will be sent out through the default router.",
+      "source": "human"
+    },
+    {
+      "kind": "example",
+      "kp_id": "kp_ada1063f_000_000_060",
+      "source_page": 34,
+      "question": "一台刚开机、还没有任何 IP 地址信息的主机，是怎么找到 DHCP 服务器的？它发出的第一个 DHCP 报文叫什么名字、被发往哪个目的地址？",
+      "answer": "它发送名为 DHCPDISCOVER 的报文，目的地址填 255.255.255.255 —— 这是一个 IP broadcast 地址。用广播是为了让该网络上的所有主机和路由器都能收到，DHCP 服务器（或 relay agent）才会看到它。",
+      "source_quote": "To contact a DHCP server, a newly booted or attached host sends a DHCPDISCOVER message to a special IP address (255.255.255.255) that is an IP broadcast address. This means it will be received by all hosts and routers on that network.",
+      "source": "human"
+    },
+    {
+      "kind": "example",
+      "kp_id": "kp_ada1063f_000_000_056",
+      "source_page": 31,
+      "question": "H1 与 H2 连在同一个以太网上。H1 要发一个 IP datagram 给 H2，但以太网帧的目标地址字段里填的不能是 IP 地址。问：这里缺的是什么信息？它由哪个协议负责补上？",
+      "answer": "缺的是「在该物理网络上有意义的链路层地址」（link-level address，例如 48-bit Ethernet 地址）。原因是 IP datagram 里装的是 IP 地址，而对方主机/路由器的物理接口只认它所在网络自己的编址方式，所以必须先把 IP 地址翻译成链路层地址 —— 这个翻译由 **ARP（Address Resolution Protocol）** 负责，也就是本节 3.3.6 的主题。",
+      "source_quote": "3.3.6 Address Translation (ARP) In the previous section we talked about how to get IP datagrams to the right physical network but glossed over the issue of how to get a datagram to a particular host or router on that network. The main issue is that IP datagrams contain IP addresses, but the physical interface hardware on the host or router to which you want to send the datagram only understands the addressing scheme of that particular network. Thus, we need to translate the IP address to a link-level address that makes sense on this network (e.g., a 48-bit Ethernet address",
+      "source": "human"
+    },
+    {
+      "kind": "misconception",
+      "kp_id": "kp_ada1063f_000_000_033",
+      "source_page": 17,
+      "wrong_belief": "把 best-effort 理解成“尽力保证送达”，于是以为 IP 基本等同于可靠服务，最坏也就是偶尔丢个包。",
+      "cause": "“best effort”字面像“尽最大努力送到”，容易被读成一种保证；再加上日常经验里网络“绝大多数时候都能通”，就默认它可靠了，忽略了“不保证”才是这个词的定义。",
+      "remedy": "记住 best-effort = 什么都不保证：包可能丢失、可能乱序到达、可能被重复投递，而且网络不会尝试从失败中恢复。**跑在 IP 之上的上层协议或应用必须自己知道这些失败模式。**",
+      "trigger": "如果说 best-effort 只是“偶尔丢包”，那么同一份数据被重复送达，或者后发的反而先到，算不算正常？",
+      "source_quote": "Best-effort delivery does not just mean that packets can get lost. Sometimes they can get delivered out of order, and sometimes the same packet can get delivered more than once. The higher-level protocols or applications that run above IP need to be aware of all these possible failure modes.",
+      "source": "human"
+    },
+    {
+      "kind": "misconception",
+      "kp_id": "kp_ada1063f_000_000_059",
+      "source_page": 33,
+      "wrong_belief": "以为 IP 地址和 Ethernet 地址一样，可以在出厂时就固化进网卡、一辈子不用改。",
+      "cause": "把链路层地址和网络层地址混为一谈：Ethernet 地址确实由厂商烧入、只要求全局唯一，于是顺手把这套直觉套到 IP 地址上，默认它也能在制造时就“烧死”。",
+      "remedy": "分清两者的要求不同：Ethernet 地址只求唯一；而 IP 地址还必须“反映互联网络的结构”（含 network part 与 host part，同一网络上的主机 network part 必须相同），所以主机换网络就得换地址——IP 地址必须是可重新配置的，这也正是需要 DHCP 的原因。",
+      "trigger": "如果 IP 地址出厂就烧进网卡，那么一台笔记本从家里抱到公司，还能直接上网吗？",
+      "source_quote": "Thus, it is not possible for the IP address to be configured once into a host when it is manufactured, since that would imply that the manufacturer knew which hosts were going to end up on which networks, and it would mean that a host, once connected to one network, could never move to another. For this reason, IP addresses need to be reconfigurable.",
+      "source": "human"
+    },
+    {
+      "kind": "misconception",
+      "kp_id": "kp_ada1063f_000_000_064",
+      "source_page": 36,
+      "wrong_belief": "认为 IP 是 best-effort、丢了就丢了，网络层对出错完全不管，也不会通知发送方。",
+      "cause": "把 best-effort 的“不负责恢复”直接外推成“不报告”：既然 IP 不重传、不保证送达，就以为它连出错也一概沉默处理。",
+      "remedy": "记一句：IP 不负责修复，但不代表沉默——它总是配着一个伴生协议 ICMP。当路由器或主机无法成功处理某个 IP datagram 时，ICMP 会把出错消息发回源主机（如 destination unreachable、TTL 减到 0 等）。",
+      "trigger": "既然 IP 不重传、不保证送达，那发送方又是怎么知道“目标不可达”或“TTL 耗尽”的？",
+      "source_quote": "IP is always conﬁgured with a companion protocol, known as the Internet Control Message Protocol (ICMP), that deﬁnes a collection of error messages that are sent back to the source host whenever a router or host is unable to process an IP datagram successfully. For example, ICMP deﬁnes error messages indicating that the destination host is unreachable (perhaps due to a link failure), that the reassembly process failed, that the TTL had reached 0, that the IP header checksum failed, and so on.",
+      "source": "human"
+    },
+    {
+      "kind": "example",
+      "kp_id": "kp_ada1063f_000_000_073",
+      "source_page": 41,
+      "question": "把网络抽象成图以后，节点 A 到节点 D 有两条路径：A–B–D 上两段链路的 cost 分别是 2 和 3；A–C–D 上两段链路的 cost 分别是 1 和 6。按 3.4.1 对“路由基本问题”的定义，A 到 D 的 lowest-cost path 是哪一条？它的 path cost 是多少？",
+      "answer": "A–B–D 更优，path cost = 2 + 3 = 5。因为一条 path 的 cost 等于组成它的所有边的 cost 之和，路由的基本问题就是求任意两节点间 cost 最低的那条路径；A–C–D 的 cost 是 1 + 6 = 7，比 5 大，故被排除。",
+      "source_quote": "The basic problem of routing is to ﬁnd the lowest-cost path between any two nodes, where the cost of a path equals the sum of the costs of all the edges that make up the path.",
+      "source": "human"
+    },
+    {
+      "kind": "example",
+      "kp_id": "kp_ada1063f_000_000_079",
+      "source_page": 45,
+      "question": "教材的 7 节点例子（A–G，所有链路 cost = 1）里，假设 A–E 这条链路断了。某一轮更新中，A 向 E 通告的距离为无限大，而 B、C 仍通告到 E 的距离为 2。请按“坏消息传得慢”的情形，依次写出随后 B、A、C 各自得出的到 E 的跳数。",
+      "answer": "B 听到 C 说 2 跳可到 E，于是认为经 C 可在 3 跳内到达 E，并通告给 A；A 于是认为经 B 可 4 跳到达 E，并通告给 C；C 又得出 5 跳。如此不断增大，直到该数字大到足以被当作无限大，E 才最终被判为不可达——这就是 count to infinity 问题。",
+      "source_quote": "Node B, upon hearing that E can be reached in 2 hops from C, concludes that it can reach E in 3 hops and advertises this to A; node A concludes that it can reach E in 4 hops and advertises this to C; node C concludes that it can reach E in 5 hops; and so on.",
+      "source": "human"
+    },
+    {
+      "kind": "example",
+      "kp_id": "kp_ada1063f_000_000_091",
+      "source_page": 53,
+      "question": "在 Figure 3.34 的网络中，节点 D 直接连到 C（该链路 cost = 2）。D 的 LSP 一开始给出 (B,11,B)。当 C 被移入 Confirmed 列表后，D 到 B 的开销变成多少？为什么原来那条 (B,11,B) 会被替换？",
+      "answer": "变成 5，记为 (B,5,C)（经 C 到达 B）。因为经 C 到 B 的总开销（D–C 的 2 加上 C–B 的 3）比原先记录的 11 更小，按 forward search 的规则，应当用开销更低的条目替换 Tentative 列表里的 (B,11,B)。",
+      "source_quote": "Cost to reach B through C is 5, so replace (B,11,B). C’s LSP tells us that we can reach A at cost 12.",
+      "source": "human"
+    },
+    {
+      "kind": "example",
+      "kp_id": "kp_ada1063f_000_000_097",
+      "source_page": 56,
+      "question": "RIP 把每条链路的 cost 都设为 1，等价于用“跳数”当度量。教材指出这种简单做法有明显缺陷。请举出其中一条，并说明：一条延迟 250 ms 的卫星链路和一条延迟 1 ms 的地面链路，按跳数度量会被怎样区别对待？",
+      "answer": "不会被区别对待——两条链路的 cost 都是 1，对路由协议来说同样有吸引力。因为按跳数度量根本不区分链路的延迟：250 ms 的卫星链路和 1 ms 的地面链路被一视同仁（同理也不区分容量，1 Mbps 的链路会和 10 Gbps 的一样好）。",
+      "source_quote": "First, it does not distinguish between links on a latency basis. Thus, a satellite link with 250-ms latency looks just as attractive to the routing protocol as a terrestrial link with 1-ms latency. Second, it does not distinguish between routes on a capacity basis, making a 1-Mbps link look just as good as a 10-Gbps link",
+      "source": "human"
+    },
+    {
+      "kind": "misconception",
+      "kp_id": "kp_ada1063f_000_000_070",
+      "source_page": 40,
+      "wrong_belief": "把 routing（路由）和 forwarding（转发）当成同一件事，以为路由器每收到一个包都要跑一次最短路算法。",
+      "cause": "日常说“路由器在给包选路”，就把“查表把包发出去”（forwarding）和“把这张表算出来”（routing）混成了同一步。",
+      "remedy": "记两句：forwarding 是收包→查转发表→按表把包发出，每个包做一次（data plane）；routing 是把这张转发表建出来的过程，靠分布式算法（control plane）。转发时不会去跑最短路。",
+      "trigger": "数据包到达路由器时转发表已经建好，此时路由器还需要为这个包重新计算最短路径吗？",
+      "source_quote": "Forwarding consists of receiving a packet, looking up its destination address in a table, and sending the packet in a direction determined by that table. We saw several examples of forwarding in the preceding section. It is a simple and well-deﬁned process performed locally at each node, and is often referred to as the network’s data plane.",
+      "source": "human"
+    },
+    {
+      "kind": "misconception",
+      "kp_id": "kp_ada1063f_000_000_071",
+      "source_page": 42,
+      "wrong_belief": "把链路的 cost 当成固定不变的物理常量，以为只要拓扑没变，路由表就永远不必更新。",
+      "cause": "入门例子（如 RIP）里 cost 恒为 1、只按跳数选路，容易让人以为 cost 是链路自带、与当前状况无关的固定属性。",
+      "remedy": "cost 是“这条链路有多值得走”的度量，可以随时间变化：教材明确说我们会希望让链路开销随时间改变，例如给一条负载很重的链路赋更高的 cost，从而让流量绕开它。",
+      "trigger": "一条链路并没有断开，只是非常拥塞——它的度量（cost）应该怎么变？路由协议要不要因此改路？",
+      "source_quote": "It implies that edge costs cannot change, even though we might reasonably wish to have link costs change over time (e.g., assigning high cost to a link that is heavily loaded).",
+      "source": "human"
+    },
+    {
+      "kind": "misconception",
+      "kp_id": "kp_ada1063f_000_000_079",
+      "source_page": 45,
+      "wrong_belief": "以为水平分割（split horizon）——尤其是配上毒性逆转（poison reverse）——就能彻底消灭路由环路。",
+      "cause": "教材举的反例通常只涉及两个节点互相把对方当成去往目的地 E 的下一跳，学生容易把“这个例子被治好了”推广成“所有环路都能治”。",
+      "remedy": "记住这两种技巧的适用边界：它们只对“涉及两个节点”的环路有效；一旦环路涉及三个或更多节点，就要用更激进的手段（例如让下游节点在听到故障通告后先等一等再通告），代价是收敛变慢。",
+      "trigger": "如果环路变成 A→B→C→A 这样涉及三个节点，水平分割和毒性逆转还能解决吗？",
+      "source_quote": "The problem with both of these techniques is that they only work for routing loops that involve two nodes. For larger routing loops, more drastic measures are called for.",
+      "source": "human"
+    },
+    {
+      "kind": "example",
+      "kp_id": "kp_ada1063f_000_000_043",
+      "source_page": 23,
+      "question": "一个 class C 网络号下面最多能接多少台主机？为什么不是 256 台？",
+      "answer": "最多 254 台。class C 只用 8 位做 host part，共有 256 个主机标识符；其中 255 被保留作 broadcast，而 0 不是合法的主机号，所以只剩 254 个可分配的主机地址。",
+      "source_quote": "Finally, class C addresses have only 8 bits for the host and 21 for the network part. Therefore, a class C network can have only 256 unique host identiﬁers, which means only 254 attached hosts (one host identiﬁer, 255, is reserved for broadcast, and 0 is not a valid host number",
+      "source": "human"
+    },
+    {
+      "kind": "misconception",
+      "kp_id": "kp_ada1063f_000_000_060",
+      "source_page": 34,
+      "wrong_belief": "以为可以让每台主机在配置时就写死 DHCP 服务器的地址，反正地址是固定的，这样就不必广播了。",
+      "cause": "只看到「广播很浪费」，没看到 DHCP 存在的目的本身就是省掉手工配置；把「让主机预先知道服务器地址」当成了无成本的改进。",
+      "remedy": "记一句：DHCP 的目标是**把主机的手工配置降到最低**。如果要求每台主机预先配好服务器地址，就等于把手工配置又搬回来了 —— 这恰恰违背了 DHCP 的初衷。所以第一个要解决的问题就是「服务器发现」，只能靠广播（或 relay agent）。",
+      "trigger": "如果每台主机都要预先写好 DHCP 服务器地址，那和手工配 IP 相比，到底省了哪一步？",
+      "source_quote": "Since the goal of DHCP is to minimize the amount of manual conﬁguration required for a host to function, it would rather defeat the purpose if each host had to be conﬁgured with the address of a DHCP server",
+      "source": "human"
+    }
+  ]
+}
