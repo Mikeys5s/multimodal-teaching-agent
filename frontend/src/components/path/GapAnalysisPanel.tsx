@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
 import { EmptyState, ErrorState, LoadingState } from '@/components/ui/Feedback'
+import { KpIdChip } from '@/components/ui/KpIdChip'
 import { useRequest } from '@/hooks/useRequest'
 import { api } from '@/lib/endpoints'
 import type { GapAnalysis, GapPrerequisite } from '@/lib/types'
@@ -26,12 +27,14 @@ function PrerequisiteItem({ item }: { item: GapPrerequisite }) {
         </span>
       </div>
       {item.reason && <p className="mt-1 text-xs leading-relaxed text-slate-500">{item.reason}</p>}
-      <div className="mt-1 font-mono text-xs text-slate-400">{item.kp_id}</div>
+      <div className="mt-1">
+        <KpIdChip kpId={item.kp_id} />
+      </div>
     </li>
   )
 }
 
-function AnalysisBody({ analysis }: { analysis: GapAnalysis }) {
+function AnalysisBody({ analysis, targetName }: { analysis: GapAnalysis; targetName: string }) {
   // 由近及远：第 1 层是直接前置，越往后越久远
   const prerequisites = [...analysis.hard_prerequisites].sort((a, b) => a.depth - b.depth)
   const { likely_gap: likelyGap } = analysis
@@ -39,11 +42,12 @@ function AnalysisBody({ analysis }: { analysis: GapAnalysis }) {
   return (
     <div className="space-y-4">
       {/* 目标 */}
-      <div className="flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50/60 px-3 py-2">
+      <div className="flex flex-wrap items-center gap-x-2 gap-y-1 rounded-lg border border-slate-200 bg-slate-50/60 px-3 py-2">
         <Target className="h-3.5 w-3.5 shrink-0 text-slate-400" aria-hidden />
         <span className="text-xs text-slate-500">回溯目标</span>
-        <span className="text-sm font-medium text-slate-700">{analysis.target_kp.name}</span>
-        <span className="font-mono text-xs text-slate-400">{analysis.target_kp.kp_id}</span>
+        <span className="text-sm font-medium text-slate-700">{targetName}</span>
+        {/* id 降级为可查小标签（方案 C②）：不占正文位置，悬停/点击仍可核对 */}
+        <KpIdChip kpId={analysis.target_kp.kp_id} />
       </div>
 
       {/* 必须补的前置 */}
@@ -167,6 +171,7 @@ export function GapAnalysisPanel({ targetKpId, targetKpName }: GapAnalysisPanelP
         <Button
           variant="secondary"
           size="sm"
+          className="shrink-0"
           loading={gapReq.loading}
           icon={<RefreshCw className="h-3.5 w-3.5" />}
           onClick={() => void reload()}
@@ -251,7 +256,7 @@ export function GapAnalysisPanel({ targetKpId, targetKpName }: GapAnalysisPanelP
           />
         )}
 
-        {!gapReq.error && analysis && <AnalysisBody analysis={analysis} />}
+        {!gapReq.error && analysis && <AnalysisBody analysis={analysis} targetName={targetKpName} />}
       </div>
     </section>
   )
