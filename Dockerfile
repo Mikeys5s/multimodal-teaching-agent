@@ -110,27 +110,29 @@ COPY skills/ /app/skills/
 #
 # 需要覆盖时（例如在境外构建）：
 #   docker build --build-arg PIP_INDEX_URL=https://pypi.org/simple/ --build-arg PIP_TRUSTED_HOST= .
-ARG PIP_INDEX_URL=https://mirrors.aliyun.com/pypi/simple/
-ARG PIP_TRUSTED_HOST=mirrors.aliyun.com
-# ⚠️ **不要在 Dockerfile 里加 `PIP_EXTRA_INDEX_URL`**（2026-10-11 实测教训）
+ARG PIP_INDEX_URL=https://pypi.tuna.tsinghua.edu.cn/simple/
+ARG PIP_TRUSTED_HOST=pypi.tuna.tsinghua.edu.cn
+# ⚠️ **索引源的选择（2026-10-11 反复实测后定）**
 #
-# 10/10 我加过 `PIP_EXTRA_INDEX_URL=https://pypi.org/simple/` 来解决
-# 「阿里云缺 `pydantic_core` 某个 wheel ⇒ 构建失败 ⇒ 静默跑旧代码」。
-# **它确实解决了那个问题，但代价是构建从 ~5 分钟变成 >36 分钟且卡死。**
+# **为什么不用阿里云**：它的 `simple/` 索引页**列了** `pydantic 2.14.0`，
+# **而 pip 去取 PEP 658 的 `.metadata` 时 404**
+# （阿里云没同步那类附属文件；**文件本身是有的**，直连 `.whl` 返回 200）。
+# ⇒ 表现是 `HTTP error 404 while getting ...whl.metadata` ⇒ **整条构建失败**。
 #
-# 实测（在服务器上量）：
-#     阿里云      HTTP 200 · **0.66 秒**
-#     官方 PyPI   HTTP 200 · **20.0 秒**（正好卡在超时上限）
-# `--extra-index-url` 的语义是「**两个源一起找**」⇒
-# **pip 对每一个包都要去官方源等一次 20 秒超时** ⇒ 几十个包就是十几分钟。
+# **为什么不用 `--extra-index-url`**：那是「**两个源一起找**」⇒
+# pip 对**每个包**都要去官方源等一次超时（实测官方源 20s 才回）
+# ⇒ 构建从 ~5 分钟变成 >36 分钟且卡死。
 #
-# **⇒ 结论：慢的源不该放进"每次都要查"的位置。**
-#   正确做法见下面的 `--timeout` / `--retries`：
-#   主源只用阿里云（快），**把超时压短**，真缺包时**快速失败**而不是长时间干等。
+# **清华源实测**：
+#     pydantic 2.14.0 · 索引页 0.45s · **能成功下载** ✅
+#     （腾讯源也可以，0.38s）
+#
+# **⇒ 结论：选「索引与文件都同步完整」的源，而不是「索引最快」的源。**
+#   两个源交替"看起来都能用"，但**真正的判据是能不能装成一个包**。
 ENV PIP_INDEX_URL=${PIP_INDEX_URL} \
     PIP_TRUSTED_HOST=${PIP_TRUSTED_HOST} \
     PIP_DEFAULT_TIMEOUT=15 \
-    PIP_RETRIES=2
+    PIP_RETRIES=3
 
 RUN pip install --no-cache-dir --timeout 15 --retries 2 --upgrade pip setuptools wheel \
     && pip install --no-cache-dir --timeout 15 --retries 2 -e . \
