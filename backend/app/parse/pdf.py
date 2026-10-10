@@ -226,6 +226,13 @@ _PAGE_NUMBER_RE = re.compile(r"^(?:\d{1,4}|[ivxlcdmIVXLCDM]{1,4})$")
 #: 位置信号兜底；而标题否决是**无位置信息**的，用宽松的罗马字母字符集会误伤真标题
 #: —— `mid` / `mild` / `dim` 都能被 `[ivxlcdmIVXLCDM]{1,4}` 匹配上。
 HEADING_PAGE_NUMBER_RE = re.compile(r"^\d{1,4}$")
+#: 句末标点：**只认句号**（中英文）。刻意不含 `?` / `?` ——
+#: `What Is an Internetwork?` 是这条教材里真实存在的标题。
+SENTENCE_END_RE = re.compile(r"[.。]$")
+#: 「看起来像正文句 / 伪代码行」的长度下限（字符）。
+#: 取 20：线上那 4 个误判样本长度是 37/78/83/84，都能覆盖；
+#: 而 `1.` 这种短标题不会被误伤。
+SENTENCE_TAIL_MIN_CHARS = 20
 #: 目录页判定：一页里含这么多个"前导点"行（`. . . . .`）就当目录页。
 #: 取 4 是因为正文里不会连续出现 4 行前导点；少于它的排版（如只有 2 条目录行）
 #: 会漏判 —— 漏判只是目录页码多留几个块，方向仍是"宁漏勿误"。
@@ -1160,6 +1167,25 @@ def _scan_document(
     )
 
 
+def _looks_like_sentence(text: str) -> bool:
+    """块文本是否像**正文句 / 伪代码行**（而不是标题）。
+
+    判据只有两条，都很保守：
+
+    1. **以句号结尾**（`.` 或 `。`）—— 真标题不以句号结尾。同一批线上数据里
+       108 个不同的 `chapter.title`，除了 4 个误判样本以外没有一个以句号结尾。
+       ⚠️ **刻意不认问号** —— `What Is an Internetwork?` 是真实标题。
+    2. **够长**（≥ `SENTENCE_TAIL_MIN_CHARS`）—— 挡住 `1.` 这种短标题。
+
+    用它挡的是"字号偏大的伪代码行/整句说明被提升成标题"这一类，
+    它们会被 `sections.py` 的 `_number_and_title` 当成章/节名。
+    """
+    stripped = (text or "").strip()
+    if len(stripped) < SENTENCE_TAIL_MIN_CHARS:
+        return False
+    return bool(SENTENCE_END_RE.search(stripped))
+
+
 def _classify(
     raw: _RawBlock,
     body_size: float,
@@ -1207,6 +1233,27 @@ def _classify(
 
     is_large = raw.max_size >= body_size + HEADING_SIZE_DELTA
     if is_large and len(raw.text) <= HEADING_MAX_CHARS and raw.line_count <= HEADING_MAX_LINES:
+        # ★ 否决规则（第六批）：**以句号结尾的长块不是标题** —— 它是正文句，或教材里
+        #   用等宽/略大字号排的**伪代码行**。
+        #
+        # 为什么必须堵：字号路径只看"字号大 + 长度 ≤100 + 行数 ≤3"。真实教材里的
+        # 算法伪代码（*Computer Networks: A Systems Approach* 的 Dijkstra 例子）与
+        # 表格里的整句说明，**字号往往比正文大一点**，于是被提升成 heading，
+        # 再被 `sections.py` 的 `_number_and_title` 当成章/节名。
+        #
+        # 线上实测（629 条知识点）：`chapter.title` 里有 4 个是这种句子，
+        # 覆盖 17 条知识点（2.7%）：
+        #   `Initialize the Confirmed list with an entry for myself; this entry has a cost of 0.`
+        #   `Each IP datagram is re-encapsulated for each physical network over which it travels.`
+        #   `CongestionWindow then grows linearly.`
+        #   `Buffers are allocated to each virtual circuit when the circuit is initialized.`
+        #
+        # 判据为什么安全：**真实标题不以句号结尾** —— 同一批数据里 108 个不同的
+        # `chapter.title`，除了上面这 4 个以外没有一个以 `.` 或 `。` 结尾；
+        # 而带问号的标题（`What Is an Internetwork?`）**不受影响**（只认 `.` / `。`）。
+        # 再加一道长度下限（≥ `SENTENCE_TAIL_MIN_CHARS`），免得误伤 `1.` 这种短标题。
+        if _looks_like_sentence(raw.text):
+            return "paragraph", None
         return "heading", size_levels.get(raw.max_size, 1)
 
     return "paragraph", None
