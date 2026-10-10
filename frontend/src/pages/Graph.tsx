@@ -235,7 +235,7 @@ export default function Graph() {
                 ].join(' ')}
               >
                 <span className="h-1.5 w-1.5 rounded-full bg-coral" aria-hidden />
-                仅看待复核（{reviewCount}）
+                仅看待复核（当前视图 {reviewCount}）
               </button>
 
               {filtered && (

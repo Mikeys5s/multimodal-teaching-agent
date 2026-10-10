@@ -6,7 +6,6 @@ import { GapAnalysisPanel } from '@/components/path/GapAnalysisPanel'
 import { PathHero } from '@/components/path/PathHero'
 import { PathTimeline } from '@/components/path/PathTimeline'
 import { TargetFilters, TargetIndex, useTargetPickerState } from '@/components/path/TargetPicker'
-import { EmptyState } from '@/components/ui/Feedback'
 import { api } from '@/lib/endpoints'
 import { formatChapterRef } from '@/lib/format'
 import { kpDisplayTitle } from '@/lib/kpTitle'
@@ -107,19 +106,54 @@ export default function PathPage() {
 
       {/* INDEX 侧栏 + 步骤时间线 */}
       <section className="atlas-sheet-panel grid min-h-[420px] overflow-hidden md:grid-cols-[230px_minmax(0,1fr)]">
-        <div className="border-b border-[#d7d0c4] bg-atlas-paper2/60 md:max-h-none md:border-b-0 md:border-r">
+        {/* 窄屏限制清单高度：否则 200+ 条目标会把下方的步骤区/空态顶到视口外 */}
+        <div className="flex max-h-[380px] flex-col border-b border-[#d7d0c4] bg-atlas-paper2/60 md:max-h-none md:border-b-0 md:border-r">
           <TargetIndex state={picker} selectedId={target?.id ?? null} onSelect={handleSelect} />
         </div>
 
         {target ? (
           <PathTimeline kpId={target.id} kpName={target.name} onRetarget={handleRetarget} />
         ) : (
-          <div className="flex flex-col">
-            <EmptyState
-              title="还没有选择目标知识点"
-              description="在左侧选一个知识点：系统会沿它的硬前置依赖反向遍历并做拓扑排序，给出「先学什么、后学什么」的有序路径，并回溯你可能卡住的更早环节。"
-            />
-            <div className="flex items-center justify-center gap-1.5 pb-10 text-xs text-atlas-muted">
+          /* 未选择状态：有层次的空态说明 + 明确的选择动作；数字只来自真实目标清单。
+             self-start：左侧清单可能有数千像素高，若跟着网格行拉伸并垂直居中，
+             空态内容会被顶到首屏视口之外（本页实测踩过） */
+          <div className="flex flex-col items-center gap-5 self-start px-6 py-14 text-center">
+            <svg width="72" height="72" viewBox="0 0 72 72" fill="none" aria-hidden className="text-atlas-muted">
+              <circle cx="14" cy="56" r="8" stroke="currentColor" strokeWidth="1.6" />
+              <circle cx="36" cy="36" r="8" stroke="currentColor" strokeWidth="1.6" />
+              <circle cx="58" cy="16" r="8" stroke="currentColor" strokeWidth="1.6" />
+              <path d="M20 50 C26 46 28 44 30 42M42 30 C48 26 50 24 52 22" stroke="currentColor" strokeWidth="1.5" strokeDasharray="3 4" />
+              <path d="M52 22l6-6M30 42l6-6" stroke="currentColor" strokeWidth="1.5" />
+            </svg>
+            <div>
+              <p className="text-base font-semibold text-atlas-ink">还没有选择目标知识点</p>
+              <p className="mx-auto mt-2 max-w-[420px] text-xs leading-relaxed text-atlas-muted">
+                从目标清单中点选一个知识点{picker.total !== null && `（当前共 ${picker.total} 个可选）`}
+                ：系统会沿它的硬前置依赖反向遍历并做拓扑排序，给出「先学什么、后学什么」的有序路径，
+                并回溯你可能卡住的更早环节。
+              </p>
+            </div>
+            <ol className="grid w-full max-w-[460px] gap-2 text-left sm:grid-cols-3">
+              <li className="rounded-xl border border-[#ddd6c8] bg-atlas-sheet px-3 py-2.5">
+                <span className="font-serif text-sm italic text-coral">01</span>
+                <span className="mt-1 block text-xs leading-relaxed text-atlas-muted">
+                  用上方搜索框或难度 / 章节筛选缩小范围
+                </span>
+              </li>
+              <li className="rounded-xl border border-[#ddd6c8] bg-atlas-sheet px-3 py-2.5">
+                <span className="font-serif text-sm italic text-coral">02</span>
+                <span className="mt-1 block text-xs leading-relaxed text-atlas-muted">
+                  在目标清单里点击一个知识点（窄屏时清单在上方）
+                </span>
+              </li>
+              <li className="rounded-xl border border-[#ddd6c8] bg-atlas-sheet px-3 py-2.5">
+                <span className="font-serif text-sm italic text-coral">03</span>
+                <span className="mt-1 block text-xs leading-relaxed text-atlas-muted">
+                  查看有序路径、每步排序依据与卡点回溯
+                </span>
+              </li>
+            </ol>
+            <div className="flex items-center justify-center gap-1.5 text-xs text-atlas-muted">
               <Route className="h-3.5 w-3.5" aria-hidden />
               路径排序的每一步都会标注可核对的先后关系 —— 排序不是黑盒
             </div>

@@ -17,19 +17,46 @@ export interface GraphCanvasProps {
 const MIN_SCALE = 0.1
 const MAX_SCALE = 3
 const ZOOM_STEP = 1.25
-const LABEL_MAX_WIDTH = 116
+/** 节点主标题每行可用的估算宽度（px）：节点宽 190 − 左侧圆点位移 24 − 右侧余量 10 */
+const LABEL_LINE_WIDTH = 156
 
-/** 中文按 12.5px、西文按 7px 估算宽度做截断（SVG <text> 不会自动换行/省略） */
-function truncateName(name: string): string {
+const charWidth = (char: string) => (/[\u2e80-\u9fff\uff00-\uffef]/.test(char) ? 12.5 : 7)
+
+/**
+ * 节点主标题排成**最多两行**（SVG <text> 不会自动换行/省略）：
+ * 逐行贪心装满；第二行放不下时在行尾加「…」。
+ * 完整名称永远可通过三处看到：节点 <title> 悬停提示、键盘 aria-label、右侧证据面板。
+ */
+function wrapName(name: string): [string, string | null] {
+  const lines: string[] = []
   let width = 0
-  let out = ''
+  let current = ''
   for (const char of name) {
-    const charWidth = /[\u2e80-\u9fff\uff00-\uffef]/.test(char) ? 12.5 : 7
-    if (width + charWidth > LABEL_MAX_WIDTH) return `${out}…`
-    width += charWidth
-    out += char
+    const w = charWidth(char)
+    if (width + w > LABEL_LINE_WIDTH) {
+      lines.push(current)
+      if (lines.length === 2) break
+      width = 0
+      current = ''
+    }
+    width += w
+    current += char
   }
-  return out
+  if (lines.length < 2 && current) lines.push(current)
+  const consumed = lines.join('').length
+  const truncated = consumed < name.length
+  if (truncated && lines.length === 2) {
+    // 第二行行尾让位给省略号
+    let line = lines[1]
+    let w = 0
+    for (const char of line) w += charWidth(char)
+    while (line && w + 8 > LABEL_LINE_WIDTH) {
+      w -= charWidth(line[line.length - 1])
+      line = line.slice(0, -1)
+    }
+    lines[1] = `${line}…`
+  }
+  return [lines[0] ?? '', lines[1] ?? null]
 }
 
 const clamp = (value: number, min: number, max: number) => Math.min(Math.max(value, min), max)
@@ -64,18 +91,18 @@ export function GraphCanvas({ nodes, edges, selectedId, onSelect }: GraphCanvasP
 
   /**
    * 初始视图：优先「可读」而非「看全」——
-   * 全景缩放若低于 0.5（图很宽），改为 0.5 倍并左对齐到先修起点层，用户向右平移探索；
+   * 全景缩放若低于 0.65（图很宽），改为 0.65 倍并左对齐到先修起点层，用户向右平移探索；
    * 「适应画布」按钮仍提供全景。
    */
   const fitReadable = useCallback(() => {
     const el = containerRef.current
     if (!el || layout.width === 0 || layout.height === 0) return
     const kFit = Math.min((el.clientWidth - 48) / layout.width, (el.clientHeight - 48) / layout.height)
-    if (kFit >= 0.5) {
+    if (kFit >= 0.65) {
       fitView()
       return
     }
-    const k = clamp(0.5, MIN_SCALE, 1.1)
+    const k = clamp(0.65, MIN_SCALE, 1.1)
     setView({
       k,
       x: 24,
@@ -255,6 +282,7 @@ export function GraphCanvas({ nodes, edges, selectedId, onSelect }: GraphCanvasP
               const dimmed = focusId !== null && !related.has(node.id)
               // 决赛任务 2：节点标签用可读标题（后端未提供时回落 name，行为与改前一致）
               const label = kpDisplayTitle(node)
+              const [labelLine1, labelLine2] = wrapName(label)
               const rawName = shouldExposeRawName(node) ? kpRawName(node) : null
               // 决赛任务 1：重复组角标。节点接口当前不带该字段 → 拿不到时为 null，不显示
               const dupLabel = dupBadgeLabel(node)
@@ -323,10 +351,15 @@ export function GraphCanvas({ nodes, edges, selectedId, onSelect }: GraphCanvasP
                     style={selected ? { filter: 'drop-shadow(0 0 8px rgba(217,237,131,0.2))' } : undefined}
                   />
                   <circle cx={14} cy={16} r={3.2} fill={color} />
-                  <text x={24} y={20} fontSize={12} fontWeight={500} fill="#edf1f6">
-                    {truncateName(label)}
+                  <text x={24} y={20} fontSize={11.5} fontWeight={500} fill="#edf1f6">
+                    {labelLine1}
                   </text>
-                  <text x={14} y={NODE_H - 10} fontSize={9} fill="#93a2b3">
+                  {labelLine2 !== null && (
+                    <text x={24} y={34} fontSize={11.5} fontWeight={500} fill="#edf1f6">
+                      {labelLine2}
+                    </text>
+                  )}
+                  <text x={14} y={NODE_H - 9} fontSize={9} fill="#93a2b3">
                     难度 {node.difficulty} · {DIFFICULTY_LABEL[node.difficulty]}
                   </text>
                   {node.needs_review && (
@@ -345,8 +378,7 @@ export function GraphCanvas({ nodes, edges, selectedId, onSelect }: GraphCanvasP
       </svg>
 
       {/* 缩放控件（触控目标手机 ≥40px） */}
-      <div className="absolute right-3 top-3 flex items-center gap-0.5 rounded-lg border border-[#d5cfc4] bg-atlas-sheet/95 p-1 shadow-card">
-        <button
+      <div className="absolute right-3 top-3 flex items-center gap-0.5 rounded-lg border border-[#d5cfc4] bg-atlas-sheet/95 p-1 shadow-card">        <button
           className="flex h-10 w-10 items-center justify-center rounded text-[#405069] hover:bg-[#e5eafa] hover:text-brand-600 sm:h-7 sm:w-7"
           onClick={() => zoomAtCenter(1 / ZOOM_STEP)}
           aria-label="缩小"
@@ -373,6 +405,11 @@ export function GraphCanvas({ nodes, edges, selectedId, onSelect }: GraphCanvasP
         >
           <Maximize2 className="h-3.5 w-3.5" />
         </button>
+      </div>
+
+      {/* 平移/缩放方式提示：宽图需要横向探索时，得让人知道怎么移动 */}
+      <div className="pointer-events-none absolute bottom-3 right-3 hidden max-w-[46%] rounded-lg border border-[#263b57] bg-atlas-ink/85 px-2.5 py-1.5 text-[10px] leading-relaxed text-[#9daabc] sm:block">
+        拖拽平移 · 滚轮缩放 · Tab 遍历节点
       </div>
 
       {/* 图例：难度色点 + 硬/软前置（线型 + 箭头形态双线索）+ 待复核 */}
