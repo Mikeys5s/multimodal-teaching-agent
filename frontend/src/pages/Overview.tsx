@@ -164,10 +164,20 @@ function useQuickTours() {
   ]
 }
 
-/** Atlas 主视觉 SVG：路径沿虚线流动，节点带光晕（纯装饰，不代表真实数据） */
+/** Atlas 主视觉 SVG：路径一次性描线呈现，连线带柔光晕（纯装饰，不代表真实数据） */
 function AtlasVisual() {
   return (
     <div className="relative z-10 grid min-h-[220px] place-items-center overflow-hidden sm:min-h-[300px]">
+      {/* 路径后方的蓝/青/黄绿环境柔光（贴合现有图形，静止、低透明，不扩展成新图） */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0"
+        style={{
+          background:
+            'radial-gradient(ellipse 42% 38% at 26% 62%, rgba(49,92,255,0.22), transparent 70%), radial-gradient(ellipse 38% 34% at 58% 48%, rgba(98,200,180,0.18), transparent 70%), radial-gradient(ellipse 30% 28% at 78% 30%, rgba(217,237,131,0.14), transparent 70%)',
+          filter: 'blur(26px)',
+        }}
+      />
       <span className="absolute right-10 top-10 font-serif text-xs italic tracking-wide text-[#9eabbc]" aria-hidden>
         SOURCE / 04
       </span>
@@ -175,7 +185,7 @@ function AtlasVisual() {
         NEXT: UNDERSTAND
       </span>
       <svg viewBox="0 0 600 330" role="img" aria-label="知识节点与学习路径示意图"
-        className="h-[220px] w-full max-w-[600px] overflow-visible sm:h-[300px]">
+        className="relative h-[220px] w-full max-w-[600px] overflow-visible sm:h-[300px]">
         <defs>
           <linearGradient id="atlas-route" x1="0" x2="1">
             <stop stopColor="#315cff" />
@@ -189,9 +199,15 @@ function AtlasVisual() {
               <feMergeNode in="SourceGraphic" />
             </feMerge>
           </filter>
+          {/* 连线光晕：只模糊、不合并，垫在实线下面 */}
+          <filter id="atlas-line-glow" x="-20%" y="-60%" width="140%" height="220%">
+            <feGaussianBlur stdDeviation="5" />
+          </filter>
         </defs>
         <path d="M54 229 C118 205 116 120 189 133 S272 237 326 196 S388 79 449 106 S506 195 562 112"
-          fill="none" stroke="url(#atlas-route)" strokeWidth="2.6" className="atlas-draw" />
+          fill="none" stroke="url(#atlas-route)" strokeWidth="7" opacity="0.32" filter="url(#atlas-line-glow)" />
+        <path d="M54 229 C118 205 116 120 189 133 S272 237 326 196 S388 79 449 106 S506 195 562 112"
+          fill="none" stroke="url(#atlas-route)" strokeWidth="2.6" pathLength={1000} className="atlas-draw" />
         <path d="M54 229 C118 205 116 120 189 133 S272 237 326 196 S388 79 449 106 S506 195 562 112"
           fill="none" stroke="#c4d0df" strokeWidth="0.8" strokeDasharray="2 8" opacity="0.5" />
         <path d="M189 133 C212 67 260 56 296 82 M326 196 C355 251 408 259 455 232 M449 106 C466 59 499 49 527 62"

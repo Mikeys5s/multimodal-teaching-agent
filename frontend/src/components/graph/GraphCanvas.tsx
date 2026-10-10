@@ -197,14 +197,14 @@ export function GraphCanvas({ nodes, edges, selectedId, onSelect }: GraphCanvasP
 
   return (
     <div ref={containerRef} className="relative h-full w-full overflow-hidden bg-atlas-canvas">
-      {/* 制图材质层：蓝色柔光 + 坐标网格（纯装饰，静止不动） */}
+      {/* 制图材质层：蓝/青环境光（压在节点网络后方，加深纵深感而不提亮画布）+ 坐标网格（纯装饰，静止不动） */}
       <div
         aria-hidden
         className="pointer-events-none absolute inset-0"
         style={{
           background:
-            'radial-gradient(ellipse at 54% 46%, rgba(49,92,255,0.20), transparent 48%), linear-gradient(rgba(255,255,255,0.035) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.035) 1px, transparent 1px)',
-          backgroundSize: 'auto, 34px 34px, 34px 34px',
+            'radial-gradient(ellipse at 54% 46%, rgba(49,92,255,0.20), transparent 48%), radial-gradient(ellipse 46% 40% at 82% 78%, rgba(98,200,180,0.12), transparent 62%), radial-gradient(ellipse 34% 30% at 16% 18%, rgba(49,92,255,0.10), transparent 60%), linear-gradient(rgba(255,255,255,0.035) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.035) 1px, transparent 1px)',
+          backgroundSize: 'auto, auto, auto, 34px 34px, 34px 34px',
         }}
       />
       <span aria-hidden className="pointer-events-none absolute left-4 top-3.5 text-[9px] uppercase tracking-[0.16em] text-[#79899c]">
@@ -267,7 +267,10 @@ export function GraphCanvas({ nodes, edges, selectedId, onSelect }: GraphCanvasP
                   strokeLinecap={hard && !backEdge ? 'butt' : 'round'}
                   markerEnd={`url(#xizhi-arrow-${hard ? 'hard' : 'soft'}${relatedEdge && !backEdge ? '-active' : ''})`}
                   opacity={dimmed ? 0.12 : 0.9}
-                  style={relatedEdge && !backEdge ? { filter: 'drop-shadow(0 0 5px rgba(217,237,131,0.7))' } : undefined}
+                  style={{
+                    transition: 'opacity 160ms ease-out, stroke 160ms ease-out',
+                    ...(relatedEdge && !backEdge ? { filter: 'drop-shadow(0 0 5px rgba(217,237,131,0.7))' } : {}),
+                  }}
                 />
               )
             })}
@@ -334,7 +337,7 @@ export function GraphCanvas({ nodes, edges, selectedId, onSelect }: GraphCanvasP
                     />
                   )}
                   {selected && (
-                    <rect x={-4} y={-4} width={NODE_W + 8} height={NODE_H + 8} rx={16} fill="none" stroke="#d9ed83" strokeWidth={2.5} opacity={0.45} style={{ filter: 'drop-shadow(0 0 8px rgba(217,237,131,0.35))' }} />
+                    <rect x={-4} y={-4} width={NODE_W + 8} height={NODE_H + 8} rx={16} fill="none" stroke="#d9ed83" strokeWidth={2.5} opacity={0.45} className="atlas-halo" style={{ filter: 'drop-shadow(0 0 8px rgba(217,237,131,0.35))' }} />
                   )}
                   {/* 深蓝节点卡：暗底 + 难度色圆点（SPEC：节点颜色映射难度）+ 难度说明行；
                       选中 = 荧光描边提亮；待复核 = 珊瑚虚线描边 + ! 角标（形态+图标+文字三重线索） */}
