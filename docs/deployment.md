@@ -89,7 +89,7 @@ sudo bash scripts/server-bootstrap.sh
 
 ```bash
 cd ~
-git clone https://github.com/RyeYen/multimodal-teaching-agent.git xizhi
+git clone https://gitee.com/mikey_code/multimodal-teaching-agent.git xizhi
 cd xizhi
 
 docker compose up -d --build

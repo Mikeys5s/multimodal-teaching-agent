@@ -1,5 +1,6 @@
 {
   "_说明": "这份快照由 .learnbuddy/_gh/snapshot_metrics.py 从线上抓取，PPT 素材包引用它。",
+  "_时效提醒": "⚠️ 这是**历史快照**（抓取于 2026-09 的 PPT 素材包阶段），其中数字**已经过期**：edge_count 625→645、conflict_count 625→644、materials 6/4/2→4/4/0。**不要直接引用本文件**；当前口径请跑 `python scripts/check-numbers.py`，或看已按 2026-10-08 实测订正的 docs/ppt-material.md。",
   "_来源": "http://120.77.177.171:8000",
   "_抓取方式": "python .learnbuddy/_gh/snapshot_metrics.py（只读，不写库）",
   "quality": {

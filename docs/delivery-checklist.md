@@ -118,9 +118,10 @@
   仓库私有 = 评委打不开 = 交付物 ④「源码仓库」**直接作废**。
 
   - **怎么验证**（两步都要做，缺一步不算）：
-    1. `curl -s https://api.github.com/repos/RyeYen/multimodal-teaching-agent | grep -m1 '"private"'`
-       → **期望输出 `"private": false`**
-    2. **无痕窗口**打开仓库页面，能直接看到代码树与 README，**不是登录页、不是 404**
+    1. `curl -s https://gitee.com/api/v5/repos/mikey_code/multimodal-teaching-agent | grep -o '"private":[a-z]*' | head -1`
+       → **期望输出 `"private":false`**
+    2. **无痕窗口**打开仓库页面 <https://gitee.com/mikey_code/multimodal-teaching-agent>，
+       能直接看到代码树与 README，**不是登录页、不是 404**
   - **证据**：把上面命令的完整输出贴到本条下面。
   - ⏰ **时点要求**：**9/24（D9 功能冻结日）前完成**，且**保持到 10/15 决赛**（不是 9/26 —— 见 A3）。
     若答辩前有人把它改回 private，**这一条直接归零**。
