@@ -7,7 +7,7 @@ import type { QaState } from '@/lib/types'
 
 import { MAX_HINT_LEVEL, SOCRATIC_LADDER, SOCRATIC_STATE_COLOR, SOCRATIC_STATE_LABEL, TURN_TYPE_LABEL } from './labels'
 
-/** 小圆点进度：索引小于等于 current 的为「已到达」 */
+/** 小圆点进度：索引小于等于 current 的为「已到达」（深蓝底上用荧光色） */
 function Dots({ current, total }: { current: number; total: number }) {
   return (
     <div className="flex items-center gap-1.5">
@@ -16,7 +16,7 @@ function Dots({ current, total }: { current: number; total: number }) {
           key={index}
           className={[
             'h-2 w-2 rounded-full',
-            index <= current ? 'bg-brand-600' : 'border border-slate-300 bg-white',
+            index <= current ? 'bg-lime' : 'border border-white/25 bg-transparent',
           ].join(' ')}
         />
       ))}
@@ -29,6 +29,7 @@ function Dots({ current, total }: { current: number; total: number }) {
  *
  * api-spec §5.3 明确写了这个面板的意义：状态机是产品核心差异化，
  * 但它是「看不见的逻辑」；把它暴露成接口 + 可视化，策略才「看得见」。
+ * Learning Atlas v2：深蓝原则板（GUIDING PRINCIPLE）形态。
  */
 export function StateMachinePanel({
   state,
@@ -55,49 +56,65 @@ export function StateMachinePanel({
   const reachedIndex = state ? SOCRATIC_LADDER.findIndex((step) => step.state === state.state) : -1
 
   return (
-    <section className="xizhi-card">
-      <header className="flex items-center justify-between border-b border-slate-100 px-4 py-2.5">
+    <section className="relative overflow-hidden rounded-2xl bg-atlas-ink2 p-4 text-[#f5f2e9]">
+      <div
+        aria-hidden
+        className="pointer-events-none absolute -right-16 -top-12 h-36 w-36 rounded-full border border-lime/25 shadow-[0_0_0_16px_rgba(217,237,131,0.05)]"
+      />
+      <header className="relative z-10 flex items-center justify-between gap-2">
         <div className="flex items-center gap-1.5">
-          <Workflow className="h-3.5 w-3.5 text-brand-600" aria-hidden />
-          <h2 className="text-sm font-semibold text-slate-800">苏格拉底状态机</h2>
+          <Workflow className="h-3.5 w-3.5 text-lime" aria-hidden />
+          <h3 className="text-xs font-semibold uppercase tracking-[0.1em] text-[#a7b4c4]">
+            GUIDING PRINCIPLE
+          </h3>
           {loading && <Spinner className="h-3 w-3" />}
         </div>
         <Button
           variant="ghost"
           size="sm"
+          className="!text-[#a7b4c4] hover:!bg-white/10 hover:!text-white"
           icon={<RefreshCw className="h-3.5 w-3.5" />}
           disabled={!enabled || loading}
+          aria-label="刷新状态机"
           onClick={onRefresh}
-        >
-          刷新
-        </Button>
+        />
       </header>
 
-      <div className="space-y-3 p-4">
+      <div className="relative z-10 mt-3 space-y-3">
+        {/* 引导原则（常驻说明） */}
+        <div>
+          <h4 className="text-base font-semibold tracking-tight">不直接代答</h4>
+          <p className="mt-1 text-xs leading-relaxed text-[#b5bfca]">
+            首轮只反问，不给答案。连续两次答不上来，再逐级给提示，最后才直接讲解。
+          </p>
+        </div>
+
         {!enabled ? (
-          <p className="text-xs leading-relaxed text-slate-400">
-            提问开始后会实时显示状态机：当前状态、下一步动作、提示级别与失败计数。
+          <p className="border-t border-white/10 pt-2.5 text-xs leading-relaxed text-[#8d99a8]">
+            提问开始后，这里会实时显示状态机：当前状态、下一步动作、提示级别与失败计数。
           </p>
         ) : error ? (
-          <InlineError>{error}</InlineError>
+          <div className="text-xs [&_div]:!border-danger-line [&_div]:!bg-danger-soft">
+            <InlineError>{error}</InlineError>
+          </div>
         ) : state ? (
           <>
             {/* 当前状态 + 下一步动作 */}
-            <div className="space-y-1.5">
+            <div className="space-y-1.5 border-t border-white/10 pt-2.5">
               <div className="flex flex-wrap items-center gap-2">
                 <Badge color={SOCRATIC_STATE_COLOR[state.state]} dot>
                   {SOCRATIC_STATE_LABEL[state.state]}
                 </Badge>
-                <span className="font-mono text-xs text-slate-400">{state.state}</span>
+                <span className="font-mono text-xs text-[#8d99a8]">{state.state}</span>
               </div>
-              <div className="text-xs text-slate-600">
-                下一步动作：<span className="font-medium">{TURN_TYPE_LABEL[state.next_action]}</span>
+              <div className="text-xs text-[#c3ccd7]">
+                下一步动作：<span className="font-medium text-white">{TURN_TYPE_LABEL[state.next_action]}</span>
               </div>
-              <div className="text-xs text-slate-500">
+              <div className="text-xs text-[#8d99a8]">
                 当前知识点：
                 {/* 有可读名就显示名字；id 收进 tooltip（评审/排查时仍拿得到） */}
                 <span
-                  className={currentKpName ? '' : 'font-mono'}
+                  className={currentKpName ? 'text-[#c3ccd7]' : 'font-mono text-[#c3ccd7]'}
                   title={state.current_kp_id ? `知识点 id：${state.current_kp_id}` : undefined}
                 >
                   {currentKpName?.trim() || state.current_kp_id || '未命中'}
@@ -107,7 +124,7 @@ export function StateMachinePanel({
 
             {/* 引导阶梯 */}
             <div className="space-y-1.5">
-              <div className="text-xs font-medium text-slate-500">引导阶梯（首轮不给答案）</div>
+              <div className="text-xs font-medium text-[#a7b4c4]">引导阶梯（首轮不给答案）</div>
               <ol className="space-y-1">
                 {SOCRATIC_LADDER.map((step, index) => {
                   const reached = reachedIndex >= 0 && index <= reachedIndex
@@ -117,10 +134,10 @@ export function StateMachinePanel({
                       className={[
                         'flex items-center justify-between rounded-md border px-2 py-1 text-xs',
                         index === reachedIndex
-                          ? 'border-brand-200 bg-brand-50 text-brand-700'
+                          ? 'border-lime/40 bg-lime/10 text-lime'
                           : reached
-                            ? 'border-slate-200 bg-slate-50 text-slate-600'
-                            : 'border-dashed border-slate-200 text-slate-400',
+                            ? 'border-white/15 bg-white/5 text-[#c3ccd7]'
+                            : 'border-dashed border-white/15 text-[#7d8a99]',
                       ].join(' ')}
                     >
                       <span className="font-medium">
@@ -135,26 +152,24 @@ export function StateMachinePanel({
 
             {/* 提示级别 */}
             <div className="flex items-center justify-between">
-              <span className="text-xs text-slate-500">
-                提示级别 hint_level
-              </span>
+              <span className="text-xs text-[#a7b4c4]">提示级别 hint_level</span>
               <div className="flex items-center gap-2">
                 <Dots current={Math.min(state.hint_level, MAX_HINT_LEVEL)} total={MAX_HINT_LEVEL} />
-                <span className="text-xs text-slate-600">
+                <span className="text-xs text-[#c3ccd7]">
                   {state.hint_level} / {MAX_HINT_LEVEL}
                 </span>
               </div>
             </div>
 
             {/* 失败计数与降级阈值 —— 明写规则，让观看者知道这是设计而非随机 */}
-            <div className="rounded-lg border border-warning-line bg-warning-soft p-2.5">
-              <div className="flex items-center justify-between text-xs text-warning">
+            <div className="rounded-lg border border-white/15 bg-white/5 p-2.5">
+              <div className="flex items-center justify-between text-xs text-[#c3ccd7]">
                 <span>连续失败次数</span>
-                <span className="font-medium">
+                <span className="font-medium text-white">
                   {state.consecutive_failures} / {state.explain_threshold}
                 </span>
               </div>
-              <p className="mt-1 text-xs leading-relaxed text-warning">
+              <p className="mt-1 text-[11px] leading-relaxed text-[#8d99a8]">
                 连续失败达到 explain_threshold（{state.explain_threshold}）次会强制降级为直接讲解 ——
                 这是代码层兜底，不依赖模型自觉。
               </p>
@@ -170,7 +185,7 @@ export function StateMachinePanel({
           <Spinner className="h-3.5 w-3.5" />
         )}
 
-        <p className="border-t border-slate-100 pt-2.5 text-xs leading-relaxed text-slate-400">
+        <p className="border-t border-white/10 pt-2.5 text-[11px] leading-relaxed text-[#7d8a99]">
           「首轮只反问、不给答案」是设计要求：先暴露理解偏差，再逐级给提示；
           提示用尽才降级讲解。越界的提问直接走拒答，不生成材料外内容。
         </p>

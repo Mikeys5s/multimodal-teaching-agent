@@ -5,19 +5,26 @@
 @layer base {
   :root {
     /* 设计 token（CSS 变量层，供 SVG 内联样式与非 Tailwind 场景引用） */
-    --xizhi-bg: #f8fafc;
-    --xizhi-surface: #ffffff;
-    --xizhi-surface-muted: #f1f5f9;
-    --xizhi-border: #e2e8f0;
-    --xizhi-text: #0f172a;
+    --xizhi-bg: #f2efe7;
+    --xizhi-surface: #fffdf7;
+    --xizhi-surface-muted: #e7e3d8;
+    --xizhi-border: #d6d0c3;
+    --xizhi-text: #101c2e;
     --xizhi-text-secondary: #334155;
     --xizhi-muted: #64748b;
-    --xizhi-brand: #2563eb;
-    --xizhi-brand-hover: #1d4ed8;
-    --xizhi-brand-soft: #eff6ff;
+    --xizhi-brand: #315cff;
+    --xizhi-brand-hover: #244be0;
+    --xizhi-brand-soft: #dfe7ff;
     --xizhi-success: #166534;
     --xizhi-warning: #92400e;
     --xizhi-danger: #991b1b;
+    --xizhi-ink: #101c2e;
+    --xizhi-ink2: #192941;
+    --xizhi-lime: #d9ed83;
+    --xizhi-lime-deep: #566a1c;
+    --xizhi-teal: #62c8b4;
+    --xizhi-coral: #ee704c;
+    --xizhi-electric: #315cff;
   }
 
   html,
@@ -27,8 +34,12 @@
   }
 
   body {
-    @apply bg-slate-50 text-slate-900 antialiased;
+    /* 暖纸底 + 细颗粒（Learning Atlas 纸感材质；非图片，零采购） */
+    @apply text-slate-900 antialiased;
     margin: 0;
+    background-color: var(--xizhi-bg);
+    background-image: radial-gradient(rgba(16, 28, 46, 0.075) 0.55px, transparent 0.7px);
+    background-size: 6px 6px;
   }
 
   /* 全局焦点可见性：键盘用户必须看得清焦点在哪（2px 环 + 2px 间隔） */
@@ -54,7 +65,7 @@
 @layer components {
   /* 表面容器：仅用于需要边界的内容块（上传区、关键数据块、风险提示、详情面板） */
   .xizhi-card {
-    @apply rounded-xl border border-slate-200 bg-white shadow-card;
+    @apply rounded-2xl border border-atlas-line bg-atlas-sheet shadow-card;
   }
 
   /* 交互元素的焦点环（Tailwind 场景） */
@@ -70,6 +81,48 @@
   /* 骨架屏：尺寸与最终内容一致，仅结构占位 */
   .xizhi-skeleton {
     @apply animate-pulse rounded-md bg-slate-100;
+  }
+
+  /* ---------- Learning Atlas 排版与材质（2026-10-10 v2） ---------- */
+
+  /* 页眉 eyebrow：英文小字轨距 + 衬线斜体序号（珊瑚橙） */
+  .atlas-eyebrow {
+    @apply flex items-center gap-2.5 text-2xs font-bold uppercase tracking-widest2 text-atlas-muted;
+  }
+  .atlas-eyebrow .idx {
+    @apply font-serif normal-case italic tracking-normal text-coral;
+    font-size: 0.8125rem;
+  }
+  .atlas-eyebrow .kick {
+    @apply font-normal normal-case tracking-widest;
+  }
+
+  /* 编辑式页面标题：34px / 紧字距 / 700 */
+  .atlas-h1 {
+    @apply font-bold leading-[1.12] tracking-[-0.03em] text-atlas-ink;
+    font-size: clamp(1.625rem, 2.6vw, 2.125rem);
+  }
+
+  /* 暖纸面板（内容承载面） */
+  .atlas-sheet-panel {
+    @apply rounded-2xl border border-atlas-line bg-atlas-sheet shadow-panel;
+  }
+
+  /* 深蓝面板（主视觉 / 原则板 / 目标面板） */
+  .atlas-navy-panel {
+    @apply relative overflow-hidden rounded-3xl bg-atlas-ink text-[#f7f4eb] shadow-navy;
+  }
+  /* 深蓝面板内的制图网格（只出现在深蓝材质上） */
+  .atlas-map-grid {
+    background-image:
+      linear-gradient(rgba(255, 255, 255, 0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
+    background-size: 36px 36px;
+  }
+
+  /* 分隔发丝线 */
+  .atlas-hairline {
+    @apply h-px bg-atlas-line;
   }
 }
 
@@ -89,13 +142,70 @@
   animation: xizhi-rise 160ms ease-out both;
 }
 
+/* 切页入场：220ms 轻微上移 + 透明度（导航/按钮反馈保持 120ms） */
+@keyframes xizhi-page-enter {
+  from {
+    opacity: 0;
+    transform: translateY(9px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.xizhi-page-enter {
+  animation: xizhi-page-enter 220ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+/* Atlas 路径线：虚线沿路径流动（概览主视觉 / 学习路径目标面板） */
+@keyframes atlas-draw {
+  to {
+    stroke-dashoffset: -160;
+  }
+}
+.atlas-draw {
+  stroke-dasharray: 7 8;
+  animation: atlas-draw 18s linear infinite;
+}
+
+/* 节点光晕呼吸（概览 / 图谱选中节点） */
+@keyframes atlas-breathe {
+  0%,
+  100% {
+    transform: scale(0.92);
+    opacity: 0.7;
+  }
+  50% {
+    transform: scale(1.12);
+    opacity: 1;
+  }
+}
+.atlas-breathe {
+  animation: atlas-breathe 3.6s ease-in-out infinite;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+/* 上传轨道慢速旋转（素材工作台） */
+@keyframes atlas-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+.atlas-spin {
+  animation: atlas-spin 24s linear infinite;
+}
+.atlas-spin-rev {
+  animation: atlas-spin 38s linear infinite reverse;
+}
+
 /* 细滚动条，避免长表格破坏版面 */
 ::-webkit-scrollbar {
   width: 10px;
   height: 10px;
 }
 ::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
+  background: #b9b3a8;
   border-radius: 9999px;
   border: 2px solid transparent;
   background-clip: content-box;

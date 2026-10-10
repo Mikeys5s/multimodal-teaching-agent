@@ -1,4 +1,4 @@
-import { ChevronDown, ChevronRight, Eye, RefreshCw, Trash2 } from 'lucide-react'
+import { ChevronDown, ChevronRight, Eye, FileText, RefreshCw, Trash2 } from 'lucide-react'
 import { Fragment, useState } from 'react'
 
 import { StatusBadge } from '@/components/ui/Badge'
@@ -56,7 +56,7 @@ export function MaterialTable({ materials, loading = false, busyId = null, onPre
       <div className="hidden overflow-x-auto lg:block">
         <table className="w-full border-collapse text-sm">
           <thead>
-            <tr className="border-b border-slate-200 text-left text-xs font-semibold text-slate-500">
+            <tr className="border-b border-atlas-line bg-atlas-paper2 text-left text-xs font-semibold uppercase tracking-wider text-atlas-muted">
               {HEADERS.map((header, index) => (
                 <th key={index} className="whitespace-nowrap px-2 py-2.5">
                   {header}
@@ -71,7 +71,7 @@ export function MaterialTable({ materials, loading = false, busyId = null, onPre
 
               return (
                 <Fragment key={material.id}>
-                  <tr className="border-b border-slate-100 hover:bg-slate-50/70">
+                  <tr className="border-b border-[#e7e1d6] hover:bg-atlas-paper/60">
                     <td className="w-8 px-2 py-3">
                       <button
                         className="flex h-6 w-6 items-center justify-center rounded text-slate-400 hover:bg-slate-100 hover:text-slate-600 disabled:opacity-30"
@@ -83,15 +83,22 @@ export function MaterialTable({ materials, loading = false, busyId = null, onPre
                         {isOpen ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
                       </button>
                     </td>
-                    <td className="max-w-[200px] px-2 py-3">
-                      <button
-                        className="block max-w-full truncate text-left font-medium text-slate-700 hover:text-brand-600 hover:underline"
-                        title={`${material.filename}（点击预览解析结果）`}
-                        onClick={() => onPreview(material)}
-                      >
-                        {material.filename}
-                      </button>
-                      <div className="text-xs text-slate-400">{formatDateTime(material.created_at)}</div>
+                    <td className="max-w-[220px] px-2 py-3">
+                      <div className="flex items-center gap-2.5">
+                        <span className="flex h-8 w-7 shrink-0 items-center justify-center rounded-md border border-[#d8d1c4] bg-[#fffaf0] text-coral" aria-hidden>
+                          <FileText className="h-3.5 w-3.5" />
+                        </span>
+                        <span className="min-w-0">
+                          <button
+                            className="block max-w-full truncate text-left text-sm font-medium text-slate-700 hover:text-brand-600 hover:underline"
+                            title={`${material.filename}（点击预览解析结果）`}
+                            onClick={() => onPreview(material)}
+                          >
+                            {material.filename}
+                          </button>
+                          <span className="block text-xs text-slate-400">{formatDateTime(material.created_at)}</span>
+                        </span>
+                      </div>
                     </td>
                     <td className="whitespace-nowrap px-2 py-3 text-slate-600">
                       {SOURCE_TYPE_LABEL[material.source_type] ?? material.source_type}
@@ -158,7 +165,7 @@ export function MaterialTable({ materials, loading = false, busyId = null, onPre
                   </tr>
 
                   {isOpen && (
-                    <tr className="border-b border-slate-100 bg-slate-50/50">
+                    <tr className="border-b border-[#e7e1d6] bg-atlas-paper/60">
                       <td />
                       <td colSpan={HEADERS.length - 1} className="px-2 py-3">
                         <div className="mb-2 text-xs font-medium text-slate-500">
@@ -176,7 +183,7 @@ export function MaterialTable({ materials, loading = false, busyId = null, onPre
       </div>
 
       {/* 手机堆叠列表（<md）：文件名 + 状态为第一行，操作保持 44px 触控 */}
-      <ul className="divide-y divide-slate-100 lg:hidden">
+      <ul className="divide-y divide-[#e7e1d6] lg:hidden">
         {materials.map((material) => {
           const isOpen = expanded.has(material.id)
           const busy = busyId === material.id

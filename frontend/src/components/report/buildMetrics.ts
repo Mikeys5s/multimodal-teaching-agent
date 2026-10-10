@@ -35,7 +35,7 @@ export function buildReportMetrics(report: QualityReport): ReportMetrics {
   const materials: MetricSpec[] = [
     {
       key: 'materials_total',
-      label: '素材总数 materials.total',
+      label: '素材总数',
       redLine: null,
       targetText: '观测项',
       value: m.total,
@@ -44,7 +44,7 @@ export function buildReportMetrics(report: QualityReport): ReportMetrics {
     },
     {
       key: 'materials_done',
-      label: '解析完成 materials.done',
+      label: '解析完成数',
       redLine: null,
       targetText: `占总数 ${fmtRatio(m.done, m.total)}`,
       value: m.done,
@@ -54,7 +54,7 @@ export function buildReportMetrics(report: QualityReport): ReportMetrics {
     },
     {
       key: 'materials_failed',
-      label: '解析失败 materials.failed',
+      label: '解析失败数',
       redLine: null,
       targetText: '观测项',
       value: m.failed,
@@ -64,7 +64,7 @@ export function buildReportMetrics(report: QualityReport): ReportMetrics {
     },
     {
       key: 'avg_quality_score',
-      label: '解析质量均分 avg_quality_score',
+      label: '解析质量均分',
       redLine: null,
       targetText: '观测项',
       value: m.avg_quality_score,
@@ -77,7 +77,7 @@ export function buildReportMetrics(report: QualityReport): ReportMetrics {
   const knowledgePoints: MetricSpec[] = [
     {
       key: 'kp_total',
-      label: '知识点总数 knowledge_points.total',
+      label: '知识点总数',
       redLine: null,
       targetText: '观测项',
       value: kp.total,
@@ -110,7 +110,7 @@ export function buildReportMetrics(report: QualityReport): ReportMetrics {
     },
     {
       key: 'five_field_complete_rate',
-      label: '五要素完备率 five_field_complete_rate',
+      label: '五要素完备率',
       redLine: null,
       targetText: '目标 1.0（100%）',
       value: kp.five_field_complete_rate,
@@ -121,7 +121,7 @@ export function buildReportMetrics(report: QualityReport): ReportMetrics {
     },
     {
       key: 'needs_review_count',
-      label: '待人工复核数 needs_review_count',
+      label: '待人工复核数',
       redLine: null,
       targetText: '观测项（不追求为 0）',
       value: kp.needs_review_count,
@@ -134,7 +134,7 @@ export function buildReportMetrics(report: QualityReport): ReportMetrics {
   const graph: MetricSpec[] = [
     {
       key: 'cycle_count',
-      label: '依赖环数量 cycle_count',
+      label: '依赖环数量',
       redLine: 'B1-2 DAG 环数',
       targetText: '必须为 0',
       value: g.cycle_count,
@@ -156,7 +156,7 @@ export function buildReportMetrics(report: QualityReport): ReportMetrics {
     },
     {
       key: 'edge_count',
-      label: '依赖边总数 graph.edge_count',
+      label: '依赖边总数',
       redLine: null,
       targetText: '观测项',
       value: g.edge_count,
@@ -165,7 +165,7 @@ export function buildReportMetrics(report: QualityReport): ReportMetrics {
     },
     {
       key: 'pruned_count',
-      label: '因成环被剪除的边 pruned_count',
+      label: '已剪除的成环边',
       redLine: null,
       targetText: '观测项',
       value: g.pruned_count,
@@ -175,7 +175,7 @@ export function buildReportMetrics(report: QualityReport): ReportMetrics {
     },
     {
       key: 'conflict_count',
-      label: '结构-语义冲突边 conflict_count',
+      label: '冲突边（结构-语义）',
       redLine: null,
       targetText: '观测项（不静默丢弃）',
       value: g.conflict_count,
@@ -185,7 +185,7 @@ export function buildReportMetrics(report: QualityReport): ReportMetrics {
     },
     {
       key: 'prerequisite_sampling_pass_rate',
-      label: '前置边人工抽检 pass_rate',
+      label: '前置边人工抽检合理率',
       redLine: 'B1-1 前置边抽检合理率',
       targetText: '目标 ≥ 0.8（80%）',
       value: g.prerequisite_sampling_pass_rate,
@@ -211,7 +211,7 @@ export function buildReportMetrics(report: QualityReport): ReportMetrics {
     },
     {
       key: 'refuse_count',
-      label: '越界拒答次数 refuse_count',
+      label: '越界拒答次数',
       redLine: null,
       targetText: '观测项（不追求为 0）',
       value: qa.refuse_count,
@@ -220,7 +220,7 @@ export function buildReportMetrics(report: QualityReport): ReportMetrics {
     },
     {
       key: 'session_count',
-      label: '答疑会话数 qa.session_count',
+      label: '答疑会话数',
       redLine: null,
       targetText: '观测项',
       value: qa.session_count,
@@ -229,7 +229,7 @@ export function buildReportMetrics(report: QualityReport): ReportMetrics {
     },
     {
       key: 'turn_count',
-      label: '答疑轮次 qa.turn_count',
+      label: '答疑轮次',
       redLine: null,
       targetText: '观测项',
       value: qa.turn_count,

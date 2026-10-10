@@ -103,3 +103,21 @@ export const DIFFICULTY_COLOR: Record<Difficulty, string> = {
 export function difficultyColor(d: Difficulty): string {
   return DIFFICULTY_COLOR[d] ?? '#94a3b8'
 }
+
+/**
+ * 章节/小节的展示文案（去重）。
+ * 线上数据有三种形态（2026-10-10 实测）：
+ *   ① number=null、title='CONGESTION CONTROL'（真实章名）
+ *   ② number=title='299'（抽取噪声，重复两遍）
+ *   ③ 两者都有且不同
+ * 规则：去掉与 number 相同的 title、去掉空值，只拼不同的部分。
+ */
+export function formatChapterRef(
+  ref: { number?: string | null; title?: string | null } | null | undefined,
+): string {
+  if (!ref) return ''
+  const num = (ref.number ?? '').trim()
+  const title = (ref.title ?? '').trim()
+  if (num && title && num !== title) return `${num} ${title}`
+  return title || num
+}

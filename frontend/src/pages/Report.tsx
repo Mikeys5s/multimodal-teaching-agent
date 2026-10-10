@@ -1,9 +1,9 @@
 import { RefreshCw } from 'lucide-react'
 
+import { AuditSheet, ReportNote } from '@/components/report/AuditSheet'
 import { ExportPanel } from '@/components/report/ExportPanel'
 import { HealthSelfCheck } from '@/components/report/HealthSelfCheck'
-import { MetricSection } from '@/components/report/MetricCard'
-import { ReportOverview } from '@/components/report/ReportOverview'
+import { MetricsStrip, ReportBanner } from '@/components/report/ReportOverview'
 import { buildReportMetrics } from '@/components/report/buildMetrics'
 import { Button } from '@/components/ui/Button'
 import { ErrorState, InlineError, LoadingState } from '@/components/ui/Feedback'
@@ -13,9 +13,10 @@ import type { QualityReport } from '@/lib/types'
 
 /**
  * 质量报告页（F4.3 / api-spec §4.6「GET /api/report/quality」）。
- * 把工程严谨度做成可见的一页：四个分区的指标全部以
- * **数值 + 进度条 + 对应验收红线**呈现，未达标显式标红；
- * 另附「演示前自检」（health + pragma，含 foreign_keys 强制校验）与导出（CSV / JSON）。
+ * 把工程严谨度做成可见的一页：指标全部以**数值 + 进度条 + 对应验收红线**呈现，
+ * 未达标显式标红；面向教师/学习者用中文概念名，不再泄漏原始工程字段名。
+ * 构图（Learning Atlas v2）：页头 → 深蓝总览横幅（质量环）→ 核心指标带 →
+ * 暖纸校验清单 + 读法 NOTE → 部署自检与导出。
  */
 export default function Report() {
   const reportReq = useRequest(() => api.getQualityReport(), [])
@@ -24,26 +25,28 @@ export default function Report() {
   const metrics = ready && report ? buildReportMetrics(report) : null
 
   return (
-    <div className="mx-auto max-w-6xl space-y-5">
-      <section className="flex items-start justify-between gap-4">
+    <div className="mx-auto max-w-[1400px] space-y-5">
+      {/* 页头：编辑式标题 + 刷新（次级操作） */}
+      <div className="flex flex-wrap items-end justify-between gap-4">
         <div className="min-w-0">
-          <h1 className="text-lg font-semibold leading-7 text-slate-900">质量报告</h1>
-          <p className="mt-1 text-xs leading-relaxed text-slate-500">
-            每项指标都标注了它对应的验收红线（A2-1 / A2-3 / B1-1 / B1-2 / B1-5 与接地率），
-            未达标会显式标红 —— 这一页给评委看的是「能不能过验收」，不是一组好看的数字。
+          <div className="atlas-eyebrow">
+            <span className="idx">06</span> QUALITY REPORT / EVIDENCE
+          </div>
+          <h2 className="atlas-h1 mt-2">质量，要有出处。</h2>
+          <p className="mt-2 max-w-[560px] text-[13px] leading-relaxed text-atlas-muted">
+            把结构、覆盖、溯源与可达性放在同一张审查地图上；未达到的项目也要清楚标记。
           </p>
         </div>
         <Button
           variant="secondary"
-          size="sm"
           className="shrink-0"
           loading={reportReq.loading}
           icon={<RefreshCw className="h-3.5 w-3.5" />}
           onClick={() => void reportReq.reload()}
         >
-          刷新
+          刷新报告
         </Button>
-      </section>
+      </div>
 
       {reportReq.error && !report && (
         <ErrorState message={reportReq.error} onRetry={() => void reportReq.reload()} />
@@ -59,37 +62,21 @@ export default function Report() {
 
       {metrics && (
         <>
-          <ReportOverview metrics={metrics.critical} />
+          <ReportBanner metrics={metrics.critical} />
+          <MetricsStrip metrics={metrics.critical} />
 
-          <MetricSection
-            title="素材解析"
-            subtitle="materials —— 解析成功率、失败可见性、质量均分"
-            metrics={metrics.materials}
-          />
+          <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_300px]">
+            <AuditSheet metrics={metrics} />
+            <ReportNote />
+          </div>
 
-          <MetricSection
-            title="知识点"
-            subtitle="knowledge_points —— 三级结构、溯源覆盖、五要素完备、待复核"
-            metrics={metrics.knowledgePoints}
-          />
+          <div id="health-self-check" className="scroll-mt-6">
+            <HealthSelfCheck />
+          </div>
 
-          <MetricSection
-            title="知识图谱"
-            subtitle="graph —— DAG 环数、边理由完备率、剪枝与冲突可见性"
-            metrics={metrics.graph}
-          />
-
-          <MetricSection
-            title="答疑辅导"
-            subtitle="qa —— 接地率、拒答次数（拒答是能力，不是缺陷）"
-            metrics={metrics.qa}
-          />
+          <ExportPanel />
         </>
       )}
-
-      <HealthSelfCheck />
-
-      <ExportPanel />
     </div>
   )
 }

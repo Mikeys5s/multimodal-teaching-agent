@@ -70,13 +70,22 @@ export function UploadDropzone({ onFiles, uploading = false, capabilities, disab
       onDragLeave={() => setDragging(false)}
       onDrop={handleDrop}
       className={[
-        'flex cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed px-6 py-8 text-center transition-colors',
-        dragging ? 'border-brand-400 bg-brand-50/70' : 'border-slate-300 bg-white hover:border-brand-300 hover:bg-slate-50',
-        disabled || uploading ? 'cursor-not-allowed opacity-70' : '',
+        'relative flex min-h-[210px] cursor-pointer flex-col items-start gap-5 overflow-hidden rounded-2xl border px-6 py-6 transition-all duration-220 sm:flex-row sm:items-center sm:gap-7 sm:px-8',
+        dragging
+          ? '-translate-y-0.5 border-brand-400 bg-[#cfddf2] shadow-panel'
+          : 'border-[#b8c9e7] bg-[#dce5f5] hover:border-[#9db4dd]',
+        disabled || uploading ? 'cursor-not-allowed opacity-80' : '',
       ].join(' ')}
     >
+      {/* 细点阵材质（左强右淡，纯装饰） */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0 [background-image:radial-gradient(#5672aa44_0.8px,transparent_0.8px)] [background-size:14px_14px] [mask-image:linear-gradient(90deg,black,transparent_86%)]"
+      />
+
       <input
         ref={inputRef}
+        id="materials-file-input"
         type="file"
         multiple
         accept={accept}
@@ -87,23 +96,38 @@ export function UploadDropzone({ onFiles, uploading = false, capabilities, disab
         }}
       />
 
-      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-brand-50 text-brand-600">
-        {uploading ? <Spinner className="h-5 w-5" /> : <Upload className="h-5 w-5" aria-hidden />}
+      {/* 轨道圆环（拖入时轻微抬起；旋转属装饰性氛围，与真实任务状态无关） */}
+      <div className="relative z-10 grid h-[104px] w-[104px] shrink-0 place-items-center rounded-full border border-[#7590ca] bg-white/35">
+        <span aria-hidden className="atlas-spin absolute inset-2 rounded-full border border-dashed border-[#8098c8]" />
+        <span aria-hidden className="atlas-spin-rev absolute -inset-2 rounded-full border border-dashed border-[#b0715f]" />
+        {uploading ? (
+          <Spinner className="h-6 w-6 text-brand-600" />
+        ) : (
+          <Upload className="h-7 w-7 text-brand-600" aria-hidden />
+        )}
       </div>
 
-      <div className="text-sm font-medium text-slate-700">
-        {uploading ? '正在上传…' : '拖拽文件到此处，或点击选择'}
-      </div>
-
-      <div className="text-xs text-slate-400">
-        支持 {typeHint} · 单文件 ≤ {maxMb}MB · 可多选
-      </div>
-
-      {unsupportedExt.length > 0 && (
-        <div className="text-xs text-warning">
-          暂不支持 {unsupportedExt.join(' / ')}（本版本聚焦图文材料解析）
+      <div className="relative z-10 min-w-0">
+        <div className="atlas-eyebrow !text-[#49628d]">DROP A SOURCE / 01</div>
+        <h3 className="mt-2 text-xl font-bold tracking-tight text-atlas-ink">
+          {uploading ? '正在上传…' : '把一份材料，放进知识地图。'}
+        </h3>
+        <p className="mt-1.5 text-xs leading-relaxed text-[#536987]">
+          拖放到此处，或从设备中选择。支持 {typeHint}。
+        </p>
+        <div className="mt-4 flex flex-wrap items-center gap-3">
+          <span className="inline-flex h-10 items-center gap-2 rounded-lg bg-brand-600 px-4 text-sm font-semibold text-white shadow-[0_8px_20px_rgba(49,92,255,0.22)]">
+            <Upload className="h-4 w-4" aria-hidden />
+            浏览文件
+          </span>
+          <span className="text-xs text-[#647795]">单文件 ≤ {maxMb}MB · 可多选</span>
         </div>
-      )}
+        {unsupportedExt.length > 0 && (
+          <div className="mt-2 text-xs text-warning">
+            暂不支持 {unsupportedExt.join(' / ')}（本版本聚焦图文材料解析）
+          </div>
+        )}
+      </div>
     </div>
   )
 }
