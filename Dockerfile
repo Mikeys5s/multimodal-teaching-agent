@@ -112,8 +112,17 @@ COPY skills/ /app/skills/
 #   docker build --build-arg PIP_INDEX_URL=https://pypi.org/simple/ --build-arg PIP_TRUSTED_HOST= .
 ARG PIP_INDEX_URL=https://mirrors.aliyun.com/pypi/simple/
 ARG PIP_TRUSTED_HOST=mirrors.aliyun.com
+# ⚠️ **兜底源**（2026-10-10 部署失败后加）：
+# 阿里云镜像**不保证与官方同步** —— 那次 `pydantic_core 2.50.0` 的 cp313 wheel
+# 在阿里云上 **404**，`pip install -e .` 直接失败 ⇒ **镜像没重建**，
+# 而**容器还在跑旧代码**（外网照样响应、页面照常打开，**看不出问题**）。
+# **⇒ 主索引用阿里云（快），缺包时自动回退官方（全）。**
+#    `--extra-index-url` 的语义是"**两个源一起找**"，不是"主源失败才用备源"，
+#    所以既能保持阿里云的速度，又不会因为某个包缺失而整条构建挂掉。
+ARG PIP_EXTRA_INDEX_URL=https://pypi.org/simple/
 ENV PIP_INDEX_URL=${PIP_INDEX_URL} \
-    PIP_TRUSTED_HOST=${PIP_TRUSTED_HOST}
+    PIP_TRUSTED_HOST=${PIP_TRUSTED_HOST} \
+    PIP_EXTRA_INDEX_URL=${PIP_EXTRA_INDEX_URL}
 
 RUN pip install --no-cache-dir --upgrade pip setuptools wheel \
     && pip install --no-cache-dir -e . \
