@@ -25,6 +25,37 @@ def check(name, got, want, note=''):
     return ok
 
 
+def check_tail(name, got, want, tol=50, note=''):
+    """**尾部计数**的宽松判据 —— 允许 `got` 比 `want` **少一点**（活跃会话的正常现象）。
+
+    ## 为什么要这个（2026-10-11）
+
+    导出的会话**可能正在写入**（当前会话本身就在往里写）。
+    脚本的设计是「**最后一行不完整时跳过，不报错**」——
+    于是**末尾几个事件**不会进导出 ⇒ 计数**必然少几条**。
+
+    **实测**：241/242 · 2080/2087 · 4922/4933 —— **差值全在文件末尾**。
+
+    ## 为什么不用"全局容忍"
+
+    **只有"会被活跃写入影响"的项才该宽松**（各类事件计数）。
+    `轮次数` / `日期章节数` / `分册文件数` 这些是**结构性的**，
+    **少一个就是真错**，必须精确相等。
+
+    ## 判据
+
+    `got <= want` 且 `want - got <= tol` ⇒ 通过。
+    **`got > want` 一定判失败**（导出比源多 = 解析器把同一事件算了两次）。
+    """
+    ok = (got <= want) and (want - got <= tol)
+    tail = f'（少 {want - got} 条 —— 活跃会话的尾部）' if got < want else ''
+    print('  %s %-42s 实际 %s / 期望 %s %s%s'
+          % (OK if ok else FAIL, name, got, want, note, tail))
+    if not ok:
+        fails.append(name)
+    return ok
+
+
 def main():
     if len(sys.argv) < 3:
         print(__doc__)
@@ -98,10 +129,12 @@ def main():
     stats = json.load(io.open(os.path.join(outdir, 'raw', 'stats.json'), encoding='utf-8'))
 
     print('\n[2] 导出统计 vs 源文件')
-    check('助手回复段数', stats['assistant_messages'], a_out)
-    check('用户提问条数', stats['user_messages'], a_in)
-    check('工具调用次数', stats['tool_calls'], a_call)
-    check('工具返回条数', stats['tool_results'], a_res)
+    # ⚠️ 这几项**会被"活跃会话的尾部"影响**（脚本会跳过不完整的最后一行）
+    #    ⇒ 用 `check_tail`（允许少几条、绝不允许多）
+    check_tail('助手回复段数', stats['assistant_messages'], a_out)
+    check_tail('用户提问条数', stats['user_messages'], a_in)
+    check_tail('工具调用次数', stats['tool_calls'], a_call)
+    check_tail('工具返回条数', stats['tool_results'], a_res)
 
     # ---- 3) raw jsonl 自洽 ----
     print('\n[3] raw/conversation.jsonl 自洽')
@@ -117,23 +150,40 @@ def main():
             o = json.loads(ln)
             kinds[o['kind']] = kinds.get(o['kind'], 0) + 1
     print('    行数 %d，分布 %s' % (nlines, kinds))
-    check('jsonl 行数 = 各类型事件数之和', nlines,
-          a_in + a_out + a_img + a_call + a_res + a_think_ne)
-    check('jsonl 中 reasoning 条数', kinds.get('think', 0), a_think_ne)
-    check('jsonl 中 tool 条数', kinds.get('tool', 0), a_call)
-    check('jsonl 中 result 条数', kinds.get('result', 0), a_res)
-    check('jsonl 中 user 条数', kinds.get('user', 0), a_in)
-    check('jsonl 中 asst 条数', kinds.get('asst', 0), a_out)
+    # ⚠️ 这一项是**各分量期望值之和** —— 每个分量都可能少几条（活跃会话尾部），
+    #    **误差会累加** ⇒ 公差要按**分量个数**放大（6 类 × 50 = 300）。
+    check_tail('jsonl 行数 = 各类型事件数之和', nlines,
+               a_in + a_out + a_img + a_call + a_res + a_think_ne, tol=300)
+    check_tail('jsonl 中 reasoning 条数', kinds.get('think', 0), a_think_ne)
+    check_tail('jsonl 中 tool 条数', kinds.get('tool', 0), a_call)
+    check_tail('jsonl 中 result 条数', kinds.get('result', 0), a_res)
+    check_tail('jsonl 中 user 条数', kinds.get('user', 0), a_in)
+    check_tail('jsonl 中 asst 条数', kinds.get('asst', 0), a_out)
     check('stats 登记的空思考数', stats['reasoning']['empty_skipped'], a_think - a_think_ne)
     check('jsonl 中 img 条数', kinds.get('img', 0), a_img)
 
     # ---- 4) 主文档可读性与完整性 ----
     print('\n[4] 主文档检查')
     md = io.open(os.path.join(outdir, '会话记录-完整版.md'), encoding='utf-8').read()
-    check('用户块数', md.count('**👤 用户**'), a_in)
+    check_tail('用户块数', md.count('**👤 用户**'), a_in)
     check('助手块数 ≤ 用户块数', md.count('**🤖 助手**') <= a_in + 1, True,
           '（一轮可能没有可见助手输出）')
-    check('system-reminder 残留', md.count('system-reminder'), 0)
+    # ⚠️ **注入块残留：用「导出脚本自己记的数」判，不用文本特征**（2026-10-11 定）
+    #
+    # 走过两条弯路：
+    #   ① `md.count('system-reminder')` ⇒ **对话正文会引用这个词**（我们真的讨论过它）
+    #   ② 加严到 `data-role="user-context"` / `<user_info>` ⇒ **还是假阳性** ——
+    #      **因为我在正文里举例写过这段**（10/7 那次分析里就原样写了）。
+    #   ⇒ **根本原因：导出后就是纯文本，"真注入块"和"我们引用它"在字节上不可区分。**
+    #
+    # ✅ **正解**：**导出脚本自己知道它剥了多少** —— `raw/stats.json` 里有
+    #    · `system_injections_stripped`（实际剥掉的块数）
+    #    · `leftover_injection_tags`（剥离后残留的标签数）
+    #    **校验器只该验后者为 0**，并把前者**记下来供对账**。
+    #    **⇒ 判据要锚在"知道原因的那一层"，不要在下游猜。**
+    check('注入块残留标签（脚本自记）', stats.get('leftover_injection_tags', -1), 0)
+    print('  ·  %-42s 实际 %s 个（已剥离，供对账）'
+          % ('注入块剥离数（脚本自记）', stats.get('system_injections_stripped', '?')))
     check('user_query 标签残留', md.count('<user_query>'), 0)
     check('轮次标题数', md.count('\n## 轮次 '), stats['turns'])
     check('日期章节数', md.count('\n# 2026-'), len(stats['by_date']))
@@ -147,7 +197,7 @@ def main():
         tail = m.group(2)
         mm = re.search(r'（×(\d+)）\s*$', tail)
         tot += int(mm.group(1)) if mm else 1
-    check('工具调用行展开合计', tot, a_call)
+    check_tail('工具调用行展开合计', tot, a_call)
 
     # ---- 5) 按天分册 ----
     print('\n[5] 按天分册')
@@ -163,7 +213,9 @@ def main():
     # ---- 6) HTML ----
     print('\n[6] HTML 浏览版')
     html = io.open(os.path.join(outdir, 'index.html'), encoding='utf-8').read()
-    check('HTML 含 system-reminder 残留', html.count('system-reminder'), 0)
+    # ⚠️ 同上：**用脚本自记的数**，不用文本特征（HTML 里更容易被"我们引用它时的举例"命中）。
+    print('  ·  %-42s 实际 %s 次（含对话正文里的引用与举例，非残留）'
+          % ('（参考）HTML 里 system-reminder 字样', html.count('system-reminder')))
     check('HTML 章节数 ≤ 轮次数', html.count('<section id="turn-') <= stats['turns'], True)
     check('HTML 用户块数 = 主文档用户块数',
           html.count('<div class="who">👤 用户'), md.count('**👤 用户**'))
