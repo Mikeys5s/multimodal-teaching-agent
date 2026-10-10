@@ -368,6 +368,108 @@ def test_bare_number_with_heading_font_is_not_a_heading(tmp_path: Path) -> None:
     assert any(c.number == "第2章" for c in chapters), "真章标题被弄丢了"
 
 
+def test_large_font_sentence_is_not_a_heading(tmp_path: Path) -> None:
+    """★ 以句号结尾的长块（正文句 / 教材里的伪代码行）**不得**成为 heading。
+
+    字号路径只看「字号大 + 长度 ≤100 + 行数 ≤3」，而真实教材里的算法伪代码
+    与整句说明**字号往往比正文大一点**，于是被提升成 heading，
+    再被 `sections.py` 的 `_number_and_title` 当成章/节名。
+
+    线上实测：629 条知识点里 `chapter.title` 有 4 个是这种句子、覆盖 17 条（2.7%）：
+
+        Initialize the Confirmed list with an entry for myself; this entry has a cost of 0.
+        Each IP datagram is re-encapsulated for each physical network over which it travels.
+        CongestionWindow then grows linearly.
+        Buffers are allocated to each virtual circuit when the circuit is initialized.
+
+    ⚠️ **必须同时钉住「问号标题不被误伤」** —— `What Is an Internetwork?` 是这条
+    教材里真实存在的标题，所以句末标点**只认句号**，不认问号。
+
+    构造要点（同上一条用例，两个坑都会造成假绿）：写在**版心内**、**正文发够量**。
+    """
+    doc = pymupdf.open()
+    page = doc.new_page()
+    # ⚠️ 全部放在**同一列**（x 相同）：分列摆放会触发"两栏阅读顺序"重排，
+    #    块的归属与顺序都会变，用例就不是在测标题判据了（我踩过）。
+    _w(page, 72, 110, "3.3. Internet (IP)", 13)             # 真标题（多级编号）
+    _w(page, 72, 150, "What Is an Internetwork?", 13)       # 真标题（问号）→ 不得被否
+    _w(page, 72, 210, "CongestionWindow then grows linearly.", 13)   # 伪代码行（37 字符）
+    # 长句要**折成两行**写（真实 PDF 就是这样）：整行写在 A4 上会被页面宽度截断，
+    # 截断后既没有句号、也不是完整句子，用例就不是在测这条规则了（我踩过）。
+    _w(page, 72, 270, "Each IP datagram is re-encapsulated for each physical", 13)
+    _w(page, 72, 284, "network over which it travels.", 13)
+    for index in range(6):                                   # 正文发够量，压住字号直方图
+        _w(page, 72, 430 + index * 16, _BODY, 10)
+    path = _save(doc, tmp_path / "sentence_not_heading.pdf")
+
+    parsed = parse_pdf(path)
+
+    # ① 核心不变量：**没有任何 heading 以句号结尾**（不依赖"块没被折行合并"）
+    heading_texts = [b.content_md.strip() for b in parsed.blocks if b.block_type == "heading"]
+    bad = [t for t in heading_texts if t.endswith((".", "。"))]
+    assert not bad, f"这些以句号结尾的块成了 heading：{bad}"
+
+    # ② 那两个句子确实进了块列表（可能被合并，所以按**包含**找），且都不是 heading
+    for frag in ("CongestionWindow then grows linearly.", "Each IP datagram is re-encapsulated"):
+        hits = [b for b in parsed.blocks if frag in b.content_md]
+        assert hits, f"{frag!r} 没进块列表"
+        assert all(b.block_type != "heading" for b in hits), (
+            f"{frag!r} 成了 heading：{[(b.block_type, b.heading_level) for b in hits]}"
+        )
+
+    # ③ 反面对照：真标题照旧（含带问号的那条 —— 句末标点只该认句号）
+    by_text = {b.content_md: b for b in parsed.blocks}
+    assert by_text["3.3. Internet (IP)"].block_type == "heading"
+    assert by_text["3.3. Internet (IP)"].heading_level == 2
+    assert by_text["What Is an Internetwork?"].block_type == "heading", (
+        "带问号的真标题被误伤了 —— 句末标点只该认句号"
+    )
+
+
+def test_outline_has_no_page_number_or_sentence_titles(tmp_path: Path) -> None:
+    """★ 端到端：`split_outline()` 出来的章/节名里**不得**出现
+    ① 纯页码形态，② 以句号结尾的正文句/伪代码行。
+
+    这是前面两条否决规则的**出口断言** —— 它们的目的不是"块的 block_type 对不对"，
+    而是"目录骨架干不干净"。只在块层面断言的话，万一 `sections.py` 换了取标题的
+    方式，问题仍然会漏过去（`chapter.title` 实测 95.5% 是纯页码就是这么来的）。
+    """
+    import re
+
+    doc = pymupdf.open()
+    page = doc.new_page()
+    _w(page, 72, 110, "第1章 网络层", 18)          # 真章标题
+    _w(page, 72, 150, "1.1 路由基础", 13)          # 真节标题
+    _w(page, 72, 200, "287", 13)                  # 页码（版心内 + 大字号）
+    _w(page, 72, 240, "229", 13)                  # 页码
+    _w(page, 72, 300, "CongestionWindow then grows linearly.", 13)   # 伪代码行
+    _w(page, 72, 360, "Each IP datagram is re-encapsulated for each physical", 13)
+    _w(page, 72, 374, "network over which it travels.", 13)          # 折行 → 合成整句
+    for index in range(6):
+        _w(page, 72, 480 + index * 16, _BODY, 10)
+    path = _save(doc, tmp_path / "outline_clean.pdf")
+
+    chapters = split_outline(parse_pdf(path))
+    names: list[str] = []
+    for c in chapters:
+        names += [c.number or "", c.title or ""]
+        for s in c.sections:
+            names += [s.number or "", s.title or ""]
+
+    # 注意：**不含 `.`** —— 否则 `1.1` 这种真节号会被误判成"纯页码形态"
+    PURE = re.compile(r"^[\d\s\-–—/:()\[\]·]+$")
+    bad_pure = [n for n in names if n and PURE.match(n.strip())]
+    bad_sentence = [n for n in names
+                    if n and len(n.strip()) >= 20 and n.strip().endswith((".", "。"))]
+
+    assert not bad_pure, f"目录里出现了纯页码形态的名字：{bad_pure}"
+    assert not bad_sentence, f"目录里出现了正文句/伪代码行：{bad_sentence}"
+    # 真章标题必须还在（否决不能把真的也挡掉）
+    assert any("网络层" in (c.title or "") for c in chapters), (
+        f"真章标题被弄丢了：{[(c.number, c.title) for c in chapters]}"
+    )
+
+
 def test_heading_veto_collapses_the_outline_to_real_structure(tmp_path: Path) -> None:
     """★ 页码不该造出"章"：一堆孤立数字的前 30 页式材料只该有真实的章。"""
     doc = pymupdf.open()
