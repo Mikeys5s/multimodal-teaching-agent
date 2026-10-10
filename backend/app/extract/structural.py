@@ -227,23 +227,84 @@ def _section_ranges(
     而**它不会报错** —— 只会让"三级结构完整率 100%"这个指标虽然通过、内容却是错的。
     （这正是 `ParsedSection.__post_init__` 要用构造期不变量挡住的那类问题；
     可惜那个不变量没有跟着落库，所以在读侧还得再推一次。）
+
+    ## ★ 排序键必须是**标题块的全局 seq**，不能是 `Section.seq`
+
+    原先这里是 `sorted(sections, key=lambda s: s.seq)`。**那是错的**：
+    `Section.seq` 是**章内**排序（见 `models/outline.py` 的 `seq` 字段文档，
+    唯一键是 `(chapter_id, seq)`）—— 所以多章材料里不同章的节会有**相同的 seq**。
+    按它排序会把不同章的节**交错**排在一起，于是上面那句"下一节的标题块 seq - 1"
+    取到的根本不是文档里的下一节，推出的区间**互相重叠**。
+
+    后果不是报错，是**同一批块被多个节各抽一遍**（`_seen_in_section` 只在同节内去重，
+    跨节不生效）。线上实测：629 条知识点里 **462 条是副本**（只有 167 个不同内容），
+    其中 **92.2% 的内容组被挂到了多个不同的节上**、81.4% 还跨多个章。
+
+    `MaterialBlock.seq` 在**一份材料内是全局唯一且递增**的（`_section_ranges` 就是靠它
+    推区间的），所以用它排序得到的一定是文档顺序，区间天然不重叠。
     """
     heading_seq: dict[str, int] = {
         b.id: b.seq for b in blocks
     }
-    ordered = sorted(sections, key=lambda s: s.seq)
+    max_seq = max((b.seq for b in blocks), default=-1)
+
+    # 解析出每个节的起始 seq；解析不出来的（`source_block_id` 为空或指向别的材料）
+    # 单独放到最后 —— 保持原先"退化但不崩"的语义，但**不再参与排序**，
+    # 免得它把真正的文档顺序搅乱。
+    resolved: list[tuple[int, Section]] = []
+    unresolved: list[Section] = []
+    for sec in sections:
+        start = heading_seq.get(sec.source_block_id or "")
+        if start is None:
+            unresolved.append(sec)
+        else:
+            resolved.append((start, sec))
+    resolved.sort(key=lambda item: item[0])
 
     out: list[tuple[Section, int, int]] = []
-    max_seq = max((b.seq for b in blocks), default=-1)
-    for i, sec in enumerate(ordered):
-        start = heading_seq.get(sec.source_block_id or "", 0)
-        if i + 1 < len(ordered):
-            nxt = heading_seq.get(ordered[i + 1].source_block_id or "", max_seq + 1)
-            end = max(start, nxt - 1)
+    for i, (start, sec) in enumerate(resolved):
+        if i + 1 < len(resolved):
+            end = max(start, resolved[i + 1][0] - 1)
         else:
-            end = max_seq
+            end = max(start, max_seq)
         out.append((sec, start, end))
+
+    # ★ 标题块解析不出来的节（`source_block_id` 为空、或指向别的材料）：
+    #   **不认领任何块**（返回空区间，`lo > hi`），并放在末尾。
+    #
+    #   原先的退化口径是 `start = 0`，也就是"从文件头开始" —— 那个节会把文档开头
+    #   整段认领过去；而这一段往往已经属于第一个正常节，于是**同一批块被认领两次**，
+    #   又产生重复知识点。定位不到的节，宁可它的知识点数是 0（**可见的**损失），
+    #   也不要悄悄复制别人的内容。
+    for sec in unresolved:
+        out.append((sec, max_seq + 1, max_seq))
     return out
+
+
+def _chapter_seq_of(sec: Section) -> int:
+    """取本节所属**章的 seq** —— 它是 `knowledge_point_id` 的第一段。
+
+    ⚠️ **不能拿 `sec.seq` 顶替**。`Section.seq` 是**章内**序号（见 `models/outline.py`），
+    拿它当章序号会让 id 的「章」段恒等于「节」段：
+
+    * 线上 629 条的 id 里这一对段只有 `000_000` / `001_001` / `002_002` / `003_003`
+      四种取值，而**单是 Ch03 就有 104 个节** —— 也就是说光看 id 定位不到具体的章和节。
+    * 这个 id 形状还被（包括我）误读成"同一份材料被抽了 4 遍"，浪费了一轮排查。
+
+    章序号直接从 `chapter_id` 解析（格式 `ch_<hash8>_<seq:03d>`，由 `models/ids.py`
+    的 `chapter_id()` 生成，不查库）；解析不出来再退回关系属性；都拿不到就**显式报错** ——
+    宁可在抽取时报错，也不要写出一批定位不到的 id。
+    """
+    tail = (sec.chapter_id or "").rsplit("_", 1)[-1]
+    if tail.isdigit():
+        return int(tail)
+    chapter = getattr(sec, "chapter", None)
+    seq = getattr(chapter, "seq", None) if chapter is not None else None
+    if seq is not None:
+        return int(seq)
+    raise ValueError(
+        f"无法确定节的章序号：section={sec.id!r} chapter_id={sec.chapter_id!r}"
+    )
 
 
 def extract_material(session: Session, mat_id: str) -> dict[str, Any]:
@@ -303,7 +364,7 @@ def extract_material(session: Session, mat_id: str) -> dict[str, Any]:
         bucket.add(name)
         quote = _clean(block.content_md)[:300]
         kp = KnowledgePoint(
-            id=knowledge_point_id(mat_id, sec.seq, sec.seq, len(created)),
+            id=knowledge_point_id(mat_id, _chapter_seq_of(sec), sec.seq, len(created)),
             section_id=sec.id,
             chapter_id=sec.chapter_id,
             material_id=mat_id,
