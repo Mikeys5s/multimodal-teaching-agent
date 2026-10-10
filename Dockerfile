@@ -112,20 +112,28 @@ COPY skills/ /app/skills/
 #   docker build --build-arg PIP_INDEX_URL=https://pypi.org/simple/ --build-arg PIP_TRUSTED_HOST= .
 ARG PIP_INDEX_URL=https://mirrors.aliyun.com/pypi/simple/
 ARG PIP_TRUSTED_HOST=mirrors.aliyun.com
-# ⚠️ **兜底源**（2026-10-10 部署失败后加）：
-# 阿里云镜像**不保证与官方同步** —— 那次 `pydantic_core 2.50.0` 的 cp313 wheel
-# 在阿里云上 **404**，`pip install -e .` 直接失败 ⇒ **镜像没重建**，
-# 而**容器还在跑旧代码**（外网照样响应、页面照常打开，**看不出问题**）。
-# **⇒ 主索引用阿里云（快），缺包时自动回退官方（全）。**
-#    `--extra-index-url` 的语义是"**两个源一起找**"，不是"主源失败才用备源"，
-#    所以既能保持阿里云的速度，又不会因为某个包缺失而整条构建挂掉。
-ARG PIP_EXTRA_INDEX_URL=https://pypi.org/simple/
+# ⚠️ **不要在 Dockerfile 里加 `PIP_EXTRA_INDEX_URL`**（2026-10-11 实测教训）
+#
+# 10/10 我加过 `PIP_EXTRA_INDEX_URL=https://pypi.org/simple/` 来解决
+# 「阿里云缺 `pydantic_core` 某个 wheel ⇒ 构建失败 ⇒ 静默跑旧代码」。
+# **它确实解决了那个问题，但代价是构建从 ~5 分钟变成 >36 分钟且卡死。**
+#
+# 实测（在服务器上量）：
+#     阿里云      HTTP 200 · **0.66 秒**
+#     官方 PyPI   HTTP 200 · **20.0 秒**（正好卡在超时上限）
+# `--extra-index-url` 的语义是「**两个源一起找**」⇒
+# **pip 对每一个包都要去官方源等一次 20 秒超时** ⇒ 几十个包就是十几分钟。
+#
+# **⇒ 结论：慢的源不该放进"每次都要查"的位置。**
+#   正确做法见下面的 `--timeout` / `--retries`：
+#   主源只用阿里云（快），**把超时压短**，真缺包时**快速失败**而不是长时间干等。
 ENV PIP_INDEX_URL=${PIP_INDEX_URL} \
     PIP_TRUSTED_HOST=${PIP_TRUSTED_HOST} \
-    PIP_EXTRA_INDEX_URL=${PIP_EXTRA_INDEX_URL}
+    PIP_DEFAULT_TIMEOUT=15 \
+    PIP_RETRIES=2
 
-RUN pip install --no-cache-dir --upgrade pip setuptools wheel \
-    && pip install --no-cache-dir -e . \
+RUN pip install --no-cache-dir --timeout 15 --retries 2 --upgrade pip setuptools wheel \
+    && pip install --no-cache-dir --timeout 15 --retries 2 -e . \
     && python -c "import app.main; print('==> 后端可导入，端点', len(app.main.app.openapi()['paths']))"
 
 # 运行期数据（SQLite + 上传文件）落在 /data，由 compose 挂卷持久化
