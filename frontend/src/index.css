@@ -35,15 +35,17 @@
 
   body {
     /* 暖纸底 + 细颗粒（Learning Atlas 纸感材质；非图片，零采购）
-       + 2 层低对比环境光（上暖下冷，约 5% 量级，不成色块） */
+       + 2 层低对比环境光（上暖下冷，约 5% 量级，不成色块）
+       + 边缘极淡暗角（<4%，收拢视线，不压正文对比度） */
     @apply text-slate-900 antialiased;
     margin: 0;
     background-color: var(--xizhi-bg);
     background-image:
+      radial-gradient(ellipse 120% 90% at 50% 45%, transparent 62%, rgba(16, 28, 46, 0.035)),
       radial-gradient(ellipse 62% 46% at 12% 0%, rgba(236, 220, 188, 0.5), transparent 70%),
       radial-gradient(ellipse 55% 42% at 92% 100%, rgba(49, 92, 255, 0.05), transparent 70%),
       radial-gradient(rgba(16, 28, 46, 0.075) 0.55px, transparent 0.7px);
-    background-size: auto, auto, 6px 6px;
+    background-size: auto, auto, auto, 6px 6px;
   }
 
   /* 极淡等高线纹理：只落在页面两角的宽阔空白（fixed 伪元素 + mask 收边，
@@ -233,6 +235,36 @@
   animation: atlas-halo 640ms ease-out 2 both;
   transform-box: fill-box;
   transform-origin: center;
+}
+
+/* 主视觉节点按顺序出现（一次性，配合路径描线节奏；reduced-motion 下瞬时） */
+@keyframes atlas-node-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px) scale(0.94);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.atlas-node-in {
+  animation: atlas-node-in 320ms ease-out both;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+/* 图谱节点首次渲染淡入（一次性 300ms，不做 200 个节点的逐项 stagger） */
+@keyframes atlas-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+.atlas-fade-in {
+  animation: atlas-fade-in 300ms ease-out both;
 }
 
 /* 上传轨道慢速旋转（素材工作台） */

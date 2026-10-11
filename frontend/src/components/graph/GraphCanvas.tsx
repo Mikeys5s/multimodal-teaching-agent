@@ -276,8 +276,8 @@ export function GraphCanvas({ nodes, edges, selectedId, onSelect }: GraphCanvasP
             })}
           </g>
 
-          {/* 节点 */}
-          <g>
+          {/* 节点（首次渲染一次性 300ms 淡入；数据变化只更新受影响节点，不整图重播） */}
+          <g className="atlas-fade-in">
             {layout.nodes.map(({ node, x, y }) => {
               const color = DIFFICULTY_COLOR[node.difficulty] ?? '#94a3b8'
               const selected = node.id === selectedId
