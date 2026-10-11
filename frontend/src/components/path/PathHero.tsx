@@ -42,6 +42,7 @@ export function PathHero({ targetName, chapterLabel }: { targetName: string; cha
           d="M20 120C91 118 72 55 152 63s64 76 127 63 77-46 141-83"
           stroke="#d9ed83"
           strokeWidth="2"
+          pathLength={1000}
           className="atlas-draw"
         />
         <path d="M152 63c34-56 83-46 119-36M279 126c21 42 57 47 94 25" stroke="#8295ac" strokeWidth="1" strokeDasharray="3 6" />

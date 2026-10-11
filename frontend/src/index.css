@@ -34,12 +34,42 @@
   }
 
   body {
-    /* 暖纸底 + 细颗粒（Learning Atlas 纸感材质；非图片，零采购） */
+    /* 暖纸底 + 细颗粒（Learning Atlas 纸感材质；非图片，零采购）
+       + 2 层低对比环境光（上暖下冷，约 5% 量级，不成色块）
+       + 边缘极淡暗角（<4%，收拢视线，不压正文对比度） */
     @apply text-slate-900 antialiased;
     margin: 0;
     background-color: var(--xizhi-bg);
-    background-image: radial-gradient(rgba(16, 28, 46, 0.075) 0.55px, transparent 0.7px);
-    background-size: 6px 6px;
+    background-image:
+      radial-gradient(ellipse 120% 90% at 50% 45%, transparent 62%, rgba(16, 28, 46, 0.035)),
+      radial-gradient(ellipse 62% 46% at 12% 0%, rgba(236, 220, 188, 0.5), transparent 70%),
+      radial-gradient(ellipse 55% 42% at 92% 100%, rgba(49, 92, 255, 0.05), transparent 70%),
+      radial-gradient(rgba(16, 28, 46, 0.075) 0.55px, transparent 0.7px);
+    background-size: auto, auto, auto, 6px 6px;
+  }
+
+  /* 极淡等高线纹理：只落在页面两角的宽阔空白（fixed 伪元素 + mask 收边，
+     不穿过密集内容区；对比度低于分隔线；静止，无 GPU 开销） */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    background-image:
+      repeating-radial-gradient(circle at 96% 8%, rgba(16, 28, 46, 0.05) 0 1px, transparent 1px 26px),
+      repeating-radial-gradient(circle at 2% 96%, rgba(49, 92, 255, 0.045) 0 1px, transparent 1px 30px);
+    -webkit-mask-image:
+      radial-gradient(circle at 96% 8%, black 0 170px, transparent 310px),
+      radial-gradient(circle at 2% 96%, black 0 150px, transparent 290px);
+    mask-image:
+      radial-gradient(circle at 96% 8%, black 0 170px, transparent 310px),
+      radial-gradient(circle at 2% 96%, black 0 150px, transparent 290px);
+  }
+  /* 内容层压在纹理之上 */
+  #root {
+    position: relative;
+    z-index: 1;
   }
 
   /* 全局焦点可见性：键盘用户必须看得清焦点在哪（2px 环 + 2px 间隔） */
@@ -157,33 +187,84 @@
   animation: xizhi-page-enter 220ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
 }
 
-/* Atlas 路径线：虚线沿路径流动（概览主视觉 / 学习路径目标面板） */
+/* Atlas 路径线：首次呈现做一次 700ms 描线（pathLength=1000 归一化），不循环播放 */
 @keyframes atlas-draw {
+  from {
+    stroke-dashoffset: 1000;
+  }
   to {
-    stroke-dashoffset: -160;
+    stroke-dashoffset: 0;
   }
 }
 .atlas-draw {
-  stroke-dasharray: 7 8;
-  animation: atlas-draw 18s linear infinite;
+  stroke-dasharray: 1000;
+  animation: atlas-draw 700ms ease-out 120ms both;
 }
 
-/* 节点光晕呼吸（概览 / 图谱选中节点） */
+/* 节点光晕：呼吸 2 次后停住在常态（缩放 ≤1.035），不再常驻脉冲 */
 @keyframes atlas-breathe {
   0%,
   100% {
-    transform: scale(0.92);
-    opacity: 0.7;
+    transform: scale(1);
+    opacity: 0.9;
   }
   50% {
-    transform: scale(1.12);
+    transform: scale(1.035);
     opacity: 1;
   }
 }
 .atlas-breathe {
-  animation: atlas-breathe 3.6s ease-in-out infinite;
+  animation: atlas-breathe 1.4s ease-in-out 2 both;
   transform-box: fill-box;
   transform-origin: center;
+}
+
+/* 图谱选中节点外环：单次亮起脉冲 ×2 后停住 */
+@keyframes atlas-halo {
+  0%,
+  100% {
+    opacity: 0.45;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.85;
+    transform: scale(1.03);
+  }
+}
+.atlas-halo {
+  animation: atlas-halo 640ms ease-out 2 both;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+/* 主视觉节点按顺序出现（一次性，配合路径描线节奏；reduced-motion 下瞬时） */
+@keyframes atlas-node-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px) scale(0.94);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.atlas-node-in {
+  animation: atlas-node-in 320ms ease-out both;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+/* 图谱节点首次渲染淡入（一次性 300ms，不做 200 个节点的逐项 stagger） */
+@keyframes atlas-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+.atlas-fade-in {
+  animation: atlas-fade-in 300ms ease-out both;
 }
 
 /* 上传轨道慢速旋转（素材工作台） */

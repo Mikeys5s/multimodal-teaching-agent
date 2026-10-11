@@ -6,7 +6,7 @@ type Size = 'sm' | 'md'
 
 const VARIANT_CLASS: Record<Variant, string> = {
   primary:
-    'bg-brand-600 text-white hover:bg-brand-700 active:bg-brand-800 disabled:bg-brand-300 disabled:hover:bg-brand-300',
+    'bg-brand-600 text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.16)] hover:bg-brand-700 hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.16),0_4px_12px_rgba(49,92,255,0.25)] active:bg-brand-800 active:shadow-none disabled:bg-brand-300 disabled:shadow-none disabled:hover:bg-brand-300 disabled:hover:shadow-none',
   secondary:
     'border border-slate-300 bg-white text-slate-700 hover:bg-slate-50 hover:text-slate-900 active:bg-slate-100 disabled:text-slate-400 disabled:hover:bg-white',
   ghost:

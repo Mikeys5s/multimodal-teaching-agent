@@ -164,10 +164,20 @@ function useQuickTours() {
   ]
 }
 
-/** Atlas 主视觉 SVG：路径沿虚线流动，节点带光晕（纯装饰，不代表真实数据） */
+/** Atlas 主视觉 SVG：路径一次性描线呈现，连线带柔光晕（纯装饰，不代表真实数据） */
 function AtlasVisual() {
   return (
     <div className="relative z-10 grid min-h-[220px] place-items-center overflow-hidden sm:min-h-[300px]">
+      {/* 路径后方的蓝/青/黄绿环境柔光（贴合现有图形，静止、低透明，不扩展成新图） */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0"
+        style={{
+          background:
+            'radial-gradient(ellipse 42% 38% at 26% 62%, rgba(49,92,255,0.22), transparent 70%), radial-gradient(ellipse 38% 34% at 58% 48%, rgba(98,200,180,0.18), transparent 70%), radial-gradient(ellipse 30% 28% at 78% 30%, rgba(217,237,131,0.14), transparent 70%)',
+          filter: 'blur(26px)',
+        }}
+      />
       <span className="absolute right-10 top-10 font-serif text-xs italic tracking-wide text-[#9eabbc]" aria-hidden>
         SOURCE / 04
       </span>
@@ -175,7 +185,7 @@ function AtlasVisual() {
         NEXT: UNDERSTAND
       </span>
       <svg viewBox="0 0 600 330" role="img" aria-label="知识节点与学习路径示意图"
-        className="h-[220px] w-full max-w-[600px] overflow-visible sm:h-[300px]">
+        className="relative h-[220px] w-full max-w-[600px] overflow-visible sm:h-[300px]">
         <defs>
           <linearGradient id="atlas-route" x1="0" x2="1">
             <stop stopColor="#315cff" />
@@ -189,19 +199,26 @@ function AtlasVisual() {
               <feMergeNode in="SourceGraphic" />
             </feMerge>
           </filter>
+          {/* 连线光晕：只模糊、不合并，垫在实线下面 */}
+          <filter id="atlas-line-glow" x="-20%" y="-60%" width="140%" height="220%">
+            <feGaussianBlur stdDeviation="5" />
+          </filter>
         </defs>
         <path d="M54 229 C118 205 116 120 189 133 S272 237 326 196 S388 79 449 106 S506 195 562 112"
-          fill="none" stroke="url(#atlas-route)" strokeWidth="2.6" className="atlas-draw" />
+          fill="none" stroke="url(#atlas-route)" strokeWidth="7" opacity="0.32" filter="url(#atlas-line-glow)" />
+        <path d="M54 229 C118 205 116 120 189 133 S272 237 326 196 S388 79 449 106 S506 195 562 112"
+          fill="none" stroke="url(#atlas-route)" strokeWidth="2.6" pathLength={1000} className="atlas-draw" />
         <path d="M54 229 C118 205 116 120 189 133 S272 237 326 196 S388 79 449 106 S506 195 562 112"
           fill="none" stroke="#c4d0df" strokeWidth="0.8" strokeDasharray="2 8" opacity="0.5" />
         <path d="M189 133 C212 67 260 56 296 82 M326 196 C355 251 408 259 455 232 M449 106 C466 59 499 49 527 62"
           fill="none" stroke="#93a3b6" strokeWidth="1" strokeDasharray="3 6" opacity="0.55" />
         <g fill="#101c2e" stroke="#d6e1ee" strokeWidth="1.4">
-          <circle cx="54" cy="229" r="11" />
-          <circle cx="189" cy="133" r="13" />
-          <circle cx="326" cy="196" r="12" />
-          <circle cx="449" cy="106" r="14" />
-          <circle cx="562" cy="112" r="10" />
+          {/* 节点沿路径顺序出现（一次性 320ms，与 700ms 描线同节奏） */}
+          <circle className="atlas-node-in" style={{ animationDelay: '140ms' }} cx="54" cy="229" r="11" />
+          <circle className="atlas-node-in" style={{ animationDelay: '300ms' }} cx="189" cy="133" r="13" />
+          <circle className="atlas-node-in" style={{ animationDelay: '440ms' }} cx="326" cy="196" r="12" />
+          <circle className="atlas-node-in" style={{ animationDelay: '580ms' }} cx="449" cy="106" r="14" />
+          <circle className="atlas-node-in" style={{ animationDelay: '700ms' }} cx="562" cy="112" r="10" />
         </g>
         <g className="atlas-breathe" filter="url(#atlas-glow)">
           <circle cx="449" cy="106" r="6" fill="#d9ed83" />
@@ -338,16 +355,17 @@ export default function Overview() {
           </div>
         </div>
 
-        <div className="relative overflow-hidden rounded-2xl bg-brand-600 p-6 text-white">
+        {/* 原则板：保留蓝色系次级锚点，但降饱和/降亮度 —— 不抢主标题与路径图的焦点 */}
+        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#2a4bc0] to-[#1e3791] p-6 text-white">
           <div
             aria-hidden
-            className="pointer-events-none absolute -bottom-24 -right-9 h-52 w-52 rounded-full border border-white/25 shadow-[0_0_0_28px_rgba(255,255,255,0.07),0_0_0_58px_rgba(255,255,255,0.04)]"
+            className="pointer-events-none absolute -bottom-24 -right-9 h-44 w-44 rounded-full border border-white/20 shadow-[0_0_0_28px_rgba(255,255,255,0.05),0_0_0_58px_rgba(255,255,255,0.03)]"
           />
-          <div className="font-serif text-4xl italic leading-[0.8] text-lime" aria-hidden>“</div>
-          <p className="relative z-10 mt-4 max-w-[290px] text-base font-semibold leading-relaxed">
+          <div className="font-serif text-4xl italic leading-[0.8] text-lime/90" aria-hidden>“</div>
+          <p className="relative z-10 mt-4 max-w-[290px] text-[15px] font-semibold leading-relaxed text-[#eef1fb]">
             知识不该是散落的答案，而是能追溯、能连接、能继续前进的结构。
           </p>
-          <small className="relative z-10 mt-5 block text-[10px] tracking-[0.12em] text-[#d9e0ff]">
+          <small className="relative z-10 mt-5 block text-[10px] tracking-[0.12em] text-[#b9c4e8]">
             THE XI ZHI PRINCIPLE / 01
           </small>
         </div>
