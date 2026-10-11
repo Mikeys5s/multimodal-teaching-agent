@@ -11,10 +11,16 @@ export interface KnowledgePointAsideProps {
  * 桌面证据面板（/graph 画布右侧内嵌，≥lg 常驻）——
  * 选中节点时在画布旁直接展示证据，不再用弹层遮挡画布；
  * 内容与移动端底部抽屉共用（KnowledgePointDetail）。
+ *
+ * ⚠️ **高度靠父容器传下来**（2026-10-11 修）：
+ * 调用方必须是 flex / grid 且给了确定高度 —— 页面那边用的是
+ * `hidden h-[62vh] lg:flex lg:min-h-0`。**若父容器是 `display:block`**，
+ * 这里的 `h-full` 与 `flex-1/overflow-auto` 都失效 ⇒ 侧栏被内容撑长且滚不动。
+ * 组件自带 `h-full min-h-0`，是为了**不依赖调用方的隐性约定**。
  */
 export function KnowledgePointAside({ kpId, onClose }: KnowledgePointAsideProps) {
   return (
-    <aside className="flex min-h-0 flex-col overflow-hidden rounded-2xl border border-atlas-line bg-atlas-sheet">
+    <aside className="flex h-full min-h-0 flex-col overflow-hidden rounded-2xl border border-atlas-line bg-atlas-sheet">
       <div className="flex shrink-0 items-center justify-between gap-3 border-b border-atlas-line bg-atlas-paper2 px-4 py-3">
         <div className="min-w-0">
           <div className="text-[10px] font-semibold uppercase tracking-[0.13em] text-atlas-muted">

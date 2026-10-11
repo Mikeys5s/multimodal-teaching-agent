@@ -272,7 +272,15 @@ export default function Graph() {
                 onSelect={setSelectedId}
               />
             </section>
-            <div className="hidden h-[62vh] min-h-[420px] lg:block">
+            {/*
+              ⚠️ 这里必须是 `lg:flex` 而不是 `lg:block`（2026-10-11 修）——
+              `KnowledgePointAside` 内部靠 `flex-1 + overflow-auto` 撑出滚动区，
+              **它需要父容器把高度约束传下去**。
+              而 `display:block` 的父容器不会约束子元素 ⇒ 侧栏被内容撑到几千 px、
+              **自身滚不动**，还把 grid 行撑高、让左侧画布下面留一片空白。
+              ⇒ 父容器改成 flex（并加 `lg:min-h-0` 让 flex 子项可以收缩）。
+            */}
+            <div className="hidden h-[62vh] min-h-[420px] lg:flex lg:min-h-0">
               <KnowledgePointAside kpId={selectedId} onClose={() => setSelectedId(null)} />
             </div>
           </div>
